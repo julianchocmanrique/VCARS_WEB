@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { getVehicleByPlate } from '@/lib/api';
 import { apiVehicleToEntry } from '@/lib/mapper';
+import { BrandPill } from '@/components/BrandPill';
+import { BottomNav } from '@/components/BottomNav';
 import { getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 import { getVisibleSteps, normalizeStepTitle, stepIndexFromTitle } from '@/lib/process';
 
@@ -52,9 +54,7 @@ export default function VehiculoDetallePage() {
         setCurrentEntry(next);
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'No se pudo cargar el vehículo';
-        if (!msg.toLowerCase().includes('not found')) {
-          setWarning(msg);
-        }
+        if (!msg.toLowerCase().includes('not found')) setWarning(msg);
       }
     })();
   }, [plate, router]);
@@ -68,53 +68,43 @@ export default function VehiculoDetallePage() {
   })();
 
   return (
-    <main className="vc-page">
-      <section className="vc-panel">
-        <div className="vc-top-row">
+    <main className="vc-page vc-shell">
+      <div className="vc-bg-orb-left" />
+      <div className="vc-bg-orb-right" />
+
+      <section className="vc-panel vc-panel-narrow">
+        <header className="vc-detail-head">
+          <Link href="/ingreso-activo" className="vc-back-btn">‹</Link>
           <div>
-            <div className="vc-brand">VCARS</div>
-            <h1>Detalle vehículo</h1>
-            <p>{plate}</p>
+            <BrandPill />
+            <p className="vc-head-sub">Detalle del vehiculo</p>
           </div>
-          <Link href="/ingreso-activo" className="vc-btn">
-            Volver
-          </Link>
-        </div>
+        </header>
 
         {warning ? <div className="vc-warning">No se pudo cargar vehículo desde backend: {warning}</div> : null}
 
-        <div className="vc-card-grid">
-          <article className="vc-card">
-            <h3>Resumen</h3>
-            <p>
-              <strong>Placa:</strong> {vehicle?.placa || '-'}
-            </p>
-            <p>
-              <strong>Cliente:</strong> {vehicle?.cliente || '-'}
-            </p>
-            <p>
-              <strong>Vehículo:</strong> {vehicle?.vehiculo || '-'}
-            </p>
-            <p>
-              <strong>Teléfono:</strong> {vehicle?.telefono || '-'}
-            </p>
-            <p>
-              <strong>Paso actual:</strong> {vehicle?.paso || '-'}
-            </p>
-          </article>
+        <section className="vc-card">
+          <h3>Resumen</h3>
+          <p><strong>Placa</strong> {vehicle?.placa || '-'}</p>
+          <p><strong>Cliente</strong> {vehicle?.cliente || '-'}</p>
+          <p><strong>Vehiculo</strong> {vehicle?.vehiculo || '-'}</p>
+          <p><strong>Telefono</strong> {vehicle?.telefono || '-'}</p>
+          <p><strong>Paso actual</strong> {vehicle?.paso || '-'}</p>
+        </section>
 
-          <article className="vc-card">
-            <h3>Línea de tiempo</h3>
-            <ul className="vc-timeline">
-              {visibleSteps.map((step, idx) => (
-                <li key={step.key} className={idx <= displayCurrentIndex ? 'done' : ''}>
-                  {step.title}
-                </li>
-              ))}
-            </ul>
-          </article>
-        </div>
+        <section className="vc-card">
+          <h3>Linea de tiempo</h3>
+          <ul className="vc-timeline">
+            {visibleSteps.map((step, idx) => (
+              <li key={step.key} className={idx <= displayCurrentIndex ? 'done' : ''}>
+                {step.title}
+              </li>
+            ))}
+          </ul>
+        </section>
       </section>
+
+      <BottomNav active="proceso" />
     </main>
   );
 }

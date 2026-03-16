@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import { DEMO_USERS, signIn } from '@/lib/auth';
 import { getSession } from '@/lib/storage';
+import { BrandPill } from '@/components/BrandPill';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,9 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (getSession()) {
-      router.replace('/home');
-    }
+    if (getSession()) router.replace('/home');
   }, [router]);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
@@ -24,35 +23,34 @@ export default function LoginPage() {
     setError('');
     const res = await signIn(username, password);
     setLoading(false);
-
     if (!res.ok) {
       setError(res.error);
       return;
     }
-
     router.replace('/home');
   }
 
   return (
     <main className="vc-page vc-auth-page">
       <section className="vc-auth-card">
-        <div className="vc-brand">VCARS</div>
-        <h1>Inicia sesión</h1>
-        <p>Usa tus credenciales del backend o demo local.</p>
+        <header className="vc-head-block">
+          <BrandPill />
+          <p className="vc-head-sub">Inicia sesión</p>
+        </header>
 
-        <form onSubmit={onSubmit} className="vc-form">
-          <label>
-            Usuario
+        <form onSubmit={onSubmit} className="vc-form-card">
+          <label className="vc-label">Usuario</label>
+          <div className="vc-input-wrap">
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="admin / tecnico / cliente"
               autoComplete="username"
             />
-          </label>
+          </div>
 
-          <label>
-            Contraseña
+          <label className="vc-label">Contraseña</label>
+          <div className="vc-input-wrap">
             <input
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -60,30 +58,32 @@ export default function LoginPage() {
               placeholder="••••"
               autoComplete="current-password"
             />
-          </label>
+          </div>
 
           {error ? <div className="vc-error">{error}</div> : null}
 
-          <button className="vc-btn vc-btn-primary" disabled={loading}>
+          <button className="vc-login-btn" disabled={loading}>
             {loading ? 'Validando...' : 'Ingresar'}
           </button>
-        </form>
 
-        <div className="vc-chip-row">
-          {DEMO_USERS.map((u) => (
-            <button
-              key={u.id}
-              className="vc-chip"
-              onClick={() => {
-                setUsername(u.username);
-                setPassword(u.password);
-              }}
-              type="button"
-            >
-              {u.username}
-            </button>
-          ))}
-        </div>
+          <div className="vc-chip-row">
+            {DEMO_USERS.map((u) => (
+              <button
+                key={u.id}
+                className="vc-chip"
+                onClick={() => {
+                  setUsername(u.username);
+                  setPassword(u.password);
+                }}
+                type="button"
+              >
+                {u.username}
+              </button>
+            ))}
+          </div>
+
+          <p className="vc-hint">Credenciales locales temporales (roles: admin / tecnico / cliente).</p>
+        </form>
       </section>
     </main>
   );

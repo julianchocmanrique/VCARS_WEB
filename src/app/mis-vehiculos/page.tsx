@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { getVehicleByPlate } from '@/lib/api';
 import { getClientIdentity, isEntryAllowed, setClientIdentity } from '@/lib/clientIdentity';
 import { apiVehicleToEntry } from '@/lib/mapper';
+import { BottomNav } from '@/components/BottomNav';
+import { BrandPill } from '@/components/BrandPill';
 import { getEntries, getRole, getSession, setEntries, type Entry } from '@/lib/storage';
 
 function normalizePlate(p: string): string {
@@ -61,22 +63,24 @@ export default function MisVehiculosPage() {
   }, [router]);
 
   return (
-    <main className="vc-page">
-      <section className="vc-panel">
-        <div className="vc-top-row">
-          <div>
-            <div className="vc-brand">VCARS</div>
-            <h1>Mis vehículos</h1>
-            <p>{identityName ? `Asociado a ${identityName}` : 'Solo ves tus placas asociadas.'}</p>
-          </div>
-          <Link href="/home" className="vc-btn">Volver</Link>
-        </div>
+    <main className="vc-page vc-shell">
+      <div className="vc-bg-orb-left" />
+      <div className="vc-bg-orb-right" />
+
+      <section className="vc-panel vc-panel-narrow">
+        <header className="vc-head-block">
+          <BrandPill />
+          <p className="vc-head-sub">Mis vehículos</p>
+          <p className="vc-subtitle-small">
+            {identityName ? `Solo ves vehículos asociados a ${identityName}.` : 'Solo ves vehículos asociados a tu cuenta.'}
+          </p>
+        </header>
 
         {!plates.length ? (
           <div className="vc-warning">
             <p>Aún no tienes placas asociadas.</p>
             <button
-              className="vc-btn vc-btn-primary"
+              className="vc-login-btn"
               onClick={() => {
                 const identity = setClientIdentity({ type: 'personal', name: 'Cliente', plates: ['ABC123'] });
                 setPlates(identity.plates);
@@ -87,20 +91,22 @@ export default function MisVehiculosPage() {
           </div>
         ) : null}
 
-        <div className="vc-list">
+        <div className="vc-list-rows">
           {entries.map((item) => (
-            <Link key={item.id} href={`/vehiculos/${encodeURIComponent(item.placa)}`} className="vc-item">
+            <Link key={item.id} href={`/vehiculos/${encodeURIComponent(item.placa)}`} className="vc-vehicle-main vc-vehicle-standalone">
               <div>
                 <strong>{item.placa}</strong>
                 <p>{item.vehiculo || item.cliente || 'Vehículo'}</p>
               </div>
-              <span>{item.paso || 'En proceso'}</span>
+              <span className="vc-step-pill">{item.paso || 'En proceso'}</span>
             </Link>
           ))}
         </div>
 
-        {plates.length && !entries.length ? <p className="vc-empty">No encontramos registros para tus placas.</p> : null}
+        {plates.length && !entries.length ? <p className="vc-empty">No encontramos registros para tus placas todavía.</p> : null}
       </section>
+
+      <BottomNav active="home" />
     </main>
   );
 }
