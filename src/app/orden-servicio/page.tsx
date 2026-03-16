@@ -33,7 +33,14 @@ const STEP_FIELDS: Record<string, Array<{ key: string; label: string; placeholde
 };
 
 export default function OrdenServicioPage() {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    const url = new URL(window.location.href);
+    const startStepRaw = Number(url.searchParams.get('startStep') || 0);
+    return Number.isFinite(startStepRaw)
+      ? Math.max(0, Math.min(VCARS_PROCESS.length - 1, startStepRaw))
+      : 0;
+  });
   const [form, setForm] = useState<Record<string, string>>({});
 
   const current = VCARS_PROCESS[step];

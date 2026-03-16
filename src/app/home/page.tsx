@@ -182,7 +182,7 @@ export default function HomePage() {
         <section className="vc-section">
           <h2 className="vc-section-title">Acciones principales</h2>
           <div className="vc-actions-grid">
-            {primaryActions.slice(0, 2).map((action) => (
+            {primaryActions.map((action) => (
               <Link key={action.key} href={action.href} className={`vc-action-card ${action.primary ? 'is-primary' : ''}`}>
                 <h3>{action.title}</h3>
                 <p>{action.subtitle}</p>
