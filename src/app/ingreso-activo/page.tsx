@@ -143,35 +143,42 @@ export default function IngresoActivoPage() {
       <style jsx global>{`
         .process-premium-bg {
           background:
-            radial-gradient(circle at 20% -8%, rgba(247, 183, 53, 0.16), transparent 34%),
-            radial-gradient(circle at 86% 18%, rgba(255, 208, 120, 0.12), transparent 36%),
+            radial-gradient(circle at 20% -8%, rgba(247, 183, 53, 0.1), transparent 34%),
+            radial-gradient(circle at 86% 18%, rgba(255, 208, 120, 0.08), transparent 36%),
             #07090d;
         }
 
         .process-wrap {
-          background: linear-gradient(180deg, rgba(12, 13, 16, 0.92), rgba(9, 10, 14, 0.98));
+          background: linear-gradient(180deg, rgba(12, 13, 16, 0.94), rgba(9, 10, 14, 0.98));
+          border-color: rgba(45, 57, 79, 0.85);
+        }
+
+        .process-wrap .vc-list-rows {
+          gap: 14px;
+          padding-bottom: 96px;
         }
 
         .process-card {
-          border: 1px solid rgba(242, 191, 94, 0.22);
+          border: 1px solid rgba(242, 191, 94, 0.14);
           border-radius: 18px;
-          background: linear-gradient(120deg, rgba(18, 16, 10, 0.96), rgba(20, 17, 11, 0.9));
+          background: linear-gradient(120deg, rgba(16, 14, 10, 0.96), rgba(15, 13, 10, 0.92));
           padding: 14px;
           display: grid;
           grid-template-columns: 1fr 130px;
           gap: 10px;
           min-height: 148px;
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
+          transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
         }
 
         .process-card:hover {
           transform: translateY(-2px);
+          border-color: rgba(242, 191, 94, 0.3);
           box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
         }
 
         .process-name {
           margin: 0;
-          font-size: 22px;
+          font-size: 20px;
           font-weight: 900;
           color: #f6f1e8;
         }
@@ -190,8 +197,8 @@ export default function IngresoActivoPage() {
         }
 
         .process-tags span {
-          border: 1px solid rgba(242, 191, 94, 0.3);
-          background: rgba(242, 191, 94, 0.08);
+          border: 1px solid rgba(242, 191, 94, 0.25);
+          background: rgba(242, 191, 94, 0.07);
           color: #f6ce85;
           border-radius: 999px;
           padding: 4px 8px;
@@ -201,19 +208,20 @@ export default function IngresoActivoPage() {
 
         .process-id {
           margin: 12px 0 0;
-          font-size: 21px;
+          font-size: 20px;
           font-weight: 900;
-          color: #f0b84c;
+          color: #eeb852;
         }
 
         .process-media {
           position: relative;
           border-radius: 14px;
-          border: 1px solid rgba(242, 191, 94, 0.18);
-          background: radial-gradient(circle at 50% 42%, rgba(255, 221, 149, 0.25), rgba(20, 18, 14, 0.9));
+          border: 1px solid rgba(242, 191, 94, 0.14);
+          background: radial-gradient(circle at 50% 42%, rgba(255, 221, 149, 0.18), rgba(20, 18, 14, 0.9));
           display: grid;
           place-items: center;
           overflow: hidden;
+          min-height: 118px;
         }
 
         .process-halo {
@@ -221,7 +229,7 @@ export default function IngresoActivoPage() {
           width: 120px;
           height: 120px;
           border-radius: 999px;
-          background: radial-gradient(circle, rgba(255, 224, 150, 0.45), rgba(255, 224, 150, 0));
+          background: radial-gradient(circle, rgba(255, 224, 150, 0.35), rgba(255, 224, 150, 0));
         }
 
         .process-badge {
@@ -229,8 +237,8 @@ export default function IngresoActivoPage() {
           z-index: 1;
           padding: 8px 12px;
           border-radius: 999px;
-          border: 1px solid rgba(255, 223, 146, 0.45);
-          background: rgba(17, 14, 10, 0.62);
+          border: 1px solid rgba(255, 223, 146, 0.35);
+          background: rgba(17, 14, 10, 0.58);
           color: #fbe3ac;
           font-weight: 900;
           font-size: 12px;
@@ -238,6 +246,10 @@ export default function IngresoActivoPage() {
         }
 
         @media (max-width: 520px) {
+          .process-wrap .vc-list-rows {
+            padding-bottom: 108px;
+          }
+
           .process-card {
             grid-template-columns: 1fr;
             min-height: auto;
