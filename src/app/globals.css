@@ -1,26 +1,232 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --vc-bg: #05070b;
+  --vc-surface: #0e1117;
+  --vc-surface-alt: #121826;
+  --vc-border: #1d2433;
+  --vc-text: #f5f7fa;
+  --vc-muted: #9aa4b2;
+  --vc-blue: #1f4d7a;
+  --vc-blue-light: #86b9e6;
+  --vc-red: #d43a3a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: radial-gradient(circle at top right, #1b2a44 0%, var(--vc-bg) 40%);
+  color: var(--vc-text);
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.vc-page {
+  min-height: 100vh;
+  padding: 28px 16px;
+}
+
+.vc-auth-page {
+  display: grid;
+  place-items: center;
+}
+
+.vc-panel,
+.vc-auth-card {
+  max-width: 980px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, rgba(18, 24, 38, 0.96), rgba(14, 17, 23, 0.96));
+  border: 1px solid var(--vc-border);
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
+}
+
+.vc-auth-card {
+  max-width: 460px;
+  width: 100%;
+}
+
+.vc-brand {
+  display: inline-block;
+  letter-spacing: 0.2em;
+  font-weight: 900;
+  color: var(--vc-blue-light);
+  margin-bottom: 8px;
+}
+
+.vc-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.vc-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.vc-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--vc-muted);
+  font-size: 14px;
+}
+
+.vc-form input {
+  width: 100%;
+  border: 1px solid var(--vc-border);
+  background: var(--vc-surface);
+  color: var(--vc-text);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.vc-btn {
+  border: 1px solid var(--vc-border);
+  background: var(--vc-surface-alt);
+  color: var(--vc-text);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.vc-btn-primary {
+  background: linear-gradient(90deg, var(--vc-blue), var(--vc-blue-light));
+  color: #07101c;
+  border-color: transparent;
+}
+
+.vc-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.vc-chip-row {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vc-chip {
+  border: 1px solid var(--vc-border);
+  background: transparent;
+  color: var(--vc-text);
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.vc-error,
+.vc-warning {
+  border: 1px solid rgba(212, 58, 58, 0.35);
+  background: rgba(212, 58, 58, 0.12);
+  color: #ffd7d7;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+
+.vc-stats-grid,
+.vc-actions-grid,
+.vc-card-grid {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.vc-stats-grid {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.vc-actions-grid,
+.vc-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.vc-stat,
+.vc-action-card,
+.vc-card,
+.vc-item {
+  border: 1px solid var(--vc-border);
+  background: var(--vc-surface);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.vc-stat strong {
+  font-size: 28px;
+  display: block;
+}
+
+.vc-stat span,
+.vc-action-card p,
+.vc-item p,
+.vc-empty,
+.vc-card p {
+  color: var(--vc-muted);
+  margin: 2px 0 0;
+}
+
+.vc-action-card h3,
+.vc-card h3,
+.vc-item strong {
+  margin: 0;
+}
+
+.vc-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.vc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.vc-item span {
+  color: var(--vc-blue-light);
+  font-size: 13px;
+}
+
+.vc-toggle-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.vc-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.vc-timeline li {
+  border-left: 3px solid var(--vc-border);
+  padding: 8px 10px;
+  color: var(--vc-muted);
+}
+
+.vc-timeline li.done {
+  border-left-color: var(--vc-blue-light);
+  color: var(--vc-text);
 }
