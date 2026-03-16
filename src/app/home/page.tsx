@@ -133,7 +133,13 @@ export default function HomePage() {
         <header className="vc-home-header">
           <div className="vc-brand-row-top">
             <BrandPill />
-            <button className="vc-profile-btn" onClick={() => router.push('/login')}>
+            <button
+              className="vc-profile-btn"
+              onClick={() => {
+                signOut();
+                router.replace('/login');
+              }}
+            >
               {PROFILE_LABEL[role]}
             </button>
           </div>
