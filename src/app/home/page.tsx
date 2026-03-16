@@ -70,18 +70,45 @@ export default function HomePage() {
   const summary = useMemo(() => summarize(entries), [entries]);
   const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
 
-  const tiles = [
-    { label: 'Activos', value: String(summary.active) },
-    { label: 'Cerrados', value: String(summary.done) },
-    { label: 'Total', value: String(summary.total) },
-    { label: 'Paso', value: currentEntry?.paso || 'Recepción' },
-    { label: 'Placa', value: currentEntry?.placa || 'Sin ingreso' },
-    { label: 'Cliente', value: currentEntry?.cliente || '-' },
-  ];
+  const primaryActions =
+    role === 'cliente'
+      ? [
+          { key: 'mis-vehiculos', title: 'Mis vehiculos', subtitle: 'Consultar placas asignadas', href: '/mis-vehiculos', primary: true },
+          {
+            key: 'estado-actual',
+            title: 'Vehiculo activo',
+            subtitle: currentEntry ? currentEntry.placa : 'Sin ingreso activo',
+            href: currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/mis-vehiculos',
+          },
+        ]
+      : role === 'tecnico'
+      ? [
+          {
+            key: 'proceso',
+            title: 'Proceso activo',
+            subtitle: currentEntry ? currentEntry.placa : 'Sin ingreso activo',
+            href: currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo',
+            primary: true,
+          },
+          { key: 'cola', title: 'Ingresos activos', subtitle: `${summary.active} en taller`, href: '/ingreso-activo' },
+        ]
+      : [
+          { key: 'nuevo', title: 'Nuevo ingreso', subtitle: 'Registrar recepcion', href: '/nuevo-ingreso', primary: true },
+          {
+            key: 'proceso',
+            title: 'Proceso activo',
+            subtitle: currentEntry ? currentEntry.placa : 'Sin ingreso activo',
+            href: currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo',
+          },
+          { key: 'historial', title: 'Historial', subtitle: `${summary.done} cerrados`, href: '/ingreso-activo' },
+        ];
 
   return (
-    <main className="vc-page vc-shell vc-ref-bg">
-      <section className="vc-panel vc-panel-home-mobile vc-ref-shell">
+    <main className="vc-page vc-shell">
+      <div className="vc-bg-orb-left" />
+      <div className="vc-bg-orb-right" />
+
+      <section className="vc-panel vc-panel-home-mobile">
         <header className="vc-home-header">
           <div className="vc-brand-row-top">
             <BrandPill />
@@ -95,55 +122,49 @@ export default function HomePage() {
               {PROFILE_LABEL[role]}
             </button>
           </div>
-
           <h1 className="vc-title">Inicio operativo</h1>
-          <p className="vc-subtitle">Panel central del vehículo y servicio.</p>
+          <p className="vc-subtitle">Gestiona ingresos, proceso actual y accesos por rol sin mezclar herramientas.</p>
         </header>
 
-        <section className="vc-ref-hero">
-          <div className="vc-ref-hero-top">
+        <section className="vc-section">
+          <h2 className="vc-section-title">Resumen</h2>
+          <div className="vc-summary-hero">
             <div>
-              <h3>{currentEntry?.vehiculo || 'VCARS Unit'}</h3>
-              <p>{currentEntry?.placa || 'Sin placa'} · {currentEntry?.cliente || 'Sin cliente'}</p>
+              <p className="vc-mini vc-mini-blue">INGRESO ACTIVO</p>
+              <h3 className="vc-summary-title">
+                {currentEntry ? `${currentEntry.vehiculo || 'Vehiculo'} · ${currentEntry.placa}` : 'Sin ingreso activo'}
+              </h3>
+              <p className="vc-summary-text">
+                {currentEntry
+                  ? `${currentEntry.cliente || '-'} · ${currentEntry.status || 'active'}`
+                  : 'Crea un ingreso o entra al proceso para continuar.'}
+              </p>
             </div>
-            <span className="vc-ref-status">Conectado</span>
+            <Link
+              className="vc-login-btn vc-summary-btn vc-yellow"
+              href={currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo'}
+            >
+              {currentEntry ? 'Abrir ingreso' : 'Crear ingreso'}
+            </Link>
           </div>
 
-          <div className="vc-ref-car-stage">
-            <div className="vc-ref-car-glow" />
-            <div className="vc-ref-car">VCARS</div>
+          <div className="vc-kpi-row">
+            <article className="vc-kpi-card"><strong>{summary.active}</strong><span>ACTIVOS</span></article>
+            <article className="vc-kpi-card"><strong>{summary.done}</strong><span>CERRADOS</span></article>
+            <article className="vc-kpi-card"><strong>{summary.total}</strong><span>TOTAL</span></article>
           </div>
-
-          <div className="vc-ref-ring-row">
-            <article>
-              <div className="vc-ref-ring">{summary.active}</div>
-              <span>En taller</span>
-            </article>
-            <article>
-              <div className="vc-ref-core">●</div>
-              <span>Estado</span>
-            </article>
-            <article>
-              <div className="vc-ref-ring">{summary.done}</div>
-              <span>Cerrados</span>
-            </article>
-          </div>
-
-          <Link
-            className="vc-login-btn vc-ref-main-btn"
-            href={currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/nuevo-ingreso'}
-          >
-            {currentEntry ? 'Abrir ingreso' : 'Crear ingreso'}
-          </Link>
         </section>
 
-        <section className="vc-ref-grid">
-          {tiles.map((tile) => (
-            <article key={tile.label} className="vc-ref-tile">
-              <p>{tile.label}</p>
-              <strong>{tile.value}</strong>
-            </article>
-          ))}
+        <section className="vc-section">
+          <h2 className="vc-section-title">Acciones principales</h2>
+          <div className="vc-actions-grid">
+            {primaryActions.map((action) => (
+              <Link key={action.key} href={action.href} className={`vc-action-card ${action.primary ? 'is-primary' : ''}`}>
+                <h3>{action.title}</h3>
+                <p>{action.subtitle}</p>
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="vc-section">
