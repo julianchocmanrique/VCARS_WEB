@@ -1,0 +1,35 @@
+:root {
+  --vc-bg: #040912;
+  --vc-surface: #060c16;
+  --vc-surface-alt: #08121f;
+  --vc-surface-elev: #0a1626;
+
+  --vc-text: #f6f1e8;
+  --vc-muted: #b2c2d8;
+
+  --vc-accent: #5be8f6;
+  --vc-accent-soft: #8cecf8;
+  --vc-accent-ink: #c8f8ff;
+  --vc-accent-deep: #2ba3ba;
+
+  --vc-border: #1a3248;
+  --vc-border-strong: #2d5a74;
+
+  --vc-danger: #d96565;
+
+  --vc-blue: var(--vc-accent-deep);
+  --vc-blue-light: var(--vc-accent-soft);
+  --vc-yellow: var(--vc-accent);
+
+  --vc-overlay-1: rgba(72, 213, 232, 0.13);
+  --vc-overlay-2: rgba(43, 163, 186, 0.11);
+  --vc-panel-border: rgba(68, 201, 226, 0.26);
+  --vc-card-border: rgba(68, 201, 226, 0.24);
+  --vc-tag-border: rgba(78, 217, 236, 0.36);
+  --vc-tag-bg: rgba(71, 201, 223, 0.12);
+  --vc-media-border: rgba(86, 230, 246, 0.25);
+  --vc-media-glow: rgba(95, 231, 246, 0.2);
+  --vc-halo: rgba(107, 239, 255, 0.4);
+  --vc-badge-border: rgba(112, 236, 251, 0.42);
+  --vc-badge-bg: rgba(4, 18, 30, 0.68);
+}
