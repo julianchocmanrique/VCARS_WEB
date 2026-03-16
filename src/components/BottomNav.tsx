@@ -15,14 +15,13 @@ const ITEMS: NavItem[] = [
 ];
 
 function Icon({ name, active }: { name: Tab; active: boolean }) {
-  const stroke = active ? '#0c1624' : '#8fa0b7';
-  const fill = active ? '#0c1624' : 'none';
+  const stroke = active ? '#0c1624' : '#94a3b8';
 
   if (name === 'home') {
     return (
       <svg viewBox="0 0 24 24" className="vc-nav-svg" aria-hidden="true">
         <path d="M3 11.8 12 4l9 7.8" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M7.4 10.7V20h9.2v-9.3" fill={fill} stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7.4 10.7V20h9.2v-9.3" fill="none" stroke={stroke} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }

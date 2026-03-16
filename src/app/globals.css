@@ -463,56 +463,36 @@ a { color: inherit; text-decoration: none; }
   bottom: 16px;
   z-index: 12;
   width: min(92vw, 440px);
+  height: 82px;
   border-radius: 20px;
   border: 1px solid rgba(29, 36, 51, 0.95);
   background: rgba(10, 14, 22, 0.96);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px;
+  align-items: center;
+  padding: 0 10px;
 }
 
 .vc-nav-item {
   display: flex;
-  align-items: center;
   justify-content: center;
 }
 
 .vc-nav-item-inner {
   width: 100%;
   min-height: 52px;
-  border-radius: 14px;
+  border-radius: 999px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  color: #8ea0b8;
-  transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
-}
-
-.vc-nav-item:hover .vc-nav-item-inner {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.vc-nav-item.is-active .vc-nav-item-inner {
-  min-height: 52px;
-  border-radius: 999px;
-  padding: 0 12px;
-  flex-direction: row;
-  justify-content: center;
   gap: 8px;
-  background: #f2d24a;
-  color: #0c1624;
-  transform: translateY(-1px);
+  color: #94a3b8;
 }
 
 .vc-nav-icon-wrap {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: inline-grid;
   place-items: center;
 }
@@ -524,13 +504,27 @@ a { color: inherit; text-decoration: none; }
 
 .vc-nav-label {
   font-size: 11px;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
   font-weight: 800;
 }
 
-.vc-nav-item.is-active .vc-nav-label {
-  font-size: 12px;
+.vc-nav-item.is-active .vc-nav-item-inner {
+  background: #f2d24a;
+  color: #0c1624;
+  min-height: 52px;
+  width: 90%;
 }
+
+.vc-nav-item:not(.is-active) .vc-nav-item-inner {
+  flex-direction: column;
+  gap: 3px;
+  min-height: 52px;
+}
+
+.vc-nav-item:not(.is-active) .vc-nav-label {
+  font-size: 10px;
+}
+
 
 @keyframes vcGlow {
   0%,
