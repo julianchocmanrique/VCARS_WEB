@@ -856,3 +856,99 @@ a { color: inherit; text-decoration: none; }
   color: #9ca7b7;
   font-size: 13px;
 }
+
+.vc-home-neon {
+  background:
+    radial-gradient(circle at 30% -8%, rgba(110, 255, 162, 0.22), transparent 36%),
+    radial-gradient(circle at 80% 22%, rgba(49, 223, 150, 0.14), transparent 34%),
+    #03080d;
+}
+
+.vc-neon-panel {
+  background: linear-gradient(180deg, rgba(7, 15, 20, 0.94), rgba(6, 12, 18, 0.98));
+}
+
+.vc-neon-vehicle-card {
+  margin-top: 8px;
+  border: 1px solid rgba(76, 214, 149, 0.28);
+  background: linear-gradient(180deg, rgba(12, 26, 22, 0.78), rgba(8, 17, 16, 0.92));
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 0 0 1px rgba(76, 214, 149, 0.08), 0 12px 40px rgba(0, 0, 0, 0.34);
+}
+
+.vc-neon-mini {
+  color: #7ceeb5;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  font-weight: 800;
+}
+
+.vc-neon-cta {
+  background: #e7ecef;
+  color: #101820;
+}
+
+.vc-neon-ring-row {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.vc-ring-item {
+  text-align: center;
+}
+
+.vc-ring {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto;
+  border-radius: 999px;
+  border: 4px solid rgba(128, 238, 183, 0.32);
+  color: #dff9e9;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.vc-ring-item p {
+  margin: 7px 0 0;
+  color: #95adb1;
+  font-size: 12px;
+}
+
+.vc-ring-glow {
+  border-color: rgba(145, 255, 196, 0.5);
+  box-shadow: 0 0 30px rgba(102, 247, 173, 0.44);
+  color: #9dffcf;
+}
+
+.vc-neon-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.vc-neon-tile {
+  border: 1px solid rgba(76, 214, 149, 0.24);
+  background: rgba(10, 24, 20, 0.8);
+  border-radius: 14px;
+  min-height: 96px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.vc-neon-tile span {
+  font-size: 12px;
+  color: #8ea6aa;
+}
+
+.vc-neon-tile strong {
+  font-size: 22px;
+  color: #e4fff0;
+}
