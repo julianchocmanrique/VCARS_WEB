@@ -68,6 +68,7 @@ export default function HomePage() {
   }, [currentEntry, router]);
 
   const summary = useMemo(() => summarize(entries), [entries]);
+  const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
 
   const primaryActions =
     role === 'cliente'
@@ -210,6 +211,23 @@ export default function HomePage() {
               <span>Cerrar sesion</span>
               <span>›</span>
             </button>
+          </div>
+
+          <div className="vc-secondary-card vc-movements-card">
+            <p className="vc-movements-title">Ultimos movimientos</p>
+            {latestEntries.length ? (
+              latestEntries.map((item) => (
+                <Link key={item.id} href={`/vehiculos/${encodeURIComponent(item.placa)}`} className="vc-movement-row">
+                  <div className="vc-movement-icon">🚘</div>
+                  <div className="vc-movement-text">
+                    <strong>{item.vehiculo || item.placa} · {item.placa}</strong>
+                    <p>{item.cliente || '-'} · {item.paso || 'Recepción (Ingreso)'}</p>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <p className="vc-empty">Aun no hay movimientos recientes.</p>
+            )}
           </div>
         </section>
       </section>
