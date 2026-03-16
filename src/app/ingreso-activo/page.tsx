@@ -72,7 +72,7 @@ export default function IngresoActivoPage() {
   }, [entries, role, viewMode]);
 
   return (
-    <main className="vc-page vc-shell vc-fleet-page">
+    <main className="vc-page vc-shell process-premium-bg">
       <div className="vc-bg-orb-left" />
       <div className="vc-bg-orb-right" />
 
@@ -82,7 +82,7 @@ export default function IngresoActivoPage() {
           <p className="vc-head-sub">Listado de proceso</p>
         </header>
 
-        <section className="vc-list-card vc-fleet-wrap">
+        <section className="vc-list-card process-wrap">
           <div className="vc-list-header">
             <div>
               <h2 className="vc-list-title">{role === 'administrativo' && viewMode === 'history' ? 'Historial' : 'Explore Fleet'}</h2>
@@ -106,24 +106,24 @@ export default function IngresoActivoPage() {
                 <Link
                   key={item.id}
                   href={`/vehiculos/${encodeURIComponent(item.placa)}`}
-                  className="vc-fleet-card"
+                  className="process-card"
                   onClick={() => setCurrentEntry(item)}
                 >
-                  <div className="vc-fleet-info">
-                    <p className="vc-fleet-title">{item.vehiculo || `Vehicle ${idx + 1}`}</p>
-                    <p className="vc-fleet-subtitle">{item.cliente || 'Cliente'} · {item.placa}</p>
+                  <div className="process-copy">
+                    <p className="process-name">{item.vehiculo || `Vehicle ${idx + 1}`}</p>
+                    <p className="process-sub">{item.cliente || 'Cliente'} · {item.placa}</p>
 
-                    <div className="vc-fleet-meta">
+                    <div className="process-tags">
                       <span>{statusLabel(item.status)}</span>
                       <span>{item.paso || 'Recepción (Ingreso)'}</span>
                     </div>
 
-                    <p className="vc-fleet-price">{item.placa}</p>
+                    <p className="process-id">#{item.placa}</p>
                   </div>
 
-                  <div className="vc-fleet-visual">
-                    <div className="vc-fleet-glow" />
-                    <div className="vc-fleet-car">VCARS</div>
+                  <div className="process-media">
+                    <div className="process-halo" />
+                    <div className="process-badge">VCARS</div>
                   </div>
                 </Link>
               ))
@@ -139,6 +139,115 @@ export default function IngresoActivoPage() {
       </section>
 
       <BottomNav active="process" />
+
+      <style jsx>{`
+        .process-premium-bg {
+          background:
+            radial-gradient(circle at 20% -8%, rgba(247, 183, 53, 0.16), transparent 34%),
+            radial-gradient(circle at 86% 18%, rgba(255, 208, 120, 0.12), transparent 36%),
+            #07090d;
+        }
+
+        .process-wrap {
+          background: linear-gradient(180deg, rgba(12, 13, 16, 0.92), rgba(9, 10, 14, 0.98));
+        }
+
+        .process-card {
+          border: 1px solid rgba(242, 191, 94, 0.22);
+          border-radius: 18px;
+          background: linear-gradient(120deg, rgba(18, 16, 10, 0.96), rgba(20, 17, 11, 0.9));
+          padding: 14px;
+          display: grid;
+          grid-template-columns: 1fr 130px;
+          gap: 10px;
+          min-height: 148px;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .process-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+        }
+
+        .process-name {
+          margin: 0;
+          font-size: 22px;
+          font-weight: 900;
+          color: #f6f1e8;
+        }
+
+        .process-sub {
+          margin: 5px 0 0;
+          color: #c8bca7;
+          font-size: 13px;
+        }
+
+        .process-tags {
+          margin-top: 8px;
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .process-tags span {
+          border: 1px solid rgba(242, 191, 94, 0.3);
+          background: rgba(242, 191, 94, 0.08);
+          color: #f6ce85;
+          border-radius: 999px;
+          padding: 4px 8px;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .process-id {
+          margin: 12px 0 0;
+          font-size: 21px;
+          font-weight: 900;
+          color: #f0b84c;
+        }
+
+        .process-media {
+          position: relative;
+          border-radius: 14px;
+          border: 1px solid rgba(242, 191, 94, 0.18);
+          background: radial-gradient(circle at 50% 42%, rgba(255, 221, 149, 0.25), rgba(20, 18, 14, 0.9));
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+        }
+
+        .process-halo {
+          position: absolute;
+          width: 120px;
+          height: 120px;
+          border-radius: 999px;
+          background: radial-gradient(circle, rgba(255, 224, 150, 0.45), rgba(255, 224, 150, 0));
+        }
+
+        .process-badge {
+          position: relative;
+          z-index: 1;
+          padding: 8px 12px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 223, 146, 0.45);
+          background: rgba(17, 14, 10, 0.62);
+          color: #fbe3ac;
+          font-weight: 900;
+          font-size: 12px;
+          letter-spacing: 1px;
+        }
+
+        @media (max-width: 520px) {
+          .process-card {
+            grid-template-columns: 1fr;
+            min-height: auto;
+          }
+
+          .process-media {
+            min-height: 88px;
+          }
+        }
+      `}</style>
     </main>
   );
 }
