@@ -759,3 +759,82 @@ a { color: inherit; text-decoration: none; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.vc-movements-card {
+  background: linear-gradient(180deg, rgba(21, 30, 45, 0.86), rgba(14, 17, 23, 0.98));
+  border-radius: 20px;
+  padding: 12px;
+}
+
+.vc-movements-title {
+  margin: 2px 2px 8px;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.vc-movement-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 6px;
+  border-radius: 10px;
+  transition: background-color 0.15s ease;
+}
+
+.vc-movement-row:hover {
+  background: rgba(134, 185, 230, 0.08);
+}
+
+.vc-movement-row + .vc-movement-row {
+  border-top: 1px solid rgba(29, 36, 51, 0.9);
+}
+
+.vc-movement-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(134, 185, 230, 0.09);
+  border: 1px solid rgba(134, 185, 230, 0.2);
+  flex: 0 0 auto;
+}
+
+.vc-car-glyph {
+  position: relative;
+  width: 14px;
+  height: 7px;
+  border: 1.8px solid #6db8f5;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.vc-car-glyph::before,
+.vc-car-glyph::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: #6db8f5;
+}
+
+.vc-car-glyph::before {
+  left: 1px;
+}
+
+.vc-car-glyph::after {
+  right: 1px;
+}
+
+.vc-movement-text strong {
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.vc-movement-text p {
+  margin: 3px 0 0;
+  color: #9ca7b7;
+  font-size: 13px;
+}

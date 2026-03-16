@@ -218,7 +218,7 @@ export default function HomePage() {
             {latestEntries.length ? (
               latestEntries.map((item) => (
                 <Link key={item.id} href={`/vehiculos/${encodeURIComponent(item.placa)}`} className="vc-movement-row">
-                  <div className="vc-movement-icon">🚘</div>
+                  <div className="vc-movement-icon"><span className="vc-car-glyph" /></div>
                   <div className="vc-movement-text">
                     <strong>{item.vehiculo || item.placa} · {item.placa}</strong>
                     <p>{item.cliente || '-'} · {item.paso || 'Recepción (Ingreso)'}</p>
