@@ -85,11 +85,13 @@ export default function VehiculoDetallePage() {
 
         <section className="vc-card">
           <h3>Resumen</h3>
-          <p><strong>Placa</strong> {vehicle?.placa || '-'}</p>
-          <p><strong>Cliente</strong> {vehicle?.cliente || '-'}</p>
-          <p><strong>Vehiculo</strong> {vehicle?.vehiculo || '-'}</p>
-          <p><strong>Telefono</strong> {vehicle?.telefono || '-'}</p>
-          <p><strong>Paso actual</strong> {vehicle?.paso || '-'}</p>
+          <div className="vc-summary-grid">
+            <span>Placa</span><strong>{vehicle?.placa || '-'}</strong>
+            <span>Cliente</span><strong>{vehicle?.cliente || '-'}</strong>
+            <span>Vehiculo</span><strong>{vehicle?.vehiculo || '-'}</strong>
+            <span>Telefono</span><strong>{vehicle?.telefono || '-'}</strong>
+            <span>Paso actual</span><strong>{vehicle?.paso || '-'}</strong>
+          </div>
         </section>
 
         <section className="vc-card">
@@ -103,7 +105,26 @@ export default function VehiculoDetallePage() {
           </ul>
 
           <div className="vc-inline-actions">
-            <Link href="/orden-servicio" className="vc-login-btn vc-summary-btn">Continuar</Link>
+            <Link href="/orden-servicio" className="vc-login-btn vc-summary-btn vc-continue-btn">Continuar →</Link>
+          </div>
+        </section>
+
+        <section className="vc-card">
+          <h3>Formularios</h3>
+          <div className="vc-forms-list">
+            {visibleSteps.map((step, idx) => (
+              <Link
+                key={step.key}
+                href={`/orden-servicio?startStep=${step.index}&plate=${encodeURIComponent(plate)}`}
+                className="vc-form-row"
+              >
+                <div className="vc-form-row-left">
+                  <span className={`vc-form-dot ${idx <= displayCurrentIndex ? 'done' : ''}`} />
+                  <span>{step.title}</span>
+                </div>
+                <span className="vc-form-edit">✎</span>
+              </Link>
+            ))}
           </div>
         </section>
       </section>

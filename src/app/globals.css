@@ -611,3 +611,66 @@ a { color: inherit; text-decoration: none; }
     max-width: 100%;
   }
 }
+
+.vc-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px 12px;
+  margin-top: 8px;
+}
+
+.vc-summary-grid span {
+  color: var(--vc-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(29, 36, 51, 0.65);
+}
+
+.vc-summary-grid strong {
+  text-align: right;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(29, 36, 51, 0.65);
+}
+
+.vc-continue-btn {
+  background: #eceff4;
+  color: #111827;
+  width: 100%;
+}
+
+.vc-forms-list {
+  display: grid;
+  gap: 6px;
+}
+
+.vc-form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 2px;
+  border-bottom: 1px solid rgba(29, 36, 51, 0.8);
+}
+
+.vc-form-row-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--vc-text);
+  font-weight: 600;
+}
+
+.vc-form-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #1b2a44;
+}
+
+.vc-form-dot.done {
+  background: #7bc5ff;
+}
+
+.vc-form-edit {
+  color: var(--vc-muted);
+  font-size: 14px;
+}
