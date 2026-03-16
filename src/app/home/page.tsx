@@ -129,7 +129,7 @@ export default function HomePage() {
       <div className="vc-bg-orb-left" />
       <div className="vc-bg-orb-right" />
 
-      <section className="vc-panel vc-panel-narrow">
+      <section className="vc-panel vc-panel-home-mobile">
         <header className="vc-home-header">
           <div className="vc-brand-row-top">
             <BrandPill />
@@ -138,42 +138,43 @@ export default function HomePage() {
             </button>
           </div>
           <h1 className="vc-title">Inicio operativo</h1>
-          <p className="vc-subtitle">Gestiona ingresos, proceso actual y accesos por rol.</p>
+          <p className="vc-subtitle">Gestiona ingresos, proceso actual y accesos por rol sin mezclar herramientas.</p>
         </header>
 
         <section className="vc-section">
           <h2 className="vc-section-title">Resumen</h2>
           <div className="vc-summary-hero">
             <div>
-              <p className="vc-mini">Ingreso activo</p>
+              <p className="vc-mini vc-mini-blue">INGRESO ACTIVO</p>
               <h3 className="vc-summary-title">
                 {currentEntry ? `${currentEntry.vehiculo || 'Vehiculo'} · ${currentEntry.placa}` : 'Sin ingreso activo'}
               </h3>
               <p className="vc-summary-text">
                 {currentEntry
                   ? `${currentEntry.cliente || '-'} · ${currentEntry.status || 'active'}`
-                  : 'Crea un ingreso o entra al proceso para continuar el flujo del taller.'}
+                  : 'Crea un ingreso o entra al proceso para continuar.'}
               </p>
             </div>
             <Link
-              className="vc-login-btn vc-summary-btn"
+              className="vc-login-btn vc-summary-btn vc-yellow"
               href={currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo'}
             >
               {currentEntry ? 'Abrir ingreso' : 'Crear ingreso'}
             </Link>
           </div>
+
           <div className="vc-kpi-row">
             <article className="vc-kpi-card">
               <strong>{summary.active}</strong>
-              <span>Activos</span>
+              <span>ACTIVOS</span>
             </article>
             <article className="vc-kpi-card">
               <strong>{summary.done}</strong>
-              <span>Cerrados</span>
+              <span>CERRADOS</span>
             </article>
             <article className="vc-kpi-card">
               <strong>{summary.total}</strong>
-              <span>Total</span>
+              <span>TOTAL</span>
             </article>
           </div>
         </section>
@@ -181,7 +182,7 @@ export default function HomePage() {
         <section className="vc-section">
           <h2 className="vc-section-title">Acciones principales</h2>
           <div className="vc-actions-grid">
-            {primaryActions.map((action) => (
+            {primaryActions.slice(0, 2).map((action) => (
               <Link key={action.key} href={action.href} className={`vc-action-card ${action.primary ? 'is-primary' : ''}`}>
                 <h3>{action.title}</h3>
                 <p>{action.subtitle}</p>
@@ -203,23 +204,6 @@ export default function HomePage() {
               <span>Cerrar sesion</span>
               <span>›</span>
             </button>
-          </div>
-
-          <div className="vc-secondary-card">
-            <p className="vc-mini">Ultimos movimientos</p>
-            {entries.slice(0, 3).length ? (
-              entries.slice(0, 3).map((item) => (
-                <Link key={item.id} href={`/vehiculos/${encodeURIComponent(item.placa)}`} className="vc-recent-row">
-                  <div>
-                    <strong>{item.vehiculo || 'Vehiculo'} · {item.placa}</strong>
-                    <p>{item.cliente || '-'} · {item.paso || 'Recepcion'}</p>
-                  </div>
-                  <span>›</span>
-                </Link>
-              ))
-            ) : (
-              <p className="vc-empty">Aun no hay movimientos recientes para mostrar.</p>
-            )}
           </div>
         </section>
       </section>

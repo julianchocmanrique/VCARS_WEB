@@ -560,3 +560,54 @@ a { color: inherit; text-decoration: none; }
     grid-template-columns: 1fr;
   }
 }
+
+.vc-panel-home-mobile {
+  max-width: 440px;
+  min-height: calc(100vh - 82px);
+  padding: 26px 16px 20px;
+}
+
+.vc-mini-blue {
+  color: #6db8f5;
+  letter-spacing: 1px;
+  font-weight: 800;
+}
+
+.vc-yellow {
+  background: #f2e83f;
+  color: #0b111a;
+}
+
+.vc-kpi-card {
+  border-radius: 22px;
+}
+
+.vc-kpi-card strong {
+  font-size: 42px;
+  line-height: 1;
+}
+
+.vc-kpi-card span {
+  letter-spacing: 1px;
+  font-weight: 800;
+}
+
+.vc-action-card {
+  min-height: 150px;
+}
+
+.vc-action-card.is-primary {
+  background: linear-gradient(180deg, #62a9de 0%, #4d90c4 100%);
+  color: #041521;
+  border-color: rgba(140, 205, 250, 0.7);
+}
+
+.vc-action-card.is-primary p {
+  color: rgba(4, 21, 33, 0.75);
+}
+
+@media (max-width: 520px) {
+  .vc-panel-home-mobile {
+    max-width: 100%;
+  }
+}
