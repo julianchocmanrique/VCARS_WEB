@@ -140,7 +140,7 @@ export default function IngresoActivoPage() {
 
       <BottomNav active="process" />
 
-      <style jsx>{`
+      <style jsx global>{`
         .process-premium-bg {
           background:
             radial-gradient(circle at 20% -8%, rgba(247, 183, 53, 0.16), transparent 34%),
