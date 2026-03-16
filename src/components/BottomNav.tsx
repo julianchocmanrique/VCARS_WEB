@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-type Tab = 'home' | 'proceso' | 'login';
+type Tab = 'home' | 'new' | 'process';
 
 export function BottomNav({ active }: { active: Tab }) {
   return (
@@ -8,11 +8,11 @@ export function BottomNav({ active }: { active: Tab }) {
       <Link href="/home" className={`vc-nav-item ${active === 'home' ? 'is-active' : ''}`}>
         <span>INICIO</span>
       </Link>
-      <Link href="/ingreso-activo" className={`vc-nav-item ${active === 'proceso' ? 'is-active' : ''}`}>
-        <span>PROCESO</span>
+      <Link href="/nuevo-ingreso" className={`vc-nav-item ${active === 'new' ? 'is-active' : ''}`}>
+        <span>NUEVO</span>
       </Link>
-      <Link href="/login" className={`vc-nav-item ${active === 'login' ? 'is-active' : ''}`}>
-        <span>LOGIN</span>
+      <Link href="/ingreso-activo" className={`vc-nav-item ${active === 'process' ? 'is-active' : ''}`}>
+        <span>PROCESO</span>
       </Link>
     </nav>
   );

@@ -107,7 +107,7 @@ export default function HomePage() {
             key: 'nuevo',
             title: 'Nuevo ingreso',
             subtitle: 'Registrar recepcion',
-            href: '/ingreso-activo',
+            href: '/nuevo-ingreso',
             primary: true,
           },
           {

@@ -122,7 +122,7 @@ export default function IngresoActivoPage() {
         </section>
       </section>
 
-      <BottomNav active="proceso" />
+      <BottomNav active="process" />
     </main>
   );
 }

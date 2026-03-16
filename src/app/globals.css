@@ -480,8 +480,8 @@ a { color: inherit; text-decoration: none; }
 }
 
 .vc-nav-item.is-active {
-  background: rgba(134, 185, 230, 0.2);
-  color: var(--vc-text);
+  background: #f2d24a;
+  color: #0c1624;
 }
 
 @keyframes vcGlow {
@@ -504,4 +504,59 @@ a { color: inherit; text-decoration: none; }
 
   .vc-summary-btn { width: 100%; }
   .vc-title { font-size: 23px; }
+}
+
+.vc-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.vc-step-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.vc-step-tab {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--vc-border);
+  background: var(--vc-surface-alt);
+  color: var(--vc-muted);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.vc-step-tab.is-active {
+  background: var(--vc-blue-light);
+  color: #0c1624;
+  border-color: transparent;
+}
+
+.vc-step-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.vc-wizard-actions {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px;
+}
+
+.vc-wizard-next {
+  margin-top: 0;
+}
+
+@media (max-width: 700px) {
+  .vc-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .vc-wizard-actions {
+    grid-template-columns: 1fr;
+  }
 }

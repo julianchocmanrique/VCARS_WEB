@@ -101,10 +101,14 @@ export default function VehiculoDetallePage() {
               </li>
             ))}
           </ul>
+
+          <div className="vc-inline-actions">
+            <Link href="/orden-servicio" className="vc-login-btn vc-summary-btn">Continuar</Link>
+          </div>
         </section>
       </section>
 
-      <BottomNav active="proceso" />
+      <BottomNav active="process" />
     </main>
   );
 }

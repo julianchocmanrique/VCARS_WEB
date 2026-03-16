@@ -37,7 +37,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!res.ok || json?.ok === false) {
-    const message = typeof json?.error === "string" ? json.error : `Error HTTP `;
+    const message = typeof json?.error === 'string' ? json.error : `Error HTTP ${res.status}`;
     const error = new Error(message) as Error & {
       status?: number;
       payload?: unknown;
@@ -70,4 +70,79 @@ export async function getVehicleByPlate(plate: string): Promise<ApiVehicle> {
   const p = String(plate || '').trim().toUpperCase();
   const json = await apiFetch<{ vehicle: ApiVehicle }>(`vehicles/${encodeURIComponent(p)}`);
   return json.vehicle;
+}
+
+export async function createCustomer(payload: { name: string; email?: string; phone?: string }) {
+  const json = await apiFetch<{ customer: { id: string } }>('customers', {
+    method: 'POST',
+    body: JSON.stringify({ name: payload.name, email: payload.email || '', phone: payload.phone || '' }),
+  });
+  return json.customer;
+}
+
+export async function createVehicle(payload: {
+  plate: string;
+  brand?: string;
+  model?: string;
+  color?: string;
+  year?: string;
+  customer: { name: string; email?: string; phone?: string };
+}) {
+  const json = await apiFetch<{ vehicle: ApiVehicle }>('vehicles', {
+    method: 'POST',
+    body: JSON.stringify({
+      plate: payload.plate,
+      brand: payload.brand || '',
+      model: payload.model || '',
+      color: payload.color || '',
+      year: payload.year || '',
+      customer: payload.customer,
+    }),
+  });
+  return json.vehicle;
+}
+
+export async function createEntry(payload: {
+  vehicleId: string;
+  receivedBy?: string;
+  notes?: string;
+  mileageKm?: number;
+  fuelLevel?: string;
+}) {
+  const json = await apiFetch<{ entry: { id: string } }>(`vehicles/${payload.vehicleId}/entries`, {
+    method: 'POST',
+    body: JSON.stringify({
+      receivedBy: payload.receivedBy || '',
+      notes: payload.notes || '',
+      mileageKm: typeof payload.mileageKm === 'number' ? payload.mileageKm : undefined,
+      fuelLevel: payload.fuelLevel || '',
+    }),
+  });
+  return json.entry;
+}
+
+export async function createIngreso(payload: {
+  plate: string;
+  customerName: string;
+  customerPhone?: string;
+  vehicleModel?: string;
+  receivedBy?: string;
+}) {
+  const vehicle = await createVehicle({
+    plate: payload.plate,
+    model: payload.vehicleModel || '',
+    customer: {
+      name: payload.customerName,
+      phone: payload.customerPhone || '',
+      email: '',
+    },
+  });
+
+  const entry = await createEntry({
+    vehicleId: vehicle.id,
+    receivedBy: payload.receivedBy || '',
+    notes: '',
+  });
+
+  return { vehicle, entry };
 }
