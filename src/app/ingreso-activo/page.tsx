@@ -14,6 +14,12 @@ function normalize(entry: Entry): Entry {
   return { ...entry, status: entry.status || 'active' };
 }
 
+function statusLabel(status?: string): string {
+  if (status === 'done') return 'Finalizado';
+  if (status === 'cancelled') return 'Cancelado';
+  return 'En proceso';
+}
+
 export default function IngresoActivoPage() {
   const router = useRouter();
   const [role] = useState<Role>(() => getRole());
@@ -66,21 +72,21 @@ export default function IngresoActivoPage() {
   }, [entries, role, viewMode]);
 
   return (
-    <main className="vc-page vc-shell">
+    <main className="vc-page vc-shell vc-fleet-page">
       <div className="vc-bg-orb-left" />
       <div className="vc-bg-orb-right" />
 
       <section className="vc-panel vc-panel-narrow">
         <header className="vc-head-block">
           <BrandPill />
-          <p className="vc-head-sub">Formato del ingreso</p>
+          <p className="vc-head-sub">Listado de proceso</p>
         </header>
 
-        <section className="vc-list-card">
+        <section className="vc-list-card vc-fleet-wrap">
           <div className="vc-list-header">
             <div>
-              <h2 className="vc-list-title">{role === 'administrativo' && viewMode === 'history' ? 'Historial de vehículos' : 'Vehículos en proceso'}</h2>
-              <p className="vc-list-subtitle">Placa - Cliente - Paso actual</p>
+              <h2 className="vc-list-title">{role === 'administrativo' && viewMode === 'history' ? 'Historial' : 'Explore Fleet'}</h2>
+              <p className="vc-list-subtitle">Tarjetas de vehículos en proceso</p>
             </div>
             <div className="vc-list-tools">
               {role === 'administrativo' ? (
@@ -96,20 +102,30 @@ export default function IngresoActivoPage() {
 
           <div className="vc-list-rows">
             {filtered.length ? (
-              filtered.map((item) => (
-                <div key={item.id} className="vc-vehicle-card">
-                  <Link
-                    href={`/vehiculos/${encodeURIComponent(item.placa)}`}
-                    className="vc-vehicle-main"
-                    onClick={() => setCurrentEntry(item)}
-                  >
-                    <div>
-                      <strong>{item.placa}</strong>
-                      <p>{item.cliente || '-'}</p>
+              filtered.map((item, idx) => (
+                <Link
+                  key={item.id}
+                  href={`/vehiculos/${encodeURIComponent(item.placa)}`}
+                  className="vc-fleet-card"
+                  onClick={() => setCurrentEntry(item)}
+                >
+                  <div className="vc-fleet-info">
+                    <p className="vc-fleet-title">{item.vehiculo || `Vehicle ${idx + 1}`}</p>
+                    <p className="vc-fleet-subtitle">{item.cliente || 'Cliente'} · {item.placa}</p>
+
+                    <div className="vc-fleet-meta">
+                      <span>{statusLabel(item.status)}</span>
+                      <span>{item.paso || 'Recepción (Ingreso)'}</span>
                     </div>
-                    <span className="vc-step-pill">{item.paso || 'Pendiente'}</span>
-                  </Link>
-                </div>
+
+                    <p className="vc-fleet-price">{item.placa}</p>
+                  </div>
+
+                  <div className="vc-fleet-visual">
+                    <div className="vc-fleet-glow" />
+                    <div className="vc-fleet-car">VCARS</div>
+                  </div>
+                </Link>
               ))
             ) : (
               <p className="vc-empty">Sin autos inscritos por ahora.</p>
