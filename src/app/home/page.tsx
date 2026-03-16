@@ -70,36 +70,18 @@ export default function HomePage() {
   const summary = useMemo(() => summarize(entries), [entries]);
   const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
 
-  const quickActions = [
-    {
-      key: 'new',
-      title: 'Nuevo ingreso',
-      value: 'Recepción',
-      href: '/nuevo-ingreso',
-    },
-    {
-      key: 'process',
-      title: 'Proceso activo',
-      value: currentEntry?.placa || 'Sin ingreso',
-      href: currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo',
-    },
-    {
-      key: 'active',
-      title: 'Activos',
-      value: String(summary.active),
-      href: '/ingreso-activo',
-    },
-    {
-      key: 'closed',
-      title: 'Cerrados',
-      value: String(summary.done),
-      href: '/ingreso-activo',
-    },
+  const tiles = [
+    { label: 'Activos', value: String(summary.active) },
+    { label: 'Cerrados', value: String(summary.done) },
+    { label: 'Total', value: String(summary.total) },
+    { label: 'Paso', value: currentEntry?.paso || 'Recepción' },
+    { label: 'Placa', value: currentEntry?.placa || 'Sin ingreso' },
+    { label: 'Cliente', value: currentEntry?.cliente || '-' },
   ];
 
   return (
-    <main className="vc-page vc-shell vc-home-neon">
-      <section className="vc-panel vc-panel-home-mobile vc-neon-panel">
+    <main className="vc-page vc-shell vc-ref-bg">
+      <section className="vc-panel vc-panel-home-mobile vc-ref-shell">
         <header className="vc-home-header">
           <div className="vc-brand-row-top">
             <BrandPill />
@@ -115,44 +97,52 @@ export default function HomePage() {
           </div>
 
           <h1 className="vc-title">Inicio operativo</h1>
-          <p className="vc-subtitle">Controla vehículo, proceso y estado general desde un solo tablero.</p>
+          <p className="vc-subtitle">Panel central del vehículo y servicio.</p>
         </header>
 
-        <section className="vc-neon-vehicle-card">
-          <div>
-            <p className="vc-mini vc-neon-mini">Vehículo conectado</p>
-            <h3 className="vc-summary-title">{currentEntry?.vehiculo || 'VCARS Diagnostic'}</h3>
-            <p className="vc-summary-text">{currentEntry ? `${currentEntry.placa} · ${currentEntry.cliente || '-'}` : 'Sin ingreso activo'}</p>
+        <section className="vc-ref-hero">
+          <div className="vc-ref-hero-top">
+            <div>
+              <h3>{currentEntry?.vehiculo || 'VCARS Unit'}</h3>
+              <p>{currentEntry?.placa || 'Sin placa'} · {currentEntry?.cliente || 'Sin cliente'}</p>
+            </div>
+            <span className="vc-ref-status">Conectado</span>
           </div>
+
+          <div className="vc-ref-car-stage">
+            <div className="vc-ref-car-glow" />
+            <div className="vc-ref-car">VCARS</div>
+          </div>
+
+          <div className="vc-ref-ring-row">
+            <article>
+              <div className="vc-ref-ring">{summary.active}</div>
+              <span>En taller</span>
+            </article>
+            <article>
+              <div className="vc-ref-core">●</div>
+              <span>Estado</span>
+            </article>
+            <article>
+              <div className="vc-ref-ring">{summary.done}</div>
+              <span>Cerrados</span>
+            </article>
+          </div>
+
           <Link
-            className="vc-login-btn vc-summary-btn vc-neon-cta"
+            className="vc-login-btn vc-ref-main-btn"
             href={currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/nuevo-ingreso'}
           >
             {currentEntry ? 'Abrir ingreso' : 'Crear ingreso'}
           </Link>
         </section>
 
-        <section className="vc-neon-ring-row">
-          <article className="vc-ring-item">
-            <div className="vc-ring">{summary.active}</div>
-            <p>En taller</p>
-          </article>
-          <article className="vc-ring-item is-center">
-            <div className="vc-ring vc-ring-glow">•</div>
-            <p>Estado</p>
-          </article>
-          <article className="vc-ring-item">
-            <div className="vc-ring">{summary.done}</div>
-            <p>Cerrados</p>
-          </article>
-        </section>
-
-        <section className="vc-neon-grid">
-          {quickActions.map((item) => (
-            <Link key={item.key} href={item.href} className="vc-neon-tile">
-              <span>{item.title}</span>
-              <strong>{item.value}</strong>
-            </Link>
+        <section className="vc-ref-grid">
+          {tiles.map((tile) => (
+            <article key={tile.label} className="vc-ref-tile">
+              <p>{tile.label}</p>
+              <strong>{tile.value}</strong>
+            </article>
           ))}
         </section>
 
