@@ -70,6 +70,18 @@ export default function HomePage() {
   const summary = useMemo(() => summarize(entries), [entries]);
   const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
   const activeStatusLabel = currentEntry?.status === 'done' ? 'Finalizado' : currentEntry?.status === 'cancelled' ? 'Cancelado' : 'Activo';
+  const todayLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat('es-CO', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short',
+      }).format(new Date()),
+    [],
+  );
+
+  const completionRate = summary.total ? Math.round(((summary.done + summary.cancelled) / summary.total) * 100) : 0;
+  const activeRate = summary.total ? Math.round((summary.active / summary.total) * 100) : 0;
 
   const primaryActions =
     role === 'cliente'
@@ -125,6 +137,11 @@ export default function HomePage() {
           <h1 className="vc-title">Inicio operativo</h1>
           <p className="vc-subtitle">Gestiona ingresos, proceso actual y accesos por rol sin mezclar herramientas.</p>
           <div className="vc-home-divider" />
+          <div className="vc-home-insights">
+            <span className="vc-insight-chip">{todayLabel}</span>
+            <span className="vc-insight-chip">{summary.active} activos</span>
+            <span className="vc-insight-chip">{summary.done} cerrados</span>
+          </div>
         </header>
 
         <section className="vc-section">
@@ -156,6 +173,33 @@ export default function HomePage() {
             <article className="vc-kpi-card"><strong>{summary.active}</strong><span>ACTIVOS</span></article>
             <article className="vc-kpi-card"><strong>{summary.done}</strong><span>CERRADOS</span></article>
             <article className="vc-kpi-card"><strong>{summary.total}</strong><span>TOTAL</span></article>
+          </div>
+        </section>
+
+        <section className="vc-section">
+          <h2 className="vc-section-title">Panel rapido</h2>
+          <div className="vc-health-grid">
+            <article className="vc-health-card">
+              <div className="vc-health-head">
+                <strong>Flujo activo</strong>
+                <span>{activeRate}%</span>
+              </div>
+              <div className="vc-health-bar"><span style={{ width: `${activeRate}%` }} /></div>
+              <p>Vehiculos actualmente en proceso</p>
+            </article>
+            <article className="vc-health-card">
+              <div className="vc-health-head">
+                <strong>Resolucion</strong>
+                <span>{completionRate}%</span>
+              </div>
+              <div className="vc-health-bar"><span style={{ width: `${completionRate}%` }} /></div>
+              <p>Casos finalizados o cancelados</p>
+            </article>
+          </div>
+          <div className="vc-shortcuts">
+            <Link href="/ingreso-activo" className="vc-shortcut-chip">Ver proceso</Link>
+            <Link href="/nuevo-ingreso" className="vc-shortcut-chip">Nuevo ingreso</Link>
+            <Link href="/orden-servicio" className="vc-shortcut-chip">Orden servicio</Link>
           </div>
         </section>
 
@@ -195,7 +239,7 @@ export default function HomePage() {
                   <div className="vc-movement-icon" aria-hidden="true">🚘</div>
                   <div className="vc-movement-text">
                     <strong>{item.vehiculo || item.placa} · {item.placa}</strong>
-                    <p>{item.cliente || '-'} · {item.paso || 'Recepción (Ingreso)'}</p>
+                    <p>{item.cliente || '-'} · {item.paso || 'Recepcion (Ingreso)'}</p>
                   </div>
                   <span className="vc-movement-go" aria-hidden="true">›</span>
                 </Link>
