@@ -20,7 +20,7 @@ a { color: inherit; text-decoration: none; }
   overflow-x: hidden;
 }
 
-.vc-shell { padding-bottom: 98px; }
+.vc-shell { padding-bottom: calc(132px + env(safe-area-inset-bottom)); }
 
 .vc-bg-orb-left,
 .vc-bg-orb-right {
@@ -60,13 +60,13 @@ a { color: inherit; text-decoration: none; }
   width: 100%;
   max-width: 440px;
   margin: 0 auto;
-  padding: 42px 16px 18px;
+  padding: 42px 16px calc(132px + env(safe-area-inset-bottom));
   min-height: calc(100vh - 82px);
   border-left: 1px solid var(--vc-panel-border);
   border-right: 1px solid var(--vc-panel-border);
 }
 
-.vc-panel-home-mobile { padding-top: 28px; }
+.vc-panel-home-mobile { padding-top: 28px; padding-bottom: calc(152px + env(safe-area-inset-bottom)); }
 .vc-panel-narrow { padding-top: 42px; }
 
 .vc-auth-card,
