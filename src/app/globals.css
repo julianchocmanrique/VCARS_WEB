@@ -789,3 +789,38 @@ a { color: inherit; text-decoration: none; }
     grid-template-columns: 1fr;
   }
 }
+
+/* Home summary overlap fix */
+.vc-summary-hero-upgrade {
+  display: grid;
+  gap: 12px;
+}
+
+.vc-summary-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.vc-summary-copy .vc-summary-title,
+.vc-summary-copy .vc-summary-text {
+  margin: 0;
+}
+
+.vc-summary-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 220px;
+  margin-top: 0;
+  padding: 0 24px;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .vc-summary-cta {
+    width: 100%;
+    min-width: 0;
+  }
+}
