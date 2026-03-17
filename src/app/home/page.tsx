@@ -69,6 +69,7 @@ export default function HomePage() {
 
   const summary = useMemo(() => summarize(entries), [entries]);
   const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
+  const activeStatusLabel = currentEntry?.status === 'done' ? 'Finalizado' : currentEntry?.status === 'cancelled' ? 'Cancelado' : 'Activo';
 
   const primaryActions =
     role === 'cliente'
@@ -109,13 +110,12 @@ export default function HomePage() {
       <div className="vc-bg-orb-right" />
 
       <section className="vc-panel vc-panel-home-mobile">
-        <header className="vc-home-header">
+        <header className="vc-home-header vc-home-head-upgrade">
           <div className="vc-brand-row-top">
             <BrandPill />
             <button
               className="vc-profile-btn"
               onClick={() => {
-                signOut();
                 router.replace('/login');
               }}
             >
@@ -124,13 +124,17 @@ export default function HomePage() {
           </div>
           <h1 className="vc-title">Inicio operativo</h1>
           <p className="vc-subtitle">Gestiona ingresos, proceso actual y accesos por rol sin mezclar herramientas.</p>
+          <div className="vc-home-divider" />
         </header>
 
         <section className="vc-section">
           <h2 className="vc-section-title">Resumen</h2>
-          <div className="vc-summary-hero">
-            <div>
-              <p className="vc-mini vc-mini-blue">INGRESO ACTIVO</p>
+          <div className="vc-summary-hero vc-summary-hero-upgrade">
+            <div className="vc-summary-copy">
+              <div className="vc-summary-topline">
+                <p className="vc-mini vc-mini-blue">INGRESO ACTIVO</p>
+                <span className="vc-status-chip">{activeStatusLabel}</span>
+              </div>
               <h3 className="vc-summary-title">
                 {currentEntry ? `${currentEntry.vehiculo || 'Vehiculo'} · ${currentEntry.placa}` : 'Sin ingreso activo'}
               </h3>
@@ -141,14 +145,14 @@ export default function HomePage() {
               </p>
             </div>
             <Link
-              className="vc-login-btn vc-summary-btn vc-yellow"
+              className="vc-login-btn vc-summary-btn vc-yellow vc-summary-cta"
               href={currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo'}
             >
-              {currentEntry ? 'Abrir ingreso' : 'Crear ingreso'}
+              {currentEntry ? 'Abrir ingreso ->' : 'Crear ingreso ->'}
             </Link>
           </div>
 
-          <div className="vc-kpi-row">
+          <div className="vc-kpi-row vc-kpi-row-upgrade">
             <article className="vc-kpi-card"><strong>{summary.active}</strong><span>ACTIVOS</span></article>
             <article className="vc-kpi-card"><strong>{summary.done}</strong><span>CERRADOS</span></article>
             <article className="vc-kpi-card"><strong>{summary.total}</strong><span>TOTAL</span></article>
@@ -157,9 +161,10 @@ export default function HomePage() {
 
         <section className="vc-section">
           <h2 className="vc-section-title">Acciones principales</h2>
-          <div className="vc-actions-grid">
+          <div className="vc-actions-grid vc-actions-grid-upgrade">
             {primaryActions.map((action) => (
               <Link key={action.key} href={action.href} className={`vc-action-card ${action.primary ? 'is-primary' : ''}`}>
+                <span className="vc-action-icon" aria-hidden="true">{action.primary ? '⚡' : '○'}</span>
                 <h3>{action.title}</h3>
                 <p>{action.subtitle}</p>
               </Link>
@@ -187,11 +192,12 @@ export default function HomePage() {
             {latestEntries.length ? (
               latestEntries.map((item) => (
                 <Link key={item.id} href={`/vehiculos/${encodeURIComponent(item.placa)}`} className="vc-movement-row">
-                  <div className="vc-movement-icon" aria-hidden="true">🚗</div>
+                  <div className="vc-movement-icon" aria-hidden="true">🚘</div>
                   <div className="vc-movement-text">
                     <strong>{item.vehiculo || item.placa} · {item.placa}</strong>
                     <p>{item.cliente || '-'} · {item.paso || 'Recepción (Ingreso)'}</p>
                   </div>
+                  <span className="vc-movement-go" aria-hidden="true">›</span>
                 </Link>
               ))
             ) : (
