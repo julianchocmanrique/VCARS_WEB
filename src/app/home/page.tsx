@@ -250,8 +250,91 @@ export default function HomePage() {
           </div>
         </section>
       </section>
-
       <BottomNav active="home" />
+
+      <style jsx>{`
+        .vc-home-insights {
+          margin-top: 12px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .vc-insight-chip {
+          display: inline-flex;
+          align-items: center;
+          border: 1px solid var(--vc-tag-border);
+          background: var(--vc-tag-bg);
+          color: var(--vc-accent-soft);
+          border-radius: 999px;
+          padding: 5px 10px;
+          font-size: 11px;
+          font-weight: 800;
+          line-height: 1;
+        }
+
+        .vc-health-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+
+        .vc-health-card {
+          border: 1px solid var(--vc-card-border);
+          border-radius: 16px;
+          padding: 12px;
+          background:
+            radial-gradient(circle at 86% -22%, rgba(91, 232, 246, 0.15), transparent 50%),
+            linear-gradient(170deg, rgba(8, 16, 28, 0.98), rgba(6, 13, 23, 0.96));
+        }
+
+        .vc-health-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+
+        .vc-health-bar {
+          margin-top: 8px;
+          width: 100%;
+          height: 8px;
+          border-radius: 999px;
+          background: rgba(71, 201, 223, 0.14);
+          overflow: hidden;
+        }
+
+        .vc-health-bar span {
+          display: block;
+          height: 100%;
+          border-radius: 999px;
+          background: linear-gradient(90deg, var(--vc-accent), var(--vc-accent-deep));
+        }
+
+        .vc-shortcuts {
+          margin-top: 10px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .vc-shortcut-chip {
+          border: 1px solid var(--vc-card-border);
+          background: rgba(71, 201, 223, 0.08);
+          color: var(--vc-accent-ink);
+          border-radius: 999px;
+          padding: 7px 12px;
+          font-size: 12px;
+          font-weight: 800;
+          line-height: 1;
+        }
+
+        @media (max-width: 700px) {
+          .vc-health-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </main>
   );
 }
