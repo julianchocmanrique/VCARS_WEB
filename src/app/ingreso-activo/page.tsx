@@ -1,9 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { listVehicles } from '@/lib/api';
+import { getCarPhotoByModel } from '@/lib/carPhoto';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { apiVehicleToEntry } from '@/lib/mapper';
 import { BottomNav } from '@/components/BottomNav';
@@ -122,8 +124,15 @@ export default function IngresoActivoPage() {
                   </div>
 
                   <div className="process-media">
-                    <div className="process-halo" />
-                    <div className="process-badge">VCARS</div>
+                    <Image
+                      src={getCarPhotoByModel(item.vehiculo, item.placa)}
+                      alt={`Foto de ${item.vehiculo || item.placa}`}
+                      fill
+                      sizes="(max-width: 520px) 100vw, 130px"
+                      className="process-image"
+                    />
+                    <div className="process-overlay" />
+                    <div className="process-badge">{(item.vehiculo || 'VCARS').split(' ')[0]}</div>
                   </div>
                 </Link>
               ))
@@ -219,32 +228,38 @@ export default function IngresoActivoPage() {
           position: relative;
           border-radius: 14px;
           border: 1px solid var(--vc-media-border);
-          background: radial-gradient(circle at 50% 42%, var(--vc-media-glow), rgba(6, 16, 28, 0.92));
-          display: grid;
-          place-items: center;
+          background: #0a1422;
           overflow: hidden;
           min-height: 118px;
         }
 
-        .process-halo {
+        .process-image {
+          object-fit: cover;
+        }
+
+        .process-overlay {
           position: absolute;
-          width: 120px;
-          height: 120px;
-          border-radius: 999px;
-          background: radial-gradient(circle, var(--vc-halo), rgba(107, 239, 255, 0));
+          inset: 0;
+          background: linear-gradient(180deg, rgba(4, 14, 26, 0.12), rgba(4, 14, 26, 0.68));
         }
 
         .process-badge {
-          position: relative;
+          position: absolute;
+          left: 8px;
+          bottom: 8px;
           z-index: 1;
-          padding: 8px 12px;
+          padding: 7px 10px;
           border-radius: 999px;
           border: 1px solid var(--vc-badge-border);
           background: var(--vc-badge-bg);
           color: var(--vc-accent-ink);
           font-weight: 900;
-          font-size: 12px;
-          letter-spacing: 1px;
+          font-size: 11px;
+          letter-spacing: 0.6px;
+          max-width: calc(100% - 16px);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         @media (max-width: 520px) {
@@ -258,7 +273,7 @@ export default function IngresoActivoPage() {
           }
 
           .process-media {
-            min-height: 88px;
+            min-height: 120px;
           }
         }
       `}</style>
