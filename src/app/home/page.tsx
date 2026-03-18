@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -195,7 +196,17 @@ export default function HomePage() {
       <div className="vc-bg-orb-right" />
 
       <section className="vc-panel vc-panel-home-mobile">
-        <header className="vc-home-header vc-home-head-upgrade">
+        <header className="vc-home-header vc-home-head-upgrade vc-home-hero-shell">
+          <div className="vc-home-car-bg" aria-hidden="true">
+            <Image
+              src="/cars/lamborghini-huracan.jpg"
+              alt=""
+              fill
+              sizes="(max-width: 700px) 100vw, 520px"
+              className="vc-home-car-image"
+            />
+          </div>
+          <div className="vc-home-hero-vignette" aria-hidden="true" />
           <div className="vc-brand-row-top">
             <BrandPill />
             <button

@@ -1006,3 +1006,50 @@ a { color: inherit; text-decoration: none; }
     min-height: auto;
   }
 }
+
+/* Home hero background car */
+.vc-home-hero-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--vc-card-border);
+  border-radius: 22px;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 78% -24%, rgba(91, 232, 246, 0.12), transparent 42%),
+    linear-gradient(165deg, rgba(7, 14, 25, 0.98), rgba(4, 10, 19, 0.98));
+}
+
+.vc-home-hero-shell > * {
+  position: relative;
+  z-index: 2;
+}
+
+.vc-home-car-bg {
+  position: absolute;
+  inset: -8% -22% -24% 34%;
+  z-index: 0;
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.vc-home-car-image {
+  object-fit: contain;
+  filter: saturate(0.85) contrast(1.05);
+}
+
+.vc-home-hero-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 76% 46%, rgba(6, 13, 23, 0.18), rgba(3, 9, 16, 0.66)),
+    linear-gradient(90deg, rgba(3, 9, 16, 0.82) 0%, rgba(3, 9, 16, 0.48) 56%, rgba(3, 9, 16, 0.7) 100%);
+}
+
+@media (max-width: 700px) {
+  .vc-home-car-bg {
+    inset: 10% -30% -8% 18%;
+    opacity: 0.22;
+  }
+}
