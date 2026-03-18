@@ -83,37 +83,21 @@ export default function HomePage() {
   const completionRate = summary.total ? Math.round(((summary.done + summary.cancelled) / summary.total) * 100) : 0;
   const activeRate = summary.total ? Math.round((summary.active / summary.total) * 100) : 0;
 
-  const primaryActions =
+  const quickActions =
     role === 'cliente'
       ? [
-          { key: 'mis-vehiculos', title: 'Mis vehiculos', subtitle: 'Consultar placas asignadas', href: '/mis-vehiculos', primary: true },
-          {
-            key: 'estado-actual',
-            title: 'Vehiculo activo',
-            subtitle: currentEntry ? currentEntry.placa : 'Sin ingreso activo',
-            href: currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/mis-vehiculos',
-          },
+          { key: 'mis-vehiculos', title: 'Mis vehiculos', subtitle: 'Consultar placas asociadas', href: '/mis-vehiculos', primary: true },
+          { key: 'orden', title: 'Orden servicio', subtitle: 'Resumen del proceso', href: '/orden-servicio' },
         ]
       : role === 'tecnico'
       ? [
-          {
-            key: 'proceso',
-            title: 'Proceso activo',
-            subtitle: currentEntry ? currentEntry.placa : 'Sin ingreso activo',
-            href: currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo',
-            primary: true,
-          },
-          { key: 'cola', title: 'Ingresos activos', subtitle: `${summary.active} en taller`, href: '/ingreso-activo' },
+          { key: 'ingresos', title: 'Ingresos activos', subtitle: `${summary.active} en taller`, href: '/ingreso-activo', primary: true },
+          { key: 'orden', title: 'Orden servicio', subtitle: 'Control del flujo', href: '/orden-servicio' },
         ]
       : [
           { key: 'nuevo', title: 'Nuevo ingreso', subtitle: 'Registrar recepcion', href: '/nuevo-ingreso', primary: true },
-          {
-            key: 'proceso',
-            title: 'Proceso activo',
-            subtitle: currentEntry ? currentEntry.placa : 'Sin ingreso activo',
-            href: currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo',
-          },
           { key: 'historial', title: 'Historial', subtitle: `${summary.done} cerrados`, href: '/ingreso-activo' },
+          { key: 'orden', title: 'Orden servicio', subtitle: 'Vista de gestion', href: '/orden-servicio' },
         ];
 
   return (
@@ -144,197 +128,110 @@ export default function HomePage() {
           </div>
         </header>
 
-        <section className="vc-section">
-          <h2 className="vc-section-title">Resumen</h2>
-          <div className="vc-summary-hero vc-summary-hero-upgrade">
-            <div className="vc-summary-copy">
-              <div className="vc-summary-topline">
-                <p className="vc-mini vc-mini-blue">INGRESO ACTIVO</p>
-                <span className="vc-status-chip">{activeStatusLabel}</span>
+        <div className="vc-home-layout">
+          <section className="vc-section vc-section-tight">
+            <h2 className="vc-section-title">Resumen</h2>
+            <div className="vc-summary-hero vc-summary-hero-upgrade">
+              <div className="vc-summary-copy">
+                <div className="vc-summary-topline">
+                  <p className="vc-mini vc-mini-blue">INGRESO ACTIVO</p>
+                  <span className="vc-status-chip">{activeStatusLabel}</span>
+                </div>
+                <h3 className="vc-summary-title">
+                  {currentEntry ? `${currentEntry.vehiculo || 'Vehiculo'} · ${currentEntry.placa}` : 'Sin ingreso activo'}
+                </h3>
+                <p className="vc-summary-text">
+                  {currentEntry
+                    ? `${currentEntry.cliente || '-'} · ${currentEntry.status || 'active'}`
+                    : 'Crea un ingreso o entra al proceso para continuar.'}
+                </p>
               </div>
-              <h3 className="vc-summary-title">
-                {currentEntry ? `${currentEntry.vehiculo || 'Vehiculo'} · ${currentEntry.placa}` : 'Sin ingreso activo'}
-              </h3>
-              <p className="vc-summary-text">
-                {currentEntry
-                  ? `${currentEntry.cliente || '-'} · ${currentEntry.status || 'active'}`
-                  : 'Crea un ingreso o entra al proceso para continuar.'}
-              </p>
-            </div>
-            <Link
-              className="vc-login-btn vc-summary-btn vc-yellow vc-summary-cta"
-              href={currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo'}
-            >
-              {currentEntry ? 'Abrir ingreso ->' : 'Crear ingreso ->'}
-            </Link>
-          </div>
-
-          <div className="vc-kpi-row vc-kpi-row-upgrade">
-            <article className="vc-kpi-card"><strong>{summary.active}</strong><span>ACTIVOS</span></article>
-            <article className="vc-kpi-card"><strong>{summary.done}</strong><span>CERRADOS</span></article>
-            <article className="vc-kpi-card"><strong>{summary.total}</strong><span>TOTAL</span></article>
-          </div>
-        </section>
-
-        <section className="vc-section">
-          <h2 className="vc-section-title">Panel rapido</h2>
-          <div className="vc-health-grid">
-            <article className="vc-health-card">
-              <div className="vc-health-head">
-                <strong>Flujo activo</strong>
-                <span>{activeRate}%</span>
-              </div>
-              <div className="vc-health-bar"><span style={{ width: `${activeRate}%` }} /></div>
-              <p>Vehiculos actualmente en proceso</p>
-            </article>
-            <article className="vc-health-card">
-              <div className="vc-health-head">
-                <strong>Resolucion</strong>
-                <span>{completionRate}%</span>
-              </div>
-              <div className="vc-health-bar"><span style={{ width: `${completionRate}%` }} /></div>
-              <p>Casos finalizados o cancelados</p>
-            </article>
-          </div>
-          <div className="vc-shortcuts">
-            <Link href="/ingreso-activo" className="vc-shortcut-chip">Ver proceso</Link>
-            <Link href="/nuevo-ingreso" className="vc-shortcut-chip">Nuevo ingreso</Link>
-            <Link href="/orden-servicio" className="vc-shortcut-chip">Orden servicio</Link>
-          </div>
-        </section>
-
-        <section className="vc-section">
-          <h2 className="vc-section-title">Acciones principales</h2>
-          <div className="vc-actions-grid vc-actions-grid-upgrade">
-            {primaryActions.map((action) => (
-              <Link key={action.key} href={action.href} className={`vc-action-card ${action.primary ? 'is-primary' : ''}`}>
-                <span className="vc-action-icon" aria-hidden="true">{action.primary ? '⚡' : '○'}</span>
-                <h3>{action.title}</h3>
-                <p>{action.subtitle}</p>
+              <Link
+                className="vc-login-btn vc-summary-btn vc-yellow vc-summary-cta"
+                href={currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo'}
+              >
+                {currentEntry ? 'Abrir ingreso ->' : 'Crear ingreso ->'}
               </Link>
-            ))}
-          </div>
-        </section>
+            </div>
 
-        <section className="vc-section">
-          <h2 className="vc-section-title">Accesos secundarios</h2>
-          <div className="vc-secondary-card">
-            <button
-              className="vc-secondary-row"
-              onClick={() => {
-                signOut();
-                router.replace('/login');
-              }}
-            >
-              <span>Cerrar sesion</span>
-              <span>›</span>
-            </button>
-          </div>
+            <div className="vc-kpi-row vc-kpi-row-upgrade">
+              <article className="vc-kpi-card"><strong>{summary.active}</strong><span>ACTIVOS</span></article>
+              <article className="vc-kpi-card"><strong>{summary.done}</strong><span>CERRADOS</span></article>
+              <article className="vc-kpi-card"><strong>{summary.total}</strong><span>TOTAL</span></article>
+            </div>
+          </section>
 
-          <div className="vc-secondary-card vc-movements-card">
-            <p className="vc-movements-title">Ultimos movimientos</p>
-            {latestEntries.length ? (
-              latestEntries.map((item) => (
-                <Link key={item.id} href={`/vehiculos/${encodeURIComponent(item.placa)}`} className="vc-movement-row">
-                  <div className="vc-movement-icon" aria-hidden="true">🚘</div>
-                  <div className="vc-movement-text">
-                    <strong>{item.vehiculo || item.placa} · {item.placa}</strong>
-                    <p>{item.cliente || '-'} · {item.paso || 'Recepcion (Ingreso)'}</p>
-                  </div>
-                  <span className="vc-movement-go" aria-hidden="true">›</span>
+          <section className="vc-section vc-section-tight">
+            <h2 className="vc-section-title">Acciones rapidas</h2>
+            <div className="vc-actions-grid vc-actions-grid-upgrade">
+              {quickActions.map((action) => (
+                <Link key={action.key} href={action.href} className={`vc-action-card ${action.primary ? 'is-primary' : ''}`}>
+                  <span className="vc-action-icon" aria-hidden="true">{action.primary ? '⚡' : '○'}</span>
+                  <h3>{action.title}</h3>
+                  <p>{action.subtitle}</p>
                 </Link>
-              ))
-            ) : (
-              <p className="vc-empty">Aun no hay movimientos recientes.</p>
-            )}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+
+          <section className="vc-section vc-section-tight">
+            <h2 className="vc-section-title">Indicadores</h2>
+            <div className="vc-health-grid">
+              <article className="vc-health-card">
+                <div className="vc-health-head">
+                  <strong>Flujo activo</strong>
+                  <span>{activeRate}%</span>
+                </div>
+                <div className="vc-health-bar"><span style={{ width: `${activeRate}%` }} /></div>
+                <p>Vehiculos actualmente en proceso</p>
+              </article>
+              <article className="vc-health-card">
+                <div className="vc-health-head">
+                  <strong>Resolucion</strong>
+                  <span>{completionRate}%</span>
+                </div>
+                <div className="vc-health-bar"><span style={{ width: `${completionRate}%` }} /></div>
+                <p>Casos finalizados o cancelados</p>
+              </article>
+            </div>
+          </section>
+
+          <section className="vc-section vc-section-tight">
+            <h2 className="vc-section-title">Ultimos movimientos</h2>
+            <div className="vc-secondary-card vc-movements-card">
+              {latestEntries.length ? (
+                latestEntries.map((item) => (
+                  <Link key={item.id} href={`/vehiculos/${encodeURIComponent(item.placa)}`} className="vc-movement-row">
+                    <div className="vc-movement-icon" aria-hidden="true">🚘</div>
+                    <div className="vc-movement-text">
+                      <strong>{item.vehiculo || item.placa} · {item.placa}</strong>
+                      <p>{item.cliente || '-'} · {item.paso || 'Recepcion (Ingreso)'}</p>
+                    </div>
+                    <span className="vc-movement-go" aria-hidden="true">›</span>
+                  </Link>
+                ))
+              ) : (
+                <p className="vc-empty">Aun no hay movimientos recientes.</p>
+              )}
+            </div>
+
+            <div className="vc-secondary-card vc-logout-wrap">
+              <button
+                className="vc-secondary-row"
+                onClick={() => {
+                  signOut();
+                  router.replace('/login');
+                }}
+              >
+                <span>Cerrar sesion</span>
+                <span>›</span>
+              </button>
+            </div>
+          </section>
+        </div>
       </section>
+
       <BottomNav active="home" />
-
-      <style jsx>{`
-        .vc-home-insights {
-          margin-top: 12px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .vc-insight-chip {
-          display: inline-flex;
-          align-items: center;
-          border: 1px solid var(--vc-tag-border);
-          background: var(--vc-tag-bg);
-          color: var(--vc-accent-soft);
-          border-radius: 999px;
-          padding: 5px 10px;
-          font-size: 11px;
-          font-weight: 800;
-          line-height: 1;
-        }
-
-        .vc-health-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-
-        .vc-health-card {
-          border: 1px solid var(--vc-card-border);
-          border-radius: 16px;
-          padding: 12px;
-          background:
-            radial-gradient(circle at 86% -22%, rgba(91, 232, 246, 0.15), transparent 50%),
-            linear-gradient(170deg, rgba(8, 16, 28, 0.98), rgba(6, 13, 23, 0.96));
-        }
-
-        .vc-health-head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-        }
-
-        .vc-health-bar {
-          margin-top: 8px;
-          width: 100%;
-          height: 8px;
-          border-radius: 999px;
-          background: rgba(71, 201, 223, 0.14);
-          overflow: hidden;
-        }
-
-        .vc-health-bar span {
-          display: block;
-          height: 100%;
-          border-radius: 999px;
-          background: linear-gradient(90deg, var(--vc-accent), var(--vc-accent-deep));
-        }
-
-        .vc-shortcuts {
-          margin-top: 10px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .vc-shortcut-chip {
-          border: 1px solid var(--vc-card-border);
-          background: rgba(71, 201, 223, 0.08);
-          color: var(--vc-accent-ink);
-          border-radius: 999px;
-          padding: 7px 12px;
-          font-size: 12px;
-          font-weight: 800;
-          line-height: 1;
-        }
-
-        @media (max-width: 700px) {
-          .vc-health-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
     </main>
   );
 }
