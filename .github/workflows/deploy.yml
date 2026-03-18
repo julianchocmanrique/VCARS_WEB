@@ -1,0 +1,25 @@
+name: Deploy VCARS_WEB to VPS
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /root/.openclaw/workspace/VCARS_WEB_SRC
+            git fetch --all
+            git reset --hard origin/main
+            cd /root/.openclaw/workspace/deployments/vcars-web2
+            docker compose up -d --build
+            docker compose ps
