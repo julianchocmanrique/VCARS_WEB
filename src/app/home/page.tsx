@@ -193,7 +193,6 @@ export default function HomePage() {
     <main className="vc-page vc-shell">
       <div className="vc-bg-orb-left" />
       <div className="vc-bg-orb-right" />
-      <div className="vc-home-corner-car" aria-hidden="true" />
 
       <section className="vc-panel vc-panel-home-mobile">
         <header className="vc-home-header vc-home-head-upgrade">
