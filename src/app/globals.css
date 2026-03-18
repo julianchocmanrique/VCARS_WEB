@@ -926,9 +926,11 @@ a { color: inherit; text-decoration: none; }
   border-radius: 999px;
 }
 
-.vc-dot-active { background: var(--vc-accent); }
-.vc-dot-done { background: #42b4ff; }
-.vc-dot-cancelled { background: #ff7f9d; }
+.vc-dot-recepcion { background: var(--vc-accent); }
+.vc-dot-diagnostico { background: #42b4ff; }
+.vc-dot-ejecucion { background: #8f84ff; }
+.vc-dot-entrega { background: #ffb85c; }
+.vc-dot-otros { background: #ff7f9d; }
 
 .vc-pie-row span { color: var(--vc-muted); font-size: 12px; }
 .vc-pie-row strong { color: var(--vc-text); font-size: 14px; }

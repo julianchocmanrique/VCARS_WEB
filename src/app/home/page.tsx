@@ -25,6 +25,13 @@ const PROFILE_LABEL: Record<Role, string> = {
   cliente: 'Cliente',
 };
 
+type ProcessRow = {
+  key: 'recepcion' | 'diagnostico' | 'ejecucion' | 'entrega' | 'otros';
+  label: string;
+  count: number;
+  pct: number;
+};
+
 function summarize(entries: Entry[]) {
   return {
     total: entries.length,
@@ -32,6 +39,23 @@ function summarize(entries: Entry[]) {
     done: entries.filter((e) => e.status === 'done').length,
     cancelled: entries.filter((e) => e.status === 'cancelled').length,
   };
+}
+
+function normalizeText(value?: string): string {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function resolveProcessKey(step?: string): ProcessRow['key'] {
+  const s = normalizeText(step);
+  if (s.includes('recepcion') || s.includes('ingreso')) return 'recepcion';
+  if (s.includes('diagnostico') || s.includes('cotizacion')) return 'diagnostico';
+  if (s.includes('ejecucion') || s.includes('taller')) return 'ejecucion';
+  if (s.includes('entrega') || s.includes('cierre')) return 'entrega';
+  return 'otros';
 }
 
 export default function HomePage() {
@@ -70,17 +94,59 @@ export default function HomePage() {
   const summary = useMemo(() => summarize(entries), [entries]);
   const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
   const activeStatusLabel = currentEntry?.status === 'done' ? 'Finalizado' : currentEntry?.status === 'cancelled' ? 'Cancelado' : 'Activo';
-  const activeRate = summary.total ? Math.round((summary.active / summary.total) * 100) : 0;
-  const doneRate = summary.total ? Math.round((summary.done / summary.total) * 100) : 0;
-  const cancelledRate = summary.total ? Math.round((summary.cancelled / summary.total) * 100) : 0;
 
-  const pieStyle = {
-    background: `conic-gradient(
-      var(--vc-accent) 0deg -edeg,
-      #42b4ff -edeg -edeg,
-      #ff7f9d -edeg 360deg
-    )`,
-  } as const;
+  const processMetrics = useMemo(() => {
+    const rows: ProcessRow[] = [
+      { key: 'recepcion', label: 'Recepción', count: 0, pct: 0 },
+      { key: 'diagnostico', label: 'Diagnóstico', count: 0, pct: 0 },
+      { key: 'ejecucion', label: 'Ejecución', count: 0, pct: 0 },
+      { key: 'entrega', label: 'Entrega / Cierre', count: 0, pct: 0 },
+      { key: 'otros', label: 'Otros', count: 0, pct: 0 },
+    ];
+
+    for (const entry of entries) {
+      const key = resolveProcessKey(entry.paso);
+      const idx = rows.findIndex((r) => r.key === key);
+      if (idx >= 0) rows[idx].count += 1;
+    }
+
+    const total = rows.reduce((acc, row) => acc + row.count, 0);
+    const withPct = rows.map((row) => ({
+      ...row,
+      pct: total ? Math.round((row.count / total) * 100) : 0,
+    }));
+
+    const palette = {
+      recepcion: 'var(--vc-accent)',
+      diagnostico: '#42b4ff',
+      ejecucion: '#8f84ff',
+      entrega: '#ffb85c',
+      otros: '#ff7f9d',
+    } as const;
+
+    if (!total) {
+      return {
+        total,
+        rows: withPct,
+        pieStyle: { background: 'conic-gradient(rgba(71, 201, 223, 0.14) 0deg 360deg)' } as const,
+      };
+    }
+
+    let cursor = 0;
+    const segments: string[] = [];
+    for (const row of withPct) {
+      const size = (row.count / total) * 360;
+      const next = cursor + size;
+      segments.push(`${palette[row.key]} ${cursor.toFixed(1)}deg ${next.toFixed(1)}deg`);
+      cursor = next;
+    }
+
+    return {
+      total,
+      rows: withPct,
+      pieStyle: { background: `conic-gradient(${segments.join(', ')})` } as const,
+    };
+  }, [entries]);
 
   const quickActions =
     role === 'cliente'
@@ -169,35 +235,25 @@ export default function HomePage() {
           </section>
 
           <section className="vc-section vc-section-tight">
-            <h2 className="vc-section-title">Indicadores</h2>
+            <h2 className="vc-section-title">Indicadores de proceso</h2>
             <div className="vc-pie-layout">
               <article className="vc-pie-card">
-                <div className="vc-pie-chart" style={pieStyle}>
+                <div className="vc-pie-chart" style={processMetrics.pieStyle}>
                   <div className="vc-pie-hole">
-                    <strong>{summary.total}</strong>
+                    <strong>{processMetrics.total}</strong>
                     <span>Total</span>
                   </div>
                 </div>
 
                 <div className="vc-pie-legend">
-                  <div className="vc-pie-row">
-                    <span className="vc-dot vc-dot-active" />
-                    <span>Activos</span>
-                    <strong>{summary.active}</strong>
-                    <em>{activeRate}%</em>
-                  </div>
-                  <div className="vc-pie-row">
-                    <span className="vc-dot vc-dot-done" />
-                    <span>Cerrados</span>
-                    <strong>{summary.done}</strong>
-                    <em>{doneRate}%</em>
-                  </div>
-                  <div className="vc-pie-row">
-                    <span className="vc-dot vc-dot-cancelled" />
-                    <span>Cancelados</span>
-                    <strong>{summary.cancelled}</strong>
-                    <em>{cancelledRate}%</em>
-                  </div>
+                  {processMetrics.rows.map((row) => (
+                    <div key={row.key} className="vc-pie-row">
+                      <span className={`vc-dot vc-dot-${row.key}`} />
+                      <span>{row.label}</span>
+                      <strong>{row.count}</strong>
+                      <em>{row.pct}%</em>
+                    </div>
+                  ))}
                 </div>
               </article>
             </div>
