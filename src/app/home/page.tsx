@@ -165,6 +165,30 @@ export default function HomePage() {
           { key: 'orden', title: 'Orden servicio', subtitle: 'Vista de gestion', href: '/orden-servicio' },
         ];
 
+  const firstGuide = [
+    {
+      n: '1',
+      title: 'Revisa el estado actual',
+      text: currentEntry ? `Tienes un ingreso activo: ${currentEntry.placa}` : 'Aún no hay ingreso activo. Puedes crear uno.',
+      href: currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/nuevo-ingreso',
+      cta: currentEntry ? 'Abrir ingreso' : 'Crear ingreso',
+    },
+    {
+      n: '2',
+      title: 'Ejecuta la acción principal',
+      text: role === 'administrativo' ? 'Registra un ingreso o continúa el historial.' : role === 'tecnico' ? 'Entra a ingresos activos y continúa el flujo.' : 'Consulta tus vehículos y su progreso.',
+      href: quickActions[0].href,
+      cta: quickActions[0].title,
+    },
+    {
+      n: '3',
+      title: 'Monitorea el proceso',
+      text: 'Usa los indicadores de etapa y últimos movimientos para seguimiento.',
+      href: '/ingreso-activo',
+      cta: 'Ver proceso',
+    },
+  ];
+
   return (
     <main className="vc-page vc-shell">
       <div className="vc-bg-orb-left" />
@@ -184,11 +208,25 @@ export default function HomePage() {
             </button>
           </div>
           <h1 className="vc-title">Inicio operativo</h1>
-          <p className="vc-subtitle">Gestiona ingresos, proceso actual y accesos por rol sin mezclar herramientas.</p>
+          <p className="vc-subtitle">Todo está ordenado por pasos para que sepas qué hacer primero.</p>
           <div className="vc-home-divider" />
         </header>
 
         <div className="vc-home-layout">
+          <section className="vc-section vc-section-tight">
+            <h2 className="vc-section-title">Guía rápida</h2>
+            <div className="vc-guide-grid">
+              {firstGuide.map((item) => (
+                <article className="vc-guide-card" key={item.n}>
+                  <span className="vc-guide-n">{item.n}</span>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                  <Link href={item.href} className="vc-guide-link">{item.cta} {'>'}</Link>
+                </article>
+              ))}
+            </div>
+          </section>
+
           <section className="vc-section vc-section-tight">
             <h2 className="vc-section-title">Resumen</h2>
             <div className="vc-summary-hero vc-summary-hero-upgrade">
@@ -222,7 +260,7 @@ export default function HomePage() {
           </section>
 
           <section className="vc-section vc-section-tight">
-            <h2 className="vc-section-title">Acciones rapidas</h2>
+            <h2 className="vc-section-title">Acciones rápidas</h2>
             <div className="vc-actions-grid vc-actions-grid-upgrade">
               {quickActions.map((action) => (
                 <Link key={action.key} href={action.href} className={`vc-action-card ${action.primary ? 'is-primary' : ''}`}>
@@ -260,7 +298,7 @@ export default function HomePage() {
           </section>
 
           <section className="vc-section vc-section-tight">
-            <h2 className="vc-section-title">Ultimos movimientos</h2>
+            <h2 className="vc-section-title">Últimos movimientos</h2>
             <div className="vc-secondary-card vc-movements-card">
               {latestEntries.length ? (
                 latestEntries.map((item) => (
@@ -274,7 +312,7 @@ export default function HomePage() {
                   </Link>
                 ))
               ) : (
-                <p className="vc-empty">Aun no hay movimientos recientes.</p>
+                <p className="vc-empty">Aún no hay movimientos recientes.</p>
               )}
             </div>
 
@@ -286,7 +324,7 @@ export default function HomePage() {
                   router.replace('/login');
                 }}
               >
-                <span>Cerrar sesion</span>
+                <span>Cerrar sesión</span>
                 <span>›</span>
               </button>
             </div>
