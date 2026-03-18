@@ -70,16 +70,6 @@ export default function HomePage() {
   const summary = useMemo(() => summarize(entries), [entries]);
   const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
   const activeStatusLabel = currentEntry?.status === 'done' ? 'Finalizado' : currentEntry?.status === 'cancelled' ? 'Cancelado' : 'Activo';
-  const todayLabel = useMemo(
-    () =>
-      new Intl.DateTimeFormat('es-CO', {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'short',
-      }).format(new Date()),
-    [],
-  );
-
   const completionRate = summary.total ? Math.round(((summary.done + summary.cancelled) / summary.total) * 100) : 0;
   const activeRate = summary.total ? Math.round((summary.active / summary.total) * 100) : 0;
 
@@ -121,11 +111,6 @@ export default function HomePage() {
           <h1 className="vc-title">Inicio operativo</h1>
           <p className="vc-subtitle">Gestiona ingresos, proceso actual y accesos por rol sin mezclar herramientas.</p>
           <div className="vc-home-divider" />
-          <div className="vc-home-insights">
-            <span className="vc-insight-chip">{todayLabel}</span>
-            <span className="vc-insight-chip">{summary.active} activos</span>
-            <span className="vc-insight-chip">{summary.done} cerrados</span>
-          </div>
         </header>
 
         <div className="vc-home-layout">
