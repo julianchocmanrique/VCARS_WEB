@@ -70,8 +70,17 @@ export default function HomePage() {
   const summary = useMemo(() => summarize(entries), [entries]);
   const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
   const activeStatusLabel = currentEntry?.status === 'done' ? 'Finalizado' : currentEntry?.status === 'cancelled' ? 'Cancelado' : 'Activo';
-  const completionRate = summary.total ? Math.round(((summary.done + summary.cancelled) / summary.total) * 100) : 0;
   const activeRate = summary.total ? Math.round((summary.active / summary.total) * 100) : 0;
+  const doneRate = summary.total ? Math.round((summary.done / summary.total) * 100) : 0;
+  const cancelledRate = summary.total ? Math.round((summary.cancelled / summary.total) * 100) : 0;
+
+  const pieStyle = {
+    background: `conic-gradient(
+      var(--vc-accent) 0deg -edeg,
+      #42b4ff -edeg -edeg,
+      #ff7f9d -edeg 360deg
+    )`,
+  } as const;
 
   const quickActions =
     role === 'cliente'
@@ -161,22 +170,35 @@ export default function HomePage() {
 
           <section className="vc-section vc-section-tight">
             <h2 className="vc-section-title">Indicadores</h2>
-            <div className="vc-health-grid">
-              <article className="vc-health-card">
-                <div className="vc-health-head">
-                  <strong>Flujo activo</strong>
-                  <span>{activeRate}%</span>
+            <div className="vc-pie-layout">
+              <article className="vc-pie-card">
+                <div className="vc-pie-chart" style={pieStyle}>
+                  <div className="vc-pie-hole">
+                    <strong>{summary.total}</strong>
+                    <span>Total</span>
+                  </div>
                 </div>
-                <div className="vc-health-bar"><span style={{ width: `${activeRate}%` }} /></div>
-                <p>Vehiculos actualmente en proceso</p>
-              </article>
-              <article className="vc-health-card">
-                <div className="vc-health-head">
-                  <strong>Resolucion</strong>
-                  <span>{completionRate}%</span>
+
+                <div className="vc-pie-legend">
+                  <div className="vc-pie-row">
+                    <span className="vc-dot vc-dot-active" />
+                    <span>Activos</span>
+                    <strong>{summary.active}</strong>
+                    <em>{activeRate}%</em>
+                  </div>
+                  <div className="vc-pie-row">
+                    <span className="vc-dot vc-dot-done" />
+                    <span>Cerrados</span>
+                    <strong>{summary.done}</strong>
+                    <em>{doneRate}%</em>
+                  </div>
+                  <div className="vc-pie-row">
+                    <span className="vc-dot vc-dot-cancelled" />
+                    <span>Cancelados</span>
+                    <strong>{summary.cancelled}</strong>
+                    <em>{cancelledRate}%</em>
+                  </div>
                 </div>
-                <div className="vc-health-bar"><span style={{ width: `${completionRate}%` }} /></div>
-                <p>Casos finalizados o cancelados</p>
               </article>
             </div>
           </section>
