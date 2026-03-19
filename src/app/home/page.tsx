@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { listVehicles } from '@/lib/api';
-import { signOut } from '@/lib/auth';
 import { apiVehicleToEntry } from '@/lib/mapper';
 import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
@@ -314,19 +313,6 @@ export default function HomePage() {
               ) : (
                 <p className="vc-empty">Aún no hay movimientos recientes.</p>
               )}
-            </div>
-
-            <div className="vc-secondary-card vc-logout-wrap">
-              <button
-                className="vc-secondary-row"
-                onClick={() => {
-                  signOut();
-                  router.replace('/login');
-                }}
-              >
-                <span>Cerrar sesión</span>
-                <span>›</span>
-              </button>
             </div>
           </section>
         </div>
