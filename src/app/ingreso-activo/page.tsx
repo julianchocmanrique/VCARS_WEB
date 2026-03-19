@@ -68,7 +68,7 @@ export default function IngresoActivoPage() {
   const clientCompanyName = useMemo(() => {
     if (role !== 'cliente') return '';
     const identity = getClientIdentity();
-    return String(identity?.companyName || identity?.name || '').trim();
+    return String(identity?.name || identity?.companyName || '').trim();
   }, [role]);
 
   const filtered = useMemo(() => {

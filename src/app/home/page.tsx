@@ -116,7 +116,7 @@ export default function HomePage() {
   const clientCompanyName = useMemo(() => {
     if (role !== 'cliente') return '';
     const identity = getClientIdentity();
-    return String(identity?.companyName || identity?.name || '').trim();
+    return String(identity?.name || identity?.companyName || '').trim();
   }, [role]);
 
   const summary = useMemo(() => summarize(scopedEntries), [scopedEntries]);

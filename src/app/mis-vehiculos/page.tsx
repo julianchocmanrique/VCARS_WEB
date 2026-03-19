@@ -34,7 +34,7 @@ export default function MisVehiculosPage() {
       const identity = getClientIdentity();
       const allowedPlates = Array.isArray(identity?.plates) ? identity.plates.map(normalizePlate) : [];
       setPlates(allowedPlates);
-      setIdentityName(identity?.companyName || identity?.name || '');
+      setIdentityName(identity?.name || identity?.companyName || '');
 
       if (allowedPlates.length) {
         try {
