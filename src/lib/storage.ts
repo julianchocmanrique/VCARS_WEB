@@ -60,6 +60,7 @@ export function clearSession(): void {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(SESSION_KEY);
   window.localStorage.removeItem(PROFILE_KEY);
+  window.localStorage.removeItem(CLIENT_IDENTITY_KEY);
 }
 
 export function getRole(): Role {

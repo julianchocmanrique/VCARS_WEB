@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { listVehicles } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 import { apiVehicleToEntry } from '@/lib/mapper';
+import { getDemoEntries } from '@/lib/demoData';
+import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
 import {
@@ -71,11 +73,13 @@ export default function HomePage() {
     }
 
     const localEntries = getEntries();
-    const localCurrent = getCurrentEntry() || localEntries[0] || null;
+    const seededEntries = localEntries.length ? localEntries : getDemoEntries();
+    if (!localEntries.length) setEntries(seededEntries);
+    const localCurrent = getCurrentEntry() || seededEntries[0] || null;
 
     queueMicrotask(() => {
       setRoleState(getRole());
-      setEntriesState(localEntries);
+      setEntriesState(seededEntries);
       setCurrentEntryState(localCurrent);
     });
 
@@ -97,9 +101,21 @@ export default function HomePage() {
     })();
   }, [router]);
 
-  const summary = useMemo(() => summarize(entries), [entries]);
-  const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
-  const activeStatusLabel = currentEntry?.status === 'done' ? 'Finalizado' : currentEntry?.status === 'cancelled' ? 'Cancelado' : 'Activo';
+  const scopedEntries = useMemo(() => {
+    if (role !== 'cliente') return entries;
+    const identity = getClientIdentity();
+    return entries.filter((entry) => isEntryAllowed(identity, entry));
+  }, [entries, role]);
+
+  const scopedCurrent = useMemo(() => {
+    if (!scopedEntries.length) return null;
+    if (currentEntry && scopedEntries.some((entry) => entry.id === currentEntry.id || entry.placa === currentEntry.placa)) return currentEntry;
+    return scopedEntries[0] || null;
+  }, [currentEntry, scopedEntries]);
+
+  const summary = useMemo(() => summarize(scopedEntries), [scopedEntries]);
+  const latestEntries = useMemo(() => scopedEntries.slice(0, 3), [scopedEntries]);
+  const activeStatusLabel = scopedCurrent?.status === 'done' ? 'Finalizado' : scopedCurrent?.status === 'cancelled' ? 'Cancelado' : 'Activo';
 
   const processMetrics = useMemo(() => {
     const rows: ProcessRow[] = [
@@ -110,7 +126,7 @@ export default function HomePage() {
       { key: 'otros', label: 'Otros', count: 0, pct: 0 },
     ];
 
-    for (const entry of entries) {
+    for (const entry of scopedEntries) {
       const key = resolveProcessKey(entry.paso);
       const idx = rows.findIndex((r) => r.key === key);
       if (idx >= 0) rows[idx].count += 1;
@@ -152,48 +168,7 @@ export default function HomePage() {
       rows: withPct,
       pieStyle: { background: `conic-gradient(${segments.join(', ')})` } as const,
     };
-  }, [entries]);
-
-  const quickActions =
-    role === 'cliente'
-      ? [
-          { key: 'mis-vehiculos', title: 'Mis vehiculos', subtitle: 'Consultar placas asociadas', href: '/mis-vehiculos', primary: true },
-          { key: 'orden', title: 'Orden servicio', subtitle: 'Resumen del proceso', href: '/orden-servicio' },
-        ]
-      : role === 'tecnico'
-      ? [
-          { key: 'ingresos', title: 'Ingresos activos', subtitle: `${summary.active} en taller`, href: '/ingreso-activo', primary: true },
-          { key: 'orden', title: 'Orden servicio', subtitle: 'Control del flujo', href: '/orden-servicio' },
-        ]
-      : [
-          { key: 'nuevo', title: 'Nuevo ingreso', subtitle: 'Registrar recepcion', href: '/nuevo-ingreso', primary: true },
-          { key: 'historial', title: 'Historial', subtitle: `${summary.done} cerrados`, href: '/ingreso-activo' },
-          { key: 'orden', title: 'Orden servicio', subtitle: 'Vista de gestion', href: '/orden-servicio' },
-        ];
-
-  const firstGuide = [
-    {
-      n: '1',
-      title: 'Revisa el estado actual',
-      text: currentEntry ? `Tienes un ingreso activo: ${currentEntry.placa}` : 'Aún no hay ingreso activo. Puedes crear uno.',
-      href: currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/nuevo-ingreso',
-      cta: currentEntry ? 'Abrir ingreso' : 'Crear ingreso',
-    },
-    {
-      n: '2',
-      title: 'Ejecuta la acción principal',
-      text: role === 'administrativo' ? 'Registra un ingreso o continúa el historial.' : role === 'tecnico' ? 'Entra a ingresos activos y continúa el flujo.' : 'Consulta tus vehículos y su progreso.',
-      href: quickActions[0].href,
-      cta: quickActions[0].title,
-    },
-    {
-      n: '3',
-      title: 'Monitorea el proceso',
-      text: 'Usa los indicadores de etapa y últimos movimientos para seguimiento.',
-      href: '/ingreso-activo',
-      cta: 'Ver proceso',
-    },
-  ];
+  }, [scopedEntries]);
 
   return (
     <main className="vc-page vc-shell">
@@ -215,25 +190,11 @@ export default function HomePage() {
             </button>
           </div>
           <h1 className="vc-title">Inicio operativo</h1>
-          <p className="vc-subtitle">Todo está ordenado por pasos para que sepas qué hacer primero.</p>
+          <p className="vc-subtitle">Este panel centraliza ingresos, estado de procesos, indicadores y movimientos recientes para gestionar la operación diaria de VCARS.</p>
           <div className="vc-home-divider" />
         </header>
 
         <div className="vc-home-layout">
-          <section className="vc-section vc-section-tight">
-            <h2 className="vc-section-title">Guía rápida</h2>
-            <div className="vc-guide-grid">
-              {firstGuide.map((item) => (
-                <article className="vc-guide-card" key={item.n}>
-                  <span className="vc-guide-n">{item.n}</span>
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                  <Link href={item.href} className="vc-guide-link">{item.cta} {'>'}</Link>
-                </article>
-              ))}
-            </div>
-          </section>
-
           <section className="vc-section vc-section-tight">
             <h2 className="vc-section-title">Resumen</h2>
             <div className="vc-summary-hero vc-summary-hero-upgrade">
@@ -243,19 +204,19 @@ export default function HomePage() {
                   <span className="vc-status-chip">{activeStatusLabel}</span>
                 </div>
                 <h3 className="vc-summary-title">
-                  {currentEntry ? `${currentEntry.vehiculo || 'Vehiculo'} · ${currentEntry.placa}` : 'Sin ingreso activo'}
+                  {scopedCurrent ? `${scopedCurrent.vehiculo || 'Vehiculo'} · ${scopedCurrent.placa}` : 'Sin ingreso activo'}
                 </h3>
                 <p className="vc-summary-text">
-                  {currentEntry
-                    ? `${currentEntry.cliente || '-'} · ${currentEntry.status || 'active'}`
+                  {scopedCurrent
+                    ? `${scopedCurrent.cliente || '-'} · ${scopedCurrent.status || 'active'}`
                     : 'Crea un ingreso o entra al proceso para continuar.'}
                 </p>
               </div>
               <Link
                 className="vc-login-btn vc-summary-btn vc-yellow vc-summary-cta"
-                href={currentEntry ? `/vehiculos/${encodeURIComponent(currentEntry.placa)}` : '/ingreso-activo'}
+                href={scopedCurrent ? `/vehiculos/${encodeURIComponent(scopedCurrent.placa)}` : '/ingreso-activo'}
               >
-                {currentEntry ? 'Abrir ingreso ->' : 'Crear ingreso ->'}
+                {scopedCurrent ? 'Abrir ingreso ->' : 'Crear ingreso ->'}
               </Link>
             </div>
 
@@ -263,19 +224,6 @@ export default function HomePage() {
               <article className="vc-kpi-card"><strong>{summary.active}</strong><span>ACTIVOS</span></article>
               <article className="vc-kpi-card"><strong>{summary.done}</strong><span>CERRADOS</span></article>
               <article className="vc-kpi-card"><strong>{summary.total}</strong><span>TOTAL</span></article>
-            </div>
-          </section>
-
-          <section className="vc-section vc-section-tight">
-            <h2 className="vc-section-title">Acciones rápidas</h2>
-            <div className="vc-actions-grid vc-actions-grid-upgrade">
-              {quickActions.map((action) => (
-                <Link key={action.key} href={action.href} className={`vc-action-card ${action.primary ? 'is-primary' : ''}`}>
-                  <span className="vc-action-icon" aria-hidden="true">{action.primary ? '⚡' : '○'}</span>
-                  <h3>{action.title}</h3>
-                  <p>{action.subtitle}</p>
-                </Link>
-              ))}
             </div>
           </section>
 

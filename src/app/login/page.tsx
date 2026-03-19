@@ -44,7 +44,7 @@ export default function LoginPage() {
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin / tecnico / cliente"
+              placeholder="david@vcars.com"
               autoComplete="username"
             />
           </div>
@@ -82,7 +82,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <p className="vc-hint">Credenciales locales temporales (roles: admin / tecnico / cliente).</p>
+          <p className="vc-hint">Credenciales locales temporales: 1 administrador, 1 tecnico y 2 clientes (congreso/alcaldia).</p>
         </form>
       </section>
     </main>

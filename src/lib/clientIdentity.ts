@@ -11,6 +11,13 @@ function normalizePlate(plate: string): string {
   return String(plate || '').trim().toUpperCase();
 }
 
+function companyFromPlate(plate: string): string {
+  const normalized = normalizePlate(plate);
+  if (!normalized) return '';
+  const hash = normalized.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return hash % 2 === 0 ? 'congreso@gobierno.com' : 'alcaldia@alcaldia.com';
+}
+
 export function getClientIdentity(): ClientIdentity | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -52,7 +59,8 @@ export function isEntryAllowed(identity: ClientIdentity | null, entry: { placa?:
 
   if (identity.type === 'empresa') {
     const left = String(identity.companyName || identity.name || '').trim().toLowerCase();
-    const right = String(entry.empresa || entry.companyName || '').trim().toLowerCase();
+    const explicit = String(entry.empresa || entry.companyName || '').trim().toLowerCase();
+    const right = explicit || companyFromPlate(plate);
     return Boolean(left && right && left === right);
   }
 
