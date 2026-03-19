@@ -3,12 +3,14 @@ import { clearSession, getEntries, setCurrentEntry, setEntries, setSession, type
 import { setClientIdentity } from './clientIdentity';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://187.124.65.93:4000';
+const PERSONAL_CLIENT_PLATE = 'BCD246';
 
 export const DEMO_USERS = [
   { id: 'u_admin_david', username: 'david@vcars.com', password: '1111', role: 'administrativo' as Role },
   { id: 'u_tech_julian', username: 'julian@vcars.com', password: '2222', role: 'tecnico' as Role },
   { id: 'u_client_congreso', username: 'congreso@gobierno.com', password: '3333', role: 'cliente' as Role },
   { id: 'u_client_alcaldia', username: 'alcaldia@alcaldia.com', password: '4444', role: 'cliente' as Role },
+  { id: 'u_client_juli', username: 'juli@gm.com', password: '5555', role: 'cliente' as Role },
 ];
 
 function roleFromApi(role?: string): Role {
@@ -20,7 +22,8 @@ function roleFromApi(role?: string): Role {
 function companyByUser(username: string): string {
   const u = String(username || '').trim().toLowerCase();
   if (u === 'alcaldia@alcaldia.com') return 'alcaldia@alcaldia.com';
-  return 'congreso@gobierno.com';
+  if (u === 'congreso@gobierno.com') return 'congreso@gobierno.com';
+  return '';
 }
 
 function applyClientIdentity(username: string): void {
@@ -39,6 +42,13 @@ function applyClientIdentity(username: string): void {
       companyName: 'alcaldia@alcaldia.com',
       plates: [],
     });
+  } else if (u === 'juli@gm.com') {
+    setClientIdentity({
+      type: 'personal',
+      name: 'Juli',
+      companyName: 'Juli',
+      plates: [PERSONAL_CLIENT_PLATE],
+    });
   }
 }
 
@@ -49,8 +59,13 @@ function ensureDemoEntriesFor(session: Session): void {
 
   let current = list[0] || null;
   if (session.role === 'cliente') {
-    const company = companyByUser(session.username);
-    current = list.find((item) => String(item.empresa || '').toLowerCase() === company) || list[0] || null;
+    const u = String(session.username || '').trim().toLowerCase();
+    if (u === 'juli@gm.com') {
+      current = list.find((item) => String(item.placa || '').toUpperCase() === PERSONAL_CLIENT_PLATE) || list[0] || null;
+    } else {
+      const company = companyByUser(session.username);
+      current = list.find((item) => String(item.empresa || '').toLowerCase() === company) || list[0] || null;
+    }
   }
 
   setCurrentEntry(current);

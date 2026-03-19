@@ -1,9 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
-import { VCARS_PROCESS } from '@/lib/process';
+import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
+import { canEditStep, getFormsForPlate, getRoleSteps, setStepField } from '@/lib/orderForms';
+import { getCurrentEntry, getEntries, getRole, getSession, type Role } from '@/lib/storage';
 
 const STEP_FIELDS: Record<string, Array<{ key: string; label: string; placeholder: string }>> = {
   recepcion: [
@@ -17,10 +20,11 @@ const STEP_FIELDS: Record<string, Array<{ key: string; label: string; placeholde
   cotizacion_formal: [
     { key: 'cotizacionTotal', label: 'Total cotizacion', placeholder: '1500000' },
     { key: 'cotizacionNumero', label: 'No. cotizacion', placeholder: 'COT-1001' },
+    { key: 'alcance', label: 'Alcance para cliente', placeholder: 'Detalle del trabajo y tiempos' },
   ],
   aprobacion: [
-    { key: 'aprobadoCliente', label: 'Aprobado', placeholder: 'Si / No' },
-    { key: 'medioAprobacion', label: 'Medio de aprobacion', placeholder: 'WhatsApp / Llamada / Correo' },
+    { key: 'decisionCliente', label: 'Decision del cliente', placeholder: 'Aprobado / No aprobado' },
+    { key: 'comentariosCliente', label: 'Comentarios del cliente', placeholder: 'Comentarios o condiciones' },
   ],
   trabajo: [
     { key: 'tecnico', label: 'Tecnico asignado', placeholder: 'Nombre del tecnico' },
@@ -33,39 +37,94 @@ const STEP_FIELDS: Record<string, Array<{ key: string; label: string; placeholde
 };
 
 export default function OrdenServicioPage() {
-  const [step, setStep] = useState(() => {
-    if (typeof window === 'undefined') return 0;
-    const url = new URL(window.location.href);
-    const startStepRaw = Number(url.searchParams.get('startStep') || 0);
-    return Number.isFinite(startStepRaw)
-      ? Math.max(0, Math.min(VCARS_PROCESS.length - 1, startStepRaw))
-      : 0;
-  });
-  const [form, setForm] = useState<Record<string, string>>({});
+  const router = useRouter();
+  const [role, setRole] = useState<Role>('administrativo');
+  const [plate, setPlate] = useState('');
+  const [startStepIndex, setStartStepIndex] = useState(0);
+  const [formsByStep, setFormsByStep] = useState<Record<string, Record<string, string>>>({});
+  const [stepPos, setStepPos] = useState(0);
 
-  const current = VCARS_PROCESS[step];
-  const fields = useMemo(() => STEP_FIELDS[current.key] || [], [current.key]);
+  useEffect(() => {
+    if (!getSession()) {
+      router.replace('/login');
+      return;
+    }
+
+    const localRole = getRole();
+    const current = getCurrentEntry();
+    const entries = getEntries();
+
+    let queryPlate = '';
+    let queryStartStep = 0;
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      queryPlate = String(url.searchParams.get('plate') || '').trim().toUpperCase();
+      const raw = Number(url.searchParams.get('startStep') || 0);
+      queryStartStep = Number.isFinite(raw) ? raw : 0;
+    }
+
+    let resolvedPlate = queryPlate || String(current?.placa || '').trim().toUpperCase();
+    if (!resolvedPlate && entries.length) resolvedPlate = String(entries[0]?.placa || '').trim().toUpperCase();
+
+    if (localRole === 'cliente') {
+      const identity = getClientIdentity();
+      const allowed = entries.filter((entry) => isEntryAllowed(identity, entry));
+      const requestedAllowed = allowed.some((entry) => String(entry.placa || '').toUpperCase() === resolvedPlate);
+      if (!requestedAllowed) resolvedPlate = String(allowed[0]?.placa || resolvedPlate || '').trim().toUpperCase();
+    }
+
+    queueMicrotask(() => {
+      setRole(localRole);
+      setPlate(resolvedPlate);
+      setStartStepIndex(queryStartStep);
+      setFormsByStep(getFormsForPlate(resolvedPlate));
+    });
+  }, [router]);
+
+  const steps = useMemo(() => getRoleSteps(role, formsByStep), [role, formsByStep]);
+
+  useEffect(() => {
+    if (!steps.length) {
+      queueMicrotask(() => setStepPos(0));
+      return;
+    }
+
+    const foundPos = steps.findIndex((step) => step.index === startStepIndex);
+    const targetPos = foundPos >= 0 ? foundPos : 0;
+    queueMicrotask(() => setStepPos(targetPos));
+  }, [startStepIndex, steps]);
+
+  const current = steps[stepPos] || steps[0];
+  const currentKey = current?.key || '';
+  const fields = useMemo(() => STEP_FIELDS[currentKey] || [], [currentKey]);
+  const editable = current ? canEditStep(role, current.key) : false;
+
+  function updateField(fieldKey: string, value: string) {
+    if (!plate || !current) return;
+    const nextByStep = setStepField(plate, current.key, fieldKey, value);
+    setFormsByStep(nextByStep);
+  }
 
   return (
-    <main className="vc-page vc-shell">
+    <main className="vc-page vc-shell" suppressHydrationWarning>
       <div className="vc-bg-orb-left" />
       <div className="vc-bg-orb-right" />
 
       <section className="vc-panel vc-panel-narrow">
         <header className="vc-detail-head">
           <BrandPill />
-          <p className="vc-head-sub">Orden de servicio</p>
+          <p className="vc-head-sub">Orden de servicio {plate ? `· ${plate}` : ''}</p>
         </header>
 
         <section className="vc-card">
-          <h3>{current.title}</h3>
+          <h3>{current?.title || 'Orden de servicio'}</h3>
 
           <div className="vc-step-tabs">
-            {VCARS_PROCESS.map((item, idx) => (
+            {steps.map((item, idx) => (
               <button
                 key={item.key}
-                className={`vc-step-tab ${idx === step ? 'is-active' : ''}`}
-                onClick={() => setStep(idx)}
+                className={`vc-step-tab ${idx === stepPos ? 'is-active' : ''}`}
+                onClick={() => setStepPos(idx)}
                 type="button"
               >
                 {idx + 1}
@@ -73,15 +132,20 @@ export default function OrdenServicioPage() {
             ))}
           </div>
 
+          {role === 'cliente' && !editable ? (
+            <p className="vc-subtitle-small">Vista cliente: este paso es informativo y se actualiza con el progreso del taller.</p>
+          ) : null}
+
           <div className="vc-step-fields">
             {fields.map((field) => (
               <div key={field.key}>
                 <label className="vc-label">{field.label}</label>
                 <div className="vc-input-wrap">
                   <input
-                    value={form[field.key] || ''}
-                    onChange={(e) => setForm((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                    value={formsByStep[currentKey]?.[field.key] || ''}
+                    onChange={(e) => updateField(field.key, e.target.value)}
                     placeholder={field.placeholder}
+                    disabled={!editable}
                   />
                 </div>
               </div>
@@ -89,14 +153,14 @@ export default function OrdenServicioPage() {
           </div>
 
           <div className="vc-wizard-actions">
-            <button className="vc-btn" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>
+            <button className="vc-btn" disabled={stepPos === 0} onClick={() => setStepPos((s) => Math.max(0, s - 1))}>
               Anterior
             </button>
             <button
               className="vc-login-btn vc-wizard-next"
-              onClick={() => setStep((s) => Math.min(VCARS_PROCESS.length - 1, s + 1))}
+              onClick={() => setStepPos((s) => Math.min(Math.max(steps.length - 1, 0), s + 1))}
             >
-              {step === VCARS_PROCESS.length - 1 ? 'Finalizar' : 'Siguiente'}
+              {stepPos === steps.length - 1 ? 'Finalizar' : 'Siguiente'}
             </button>
           </div>
         </section>

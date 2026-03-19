@@ -10,7 +10,8 @@ import { getClientIdentity } from '@/lib/clientIdentity';
 import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
 import { getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
-import { getVisibleSteps, normalizeStepTitle, stepIndexFromTitle } from '@/lib/process';
+import { getRoleSteps, getFormsForPlate } from '@/lib/orderForms';
+import { normalizeStepTitle, stepIndexFromTitle } from '@/lib/process';
 
 export default function VehiculoDetallePage() {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function VehiculoDetallePage() {
     return String(identity?.name || identity?.companyName || '').trim();
   }, [role]);
 
-  const visibleSteps = useMemo(() => getVisibleSteps(role), [role]);
+  const visibleSteps = useMemo(() => getRoleSteps(role, getFormsForPlate(plate)), [role, plate]);
   const visibleIndices = visibleSteps.map((s) => s.index);
   const displayCurrentIndex = (() => {
     if (visibleIndices.includes(stepIndex)) return visibleIndices.indexOf(stepIndex);

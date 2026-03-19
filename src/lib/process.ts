@@ -4,7 +4,7 @@ const ADMIN: Role = 'administrativo';
 const TECH: Role = 'tecnico';
 const CLIENT: Role = 'cliente';
 
-type ProcessStep = {
+export type ProcessStep = {
   key: string;
   title: string;
   visibleRoles: Role[];
@@ -24,7 +24,7 @@ export const VCARS_PROCESS: ProcessStep[] = [
   {
     key: 'cotizacion_formal',
     title: 'Cotización al cliente (Admin)',
-    visibleRoles: [ADMIN],
+    visibleRoles: [ADMIN, CLIENT],
   },
   {
     key: 'aprobacion',

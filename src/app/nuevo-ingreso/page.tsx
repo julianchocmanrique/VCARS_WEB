@@ -7,10 +7,13 @@ import { BottomNav } from '@/components/BottomNav';
 import { createIngreso } from '@/lib/api';
 import { getEntries, setCurrentEntry, setEntries, type Entry } from '@/lib/storage';
 
+type HolderType = 'cliente' | 'empresa';
+
 export default function NuevoIngresoPage() {
   const router = useRouter();
   const [placa, setPlaca] = useState('');
-  const [cliente, setCliente] = useState('');
+  const [holderType, setHolderType] = useState<HolderType>('cliente');
+  const [holderName, setHolderName] = useState('');
   const [telefono, setTelefono] = useState('');
   const [vehiculo, setVehiculo] = useState('');
   const [recibio, setRecibio] = useState('');
@@ -19,7 +22,7 @@ export default function NuevoIngresoPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!placa.trim() || !cliente.trim() || !telefono.trim() || !vehiculo.trim() || !recibio.trim()) {
+    if (!placa.trim() || !holderName.trim() || !telefono.trim() || !vehiculo.trim() || !recibio.trim()) {
       setError('Todos los campos son obligatorios.');
       return;
     }
@@ -31,7 +34,7 @@ export default function NuevoIngresoPage() {
     try {
       backend = await createIngreso({
         plate: placa.trim(),
-        customerName: cliente.trim(),
+        customerName: holderName.trim(),
         customerPhone: telefono.trim(),
         vehicleModel: vehiculo.trim(),
         receivedBy: recibio.trim(),
@@ -43,7 +46,8 @@ export default function NuevoIngresoPage() {
     const payload: Entry = {
       id: `entry-${Date.now()}`,
       placa: placa.trim().toUpperCase(),
-      cliente: cliente.trim(),
+      cliente: holderName.trim(),
+      empresa: holderType === 'empresa' ? holderName.trim() : '',
       telefono: telefono.trim(),
       vehiculo: vehiculo.trim(),
       paso: 'Recepción (Ingreso)',
@@ -96,9 +100,35 @@ export default function NuevoIngresoPage() {
             </div>
           </div>
 
-          <label className="vc-label">Cliente</label>
+          <label className="vc-label">Tipo de titular</label>
+          <div className="vc-chip-row" style={{ marginBottom: 10 }}>
+            <button
+              type="button"
+              className="vc-chip"
+              onClick={() => setHolderType('cliente')}
+              aria-pressed={holderType === 'cliente'}
+              style={holderType === 'cliente' ? { borderColor: 'var(--vc-accent)', color: 'var(--vc-accent-ink)' } : undefined}
+            >
+              Cliente
+            </button>
+            <button
+              type="button"
+              className="vc-chip"
+              onClick={() => setHolderType('empresa')}
+              aria-pressed={holderType === 'empresa'}
+              style={holderType === 'empresa' ? { borderColor: 'var(--vc-accent)', color: 'var(--vc-accent-ink)' } : undefined}
+            >
+              Empresa
+            </button>
+          </div>
+
+          <label className="vc-label">{holderType === 'empresa' ? 'Empresa' : 'Cliente'}</label>
           <div className="vc-input-wrap">
-            <input value={cliente} onChange={(e) => setCliente(e.target.value)} placeholder="Nombre del cliente" />
+            <input
+              value={holderName}
+              onChange={(e) => setHolderName(e.target.value)}
+              placeholder={holderType === 'empresa' ? 'Nombre de la empresa' : 'Nombre del cliente'}
+            />
           </div>
 
           <label className="vc-label">Marca / Modelo</label>
