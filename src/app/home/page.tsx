@@ -113,6 +113,12 @@ export default function HomePage() {
     return scopedEntries[0] || null;
   }, [currentEntry, scopedEntries]);
 
+  const clientCompanyName = useMemo(() => {
+    if (role !== 'cliente') return '';
+    const identity = getClientIdentity();
+    return String(identity?.companyName || identity?.name || '').trim();
+  }, [role]);
+
   const summary = useMemo(() => summarize(scopedEntries), [scopedEntries]);
   const latestEntries = useMemo(() => scopedEntries.slice(0, 3), [scopedEntries]);
   const activeStatusLabel = scopedCurrent?.status === 'done' ? 'Finalizado' : scopedCurrent?.status === 'cancelled' ? 'Cancelado' : 'Activo';
@@ -208,7 +214,7 @@ export default function HomePage() {
                 </h3>
                 <p className="vc-summary-text">
                   {scopedCurrent
-                    ? `${scopedCurrent.cliente || '-'} · ${scopedCurrent.status || 'active'}`
+                    ? `${(role === 'cliente' ? (clientCompanyName || scopedCurrent.cliente || '-') : (scopedCurrent.cliente || '-'))} · ${scopedCurrent.status || 'active'}`
                     : 'Crea un ingreso o entra al proceso para continuar.'}
                 </p>
               </div>
@@ -261,7 +267,7 @@ export default function HomePage() {
                     <div className="vc-movement-icon" aria-hidden="true">🚘</div>
                     <div className="vc-movement-text">
                       <strong>{item.vehiculo || item.placa} · {item.placa}</strong>
-                      <p>{item.cliente || '-'} · {item.paso || 'Recepcion (Ingreso)'}</p>
+                      <p>{role === 'cliente' ? (clientCompanyName || item.cliente || '-') : (item.cliente || '-')} · {item.paso || 'Recepcion (Ingreso)'}</p>
                     </div>
                     <span className="vc-movement-go" aria-hidden="true">›</span>
                   </Link>

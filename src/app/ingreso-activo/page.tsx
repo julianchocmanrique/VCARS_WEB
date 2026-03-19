@@ -65,6 +65,12 @@ export default function IngresoActivoPage() {
     })();
   }, [router]);
 
+  const clientCompanyName = useMemo(() => {
+    if (role !== 'cliente') return '';
+    const identity = getClientIdentity();
+    return String(identity?.companyName || identity?.name || '').trim();
+  }, [role]);
+
   const filtered = useMemo(() => {
     if (!mounted) return [];
 
@@ -130,7 +136,7 @@ export default function IngresoActivoPage() {
                 >
                   <div className="process-copy">
                     <p className="process-name">{item.vehiculo || `Vehicle ${idx + 1}`}</p>
-                    <p className="process-sub">{item.cliente || 'Cliente'} · {item.placa}</p>
+                    <p className="process-sub">{role === 'cliente' ? (clientCompanyName || item.cliente || 'Cliente') : (item.cliente || 'Cliente')} · {item.placa}</p>
 
                     <div className="process-tags">
                       <span>{statusLabel(item.status)}</span>
