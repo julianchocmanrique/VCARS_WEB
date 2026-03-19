@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { listVehicles } from '@/lib/api';
+import { signOut } from '@/lib/auth';
 import { apiVehicleToEntry } from '@/lib/mapper';
 import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
@@ -59,12 +60,9 @@ function resolveProcessKey(step?: string): ProcessRow['key'] {
 
 export default function HomePage() {
   const router = useRouter();
-  const [role] = useState<Role>(() => getRole());
-  const [entries, setEntriesState] = useState<Entry[]>(() => getEntries());
-  const [currentEntry, setCurrentEntryState] = useState<Entry | null>(() => {
-    const localEntries = getEntries();
-    return getCurrentEntry() || localEntries[0] || null;
-  });
+  const [role, setRoleState] = useState<Role>('administrativo');
+  const [entries, setEntriesState] = useState<Entry[]>([]);
+  const [currentEntry, setCurrentEntryState] = useState<Entry | null>(null);
 
   useEffect(() => {
     if (!getSession()) {
@@ -72,7 +70,16 @@ export default function HomePage() {
       return;
     }
 
-    if (currentEntry) setCurrentEntry(currentEntry);
+    const localEntries = getEntries();
+    const localCurrent = getCurrentEntry() || localEntries[0] || null;
+
+    queueMicrotask(() => {
+      setRoleState(getRole());
+      setEntriesState(localEntries);
+      setCurrentEntryState(localCurrent);
+    });
+
+    if (localCurrent) setCurrentEntry(localCurrent);
 
     (async () => {
       try {
@@ -81,14 +88,14 @@ export default function HomePage() {
         if (!mapped.length) return;
         setEntries(mapped);
         setEntriesState(mapped);
-        const nextCurrent = currentEntry || mapped[0] || null;
+        const nextCurrent = localCurrent || mapped[0] || null;
         setCurrentEntryState(nextCurrent);
         if (nextCurrent) setCurrentEntry(nextCurrent);
       } catch {
         // fallback local
       }
     })();
-  }, [currentEntry, router]);
+  }, [router]);
 
   const summary = useMemo(() => summarize(entries), [entries]);
   const latestEntries = useMemo(() => entries.slice(0, 3), [entries]);
@@ -200,6 +207,7 @@ export default function HomePage() {
             <button
               className="vc-profile-btn"
               onClick={() => {
+                signOut();
                 router.replace('/login');
               }}
             >
