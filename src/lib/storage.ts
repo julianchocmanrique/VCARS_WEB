@@ -46,6 +46,50 @@ export type Entry = {
   };
 };
 
+function normalizeEntry(value: unknown): Entry | null {
+  if (!value || typeof value !== 'object') return null;
+  const v = value as Record<string, unknown>;
+  const placa = String(v.placa || '').trim().toUpperCase();
+  if (!placa) return null;
+
+  const statusRaw = String(v.status || 'active');
+  const status: Entry['status'] = statusRaw === 'done' || statusRaw === 'cancelled' ? statusRaw : 'active';
+
+  return {
+    id: String(v.id || `entry-${placa}`),
+    orderNumber: String(v.orderNumber || ''),
+    placa,
+    cliente: String(v.cliente || ''),
+    nitCc: String(v.nitCc || ''),
+    direccion: String(v.direccion || ''),
+    telefono: String(v.telefono || ''),
+    email: String(v.email || ''),
+    vehiculo: String(v.vehiculo || ''),
+    color: String(v.color || ''),
+    empresa: String(v.empresa || ''),
+    invoiceName: String(v.invoiceName || ''),
+    paymentMethod: (v.paymentMethod === 'contado' || v.paymentMethod === 'credito') ? v.paymentMethod : '',
+    creditDays: String(v.creditDays || ''),
+    fuelLevel: String(v.fuelLevel || ''),
+    receivedBy: String(v.receivedBy || ''),
+    expectedDeliveryDate: String(v.expectedDeliveryDate || ''),
+    soatExpiry: String(v.soatExpiry || ''),
+    rtmExpiry: String(v.rtmExpiry || ''),
+    wantsOldParts: (v.wantsOldParts === 'SI' || v.wantsOldParts === 'NO') ? v.wantsOldParts : '',
+    paso: String(v.paso || ''),
+    stepIndex: Number.isFinite(Number(v.stepIndex)) ? Number(v.stepIndex) : 0,
+    status,
+    fecha: String(v.fecha || ''),
+    updatedAt: String(v.updatedAt || ''),
+    backend: v.backend && typeof v.backend === 'object'
+      ? {
+          vehicleId: String((v.backend as Record<string, unknown>).vehicleId || ''),
+          entryId: String((v.backend as Record<string, unknown>).entryId || ''),
+        }
+      : undefined,
+  };
+}
+
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
   try {
@@ -84,7 +128,10 @@ export function getRole(): Role {
 }
 
 export function getEntries(): Entry[] {
-  return readJson<Entry[]>(ENTRIES_KEY, []);
+  const raw = readJson<unknown>(ENTRIES_KEY, []);
+  if (!Array.isArray(raw)) return [];
+  const clean = raw.map(normalizeEntry).filter(Boolean) as Entry[];
+  return clean;
 }
 
 export function setEntries(entries: Entry[]): void {
@@ -92,7 +139,8 @@ export function setEntries(entries: Entry[]): void {
 }
 
 export function getCurrentEntry(): Entry | null {
-  return readJson<Entry | null>(CURRENT_ENTRY_KEY, null);
+  const raw = readJson<unknown>(CURRENT_ENTRY_KEY, null);
+  return normalizeEntry(raw);
 }
 
 export function setCurrentEntry(entry: Entry | null): void {
