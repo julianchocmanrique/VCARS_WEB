@@ -36,6 +36,14 @@ export type Entry = {
   rtmExpiry?: string;
   wantsOldParts?: 'SI' | 'NO' | '';
   intakePhotos?: string[];
+  intakePhotosByZone?: {
+    superior?: string;
+    inferior?: string;
+    lateralDerecho?: string;
+    lateralIzquierdo?: string;
+    frontal?: string;
+    trasero?: string;
+  };
   paso?: string;
   stepIndex?: number;
   status?: 'active' | 'done' | 'cancelled';
@@ -55,6 +63,28 @@ function normalizeEntry(value: unknown): Entry | null {
 
   const statusRaw = String(v.status || 'active');
   const status: Entry['status'] = statusRaw === 'done' || statusRaw === 'cancelled' ? statusRaw : 'active';
+  const legacyPhotos = Array.isArray(v.intakePhotos)
+    ? v.intakePhotos.map((x) => String(x || '')).filter(Boolean).slice(0, 6)
+    : [];
+  const zoneRaw = v.intakePhotosByZone && typeof v.intakePhotosByZone === 'object'
+    ? (v.intakePhotosByZone as Record<string, unknown>)
+    : {};
+  const intakePhotosByZone = {
+    superior: String(zoneRaw.superior || legacyPhotos[0] || ''),
+    inferior: String(zoneRaw.inferior || legacyPhotos[1] || ''),
+    lateralDerecho: String(zoneRaw.lateralDerecho || legacyPhotos[2] || ''),
+    lateralIzquierdo: String(zoneRaw.lateralIzquierdo || legacyPhotos[3] || ''),
+    frontal: String(zoneRaw.frontal || legacyPhotos[4] || ''),
+    trasero: String(zoneRaw.trasero || legacyPhotos[5] || ''),
+  };
+  const intakePhotos = [
+    intakePhotosByZone.superior,
+    intakePhotosByZone.inferior,
+    intakePhotosByZone.lateralDerecho,
+    intakePhotosByZone.lateralIzquierdo,
+    intakePhotosByZone.frontal,
+    intakePhotosByZone.trasero,
+  ].filter(Boolean);
 
   return {
     id: String(v.id || `entry-${placa}`),
@@ -77,9 +107,8 @@ function normalizeEntry(value: unknown): Entry | null {
     soatExpiry: String(v.soatExpiry || ''),
     rtmExpiry: String(v.rtmExpiry || ''),
     wantsOldParts: (v.wantsOldParts === 'SI' || v.wantsOldParts === 'NO') ? v.wantsOldParts : '',
-    intakePhotos: Array.isArray(v.intakePhotos)
-      ? v.intakePhotos.map((x) => String(x || '')).filter(Boolean).slice(0, 6)
-      : [],
+    intakePhotos,
+    intakePhotosByZone,
     paso: String(v.paso || ''),
     stepIndex: Number.isFinite(Number(v.stepIndex)) ? Number(v.stepIndex) : 0,
     status,

@@ -1,4 +1,5 @@
-import { getDemoEntries } from './demoData';
+import { applyDemoEntries } from './demoData';
+import { ensureDemoFormsSeed } from './orderForms';
 import { clearSession, getEntries, setCurrentEntry, setEntries, setSession, type Role, type Session } from './storage';
 import { setClientIdentity } from './clientIdentity';
 
@@ -54,8 +55,9 @@ function applyClientIdentity(username: string): void {
 
 function ensureDemoEntriesFor(session: Session): void {
   const local = getEntries();
-  const list = local.length ? local : getDemoEntries();
-  if (!local.length) setEntries(list);
+  const list = applyDemoEntries(local);
+  setEntries(list);
+  ensureDemoFormsSeed();
 
   let current = list[0] || null;
   if (session.role === 'cliente') {

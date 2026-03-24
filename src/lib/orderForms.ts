@@ -1,4 +1,5 @@
 import type { Role } from './storage';
+import { getDemoFormsByPlate } from './demoData';
 import { VCARS_PROCESS, type ProcessStep } from './process';
 
 const ORDER_FORMS_KEY = '@vcars_order_forms';
@@ -26,9 +27,26 @@ function writeAll(value: FormsByPlate): void {
   window.localStorage.setItem(ORDER_FORMS_KEY, JSON.stringify(value));
 }
 
+function mergeDemoForms(existing: FormsByPlate, demo: FormsByPlate): FormsByPlate {
+  const merged: FormsByPlate = { ...demo };
+  for (const [plate, forms] of Object.entries(existing || {})) {
+    if (merged[plate]) continue;
+    merged[plate] = forms;
+  }
+  return merged;
+}
+
+export function ensureDemoFormsSeed(): FormsByPlate {
+  const existing = readAll();
+  const demo = getDemoFormsByPlate();
+  const merged = mergeDemoForms(existing, demo);
+  writeAll(merged);
+  return merged;
+}
+
 export function getFormsForPlate(plate: string): FormsByStep {
   const key = normalizePlate(plate);
-  const all = readAll();
+  const all = ensureDemoFormsSeed();
   return all[key] || {};
 }
 

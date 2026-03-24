@@ -5,13 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { getVehicleByPlate } from '@/lib/api';
 import { apiVehicleToEntry } from '@/lib/mapper';
-import { getDemoEntries } from '@/lib/demoData';
+import { applyDemoEntries } from '@/lib/demoData';
 import { getClientIdentity } from '@/lib/clientIdentity';
 import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
 import { getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
-import { getFormsForPlate, getRoleSteps, isClientQuoteReady, setStepFields } from '@/lib/orderForms';
+import { ensureDemoFormsSeed, getFormsForPlate, getRoleSteps, isClientQuoteReady, setStepFields } from '@/lib/orderForms';
 import { normalizeStepTitle, stepIndexFromTitle } from '@/lib/process';
+
+const PHOTO_SLOTS = [
+  { key: 'superior', label: 'Superior' },
+  { key: 'inferior', label: 'Inferior' },
+  { key: 'lateralDerecho', label: 'Lateral derecho' },
+  { key: 'lateralIzquierdo', label: 'Lateral izquierdo' },
+  { key: 'frontal', label: 'Frontal' },
+  { key: 'trasero', label: 'Trasero' },
+] as const;
 
 export default function VehiculoDetallePage() {
   const router = useRouter();
@@ -32,8 +41,9 @@ export default function VehiculoDetallePage() {
 
     const localRole = getRole();
     const localRaw = getEntries();
-    const seeded = localRaw.length ? localRaw : getDemoEntries();
-    if (!localRaw.length) setEntries(seeded);
+    const seeded = applyDemoEntries(localRaw);
+    setEntries(seeded);
+    ensureDemoFormsSeed();
 
     const found = seeded.find((item) => String(item.placa).toUpperCase() === plate) || null;
     queueMicrotask(() => {
@@ -53,7 +63,8 @@ export default function VehiculoDetallePage() {
         if (!mapped) return;
 
         const normalizedStep = normalizeStepTitle(mapped.paso);
-        const next = { ...mapped, paso: normalizedStep };
+        const localBase = getEntries().find((item) => String(item.placa || '').toUpperCase() === plate) || null;
+        const next = { ...localBase, ...mapped, paso: normalizedStep };
         setVehicle(next);
         setStepIndex(stepIndexFromTitle(normalizedStep));
 
@@ -94,6 +105,19 @@ export default function VehiculoDetallePage() {
 
   const quoteData = formsByStep.cotizacion_formal || {};
   const approvalData = formsByStep.aprobacion || {};
+  const intakePhotosByZone = useMemo(() => {
+    const zone = vehicle?.intakePhotosByZone || {};
+    const legacy = vehicle?.intakePhotos || [];
+    return {
+      superior: String(zone.superior || legacy[0] || ''),
+      inferior: String(zone.inferior || legacy[1] || ''),
+      lateralDerecho: String(zone.lateralDerecho || legacy[2] || ''),
+      lateralIzquierdo: String(zone.lateralIzquierdo || legacy[3] || ''),
+      frontal: String(zone.frontal || legacy[4] || ''),
+      trasero: String(zone.trasero || legacy[5] || ''),
+    };
+  }, [vehicle]);
+  const hasIntakePhotos = PHOTO_SLOTS.some((slot) => intakePhotosByZone[slot.key]);
 
   function setApprovalPatch(patch: Record<string, string>) {
     if (!plate) return;
@@ -139,15 +163,25 @@ export default function VehiculoDetallePage() {
           </div>
         </section>
 
-        {vehicle?.intakePhotos?.length ? (
+        {hasIntakePhotos ? (
           <section className="vc-card">
             <h3>Evidencias de ingreso</h3>
             <div className="vc-photo-grid">
-              {vehicle.intakePhotos.map((src, idx) => (
-                <a key={`ev-${idx}`} href={src} target="_blank" rel="noreferrer" className="vc-photo-item">
-                  <img src={src} alt={`Evidencia ${idx + 1}`} className="vc-photo-preview" />
-                </a>
-              ))}
+              {PHOTO_SLOTS.map((slot) => {
+                const src = intakePhotosByZone[slot.key];
+                return (
+                  <div key={slot.key} className="vc-photo-item">
+                    <p className="vc-photo-label">{slot.label}</p>
+                    {src ? (
+                      <a href={src} target="_blank" rel="noreferrer">
+                        <img src={src} alt={`Evidencia ${slot.label}`} className="vc-photo-preview" />
+                      </a>
+                    ) : (
+                      <div className="vc-photo-empty">Sin imagen</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
         ) : null}

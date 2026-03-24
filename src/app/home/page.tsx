@@ -6,8 +6,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { listVehicles } from '@/lib/api';
 import { signOut } from '@/lib/auth';
 import { apiVehicleToEntry } from '@/lib/mapper';
-import { getDemoEntries } from '@/lib/demoData';
+import { applyDemoEntries } from '@/lib/demoData';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
+import { ensureDemoFormsSeed } from '@/lib/orderForms';
 import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
 import {
@@ -73,8 +74,9 @@ export default function HomePage() {
     }
 
     const localEntries = getEntries();
-    const seededEntries = localEntries.length ? localEntries : getDemoEntries();
-    if (!localEntries.length) setEntries(seededEntries);
+    const seededEntries = applyDemoEntries(localEntries);
+    setEntries(seededEntries);
+    ensureDemoFormsSeed();
     const localCurrent = getCurrentEntry() || seededEntries[0] || null;
 
     queueMicrotask(() => {
@@ -89,10 +91,10 @@ export default function HomePage() {
       try {
         const vehicles = await listVehicles({ take: 50 });
         const mapped = vehicles.map(apiVehicleToEntry).filter(Boolean) as Entry[];
-        if (!mapped.length) return;
-        setEntries(mapped);
-        setEntriesState(mapped);
-        const nextCurrent = localCurrent || mapped[0] || null;
+        const merged = applyDemoEntries(mapped);
+        setEntries(merged);
+        setEntriesState(merged);
+        const nextCurrent = localCurrent || merged[0] || null;
         setCurrentEntryState(nextCurrent);
         if (nextCurrent) setCurrentEntry(nextCurrent);
       } catch {

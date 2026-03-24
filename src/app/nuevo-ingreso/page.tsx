@@ -9,8 +9,27 @@ import { getEntries, setCurrentEntry, setEntries, type Entry } from '@/lib/stora
 
 type HolderType = 'cliente' | 'empresa';
 
-const MAX_IMAGES = 6;
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
+
+const PHOTO_SLOTS = [
+  { key: 'superior', label: 'Superior' },
+  { key: 'inferior', label: 'Inferior' },
+  { key: 'lateralDerecho', label: 'Lateral derecho' },
+  { key: 'lateralIzquierdo', label: 'Lateral izquierdo' },
+  { key: 'frontal', label: 'Frontal' },
+  { key: 'trasero', label: 'Trasero' },
+] as const;
+
+type PhotoSlotKey = (typeof PHOTO_SLOTS)[number]['key'];
+
+const EMPTY_INTAKE_PHOTOS: Record<PhotoSlotKey, string> = {
+  superior: '',
+  inferior: '',
+  lateralDerecho: '',
+  lateralIzquierdo: '',
+  frontal: '',
+  trasero: '',
+};
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -63,43 +82,36 @@ export default function NuevoIngresoPage() {
   const [wantsOldParts, setWantsOldParts] = useState<'SI' | 'NO' | ''>('NO');
   const [soatExpiry, setSoatExpiry] = useState('');
   const [rtmExpiry, setRtmExpiry] = useState('');
-  const [intakePhotos, setIntakePhotos] = useState<string[]>([]);
+  const [intakePhotosByZone, setIntakePhotosByZone] = useState<Record<PhotoSlotKey, string>>(EMPTY_INTAKE_PHOTOS);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const holderLabel = useMemo(() => (holderType === 'empresa' ? 'Empresa' : 'Cliente'), [holderType]);
 
-  async function onPickImages(e: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+  async function onPickImage(slot: PhotoSlotKey, e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const remaining = Math.max(0, MAX_IMAGES - intakePhotos.length);
-    if (!remaining) {
-      setError(`Ya tienes el máximo de ${MAX_IMAGES} imágenes.`);
-      return;
-    }
-
-    const selected = files.slice(0, remaining);
-    const oversized = selected.find((f) => f.size > MAX_IMAGE_SIZE);
-    if (oversized) {
-      setError(`La imagen ${oversized.name} supera 3MB. Súbela más liviana.`);
+    if (file.size > MAX_IMAGE_SIZE) {
+      setError(`La imagen ${file.name} supera 3MB. Súbela más liviana.`);
+      e.target.value = '';
       return;
     }
 
     try {
-      const encoded = await Promise.all(selected.map(fileToDataUrl));
-      setIntakePhotos((prev) => [...prev, ...encoded].slice(0, MAX_IMAGES));
+      const encoded = await fileToDataUrl(file);
+      setIntakePhotosByZone((prev) => ({ ...prev, [slot]: encoded }));
       setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudieron cargar las imágenes.');
+      setError(err instanceof Error ? err.message : 'No se pudo cargar la imagen.');
     } finally {
       e.target.value = '';
     }
   }
 
-  function removePhoto(index: number) {
-    setIntakePhotos((prev) => prev.filter((_, i) => i !== index));
+  function removePhoto(slot: PhotoSlotKey) {
+    setIntakePhotosByZone((prev) => ({ ...prev, [slot]: '' }));
   }
 
   async function onSubmit(e: FormEvent) {
@@ -158,7 +170,8 @@ export default function NuevoIngresoPage() {
       soatExpiry: soatExpiry.trim(),
       rtmExpiry: rtmExpiry.trim(),
       wantsOldParts,
-      intakePhotos,
+      intakePhotosByZone,
+      intakePhotos: PHOTO_SLOTS.map((slot) => intakePhotosByZone[slot.key]).filter(Boolean),
       paso: 'Recepción (Ingreso)',
       stepIndex: 0,
       status: 'active',
@@ -388,23 +401,34 @@ export default function NuevoIngresoPage() {
           </div>
 
           <h3 style={{ margin: '14px 0 8px' }}>Evidencias de ingreso (imágenes)</h3>
-          <label className="vc-label">Sube fotos del estado del vehículo (máx. {MAX_IMAGES}, 3MB c/u)</label>
-          <div className="vc-input-wrap">
-            <input type="file" accept="image/*" multiple onChange={onPickImages} />
-          </div>
-
-          {intakePhotos.length ? (
-            <div className="vc-photo-grid" style={{ marginTop: 10 }}>
-              {intakePhotos.map((src, idx) => (
-                <div key={`ph-${idx}`} className="vc-photo-item">
-                  <img src={src} alt={`Evidencia ${idx + 1}`} className="vc-photo-preview" />
-                  <button type="button" className="vc-btn" onClick={() => removePhoto(idx)} style={{ marginTop: 6 }}>
-                    Quitar
-                  </button>
+          <label className="vc-label">Carga una foto por cada ángulo (máx. 3MB por imagen)</label>
+          <div className="vc-photo-grid" style={{ marginTop: 10 }}>
+            {PHOTO_SLOTS.map((slot) => {
+              const src = intakePhotosByZone[slot.key];
+              return (
+                <div key={slot.key} className="vc-photo-item">
+                  <p className="vc-photo-label">{slot.label}</p>
+                  <div className="vc-input-wrap">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => onPickImage(slot.key, e)}
+                    />
+                  </div>
+                  {src ? (
+                    <>
+                      <img src={src} alt={`Foto ${slot.label}`} className="vc-photo-preview" />
+                      <button type="button" className="vc-btn" onClick={() => removePhoto(slot.key)} style={{ marginTop: 6 }}>
+                        Quitar
+                      </button>
+                    </>
+                  ) : (
+                    <div className="vc-photo-empty">Sin imagen</div>
+                  )}
                 </div>
-              ))}
-            </div>
-          ) : null}
+              );
+            })}
+          </div>
 
           {error ? <div className="vc-error">{error}</div> : null}
 

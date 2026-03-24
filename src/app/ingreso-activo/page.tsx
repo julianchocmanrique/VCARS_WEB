@@ -8,9 +8,10 @@ import { listVehicles } from '@/lib/api';
 import { getCarPhotoByModel } from '@/lib/carPhoto';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { apiVehicleToEntry } from '@/lib/mapper';
-import { getDemoEntries } from '@/lib/demoData';
+import { applyDemoEntries } from '@/lib/demoData';
 import { BottomNav } from '@/components/BottomNav';
 import { BrandPill } from '@/components/BrandPill';
+import { ensureDemoFormsSeed } from '@/lib/orderForms';
 import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 
 function normalize(entry: Entry): Entry {
@@ -40,8 +41,9 @@ export default function IngresoActivoPage() {
 
     const localRole = getRole();
     const localRawEntries = getEntries();
-    const seeded = localRawEntries.length ? localRawEntries : getDemoEntries();
-    if (!localRawEntries.length) setEntries(seeded);
+    const seeded = applyDemoEntries(localRawEntries);
+    setEntries(seeded);
+    ensureDemoFormsSeed();
     const localEntries = seeded.map(normalize);
 
     queueMicrotask(() => {
@@ -54,8 +56,8 @@ export default function IngresoActivoPage() {
       try {
         const vehicles = await listVehicles({ take: 50 });
         const mapped = vehicles.map(apiVehicleToEntry).filter(Boolean) as Entry[];
-        if (!mapped.length) return;
-        const normalized = mapped.map(normalize);
+        const merged = applyDemoEntries(mapped);
+        const normalized = merged.map(normalize);
         setEntries(normalized);
         setEntriesState(normalized);
       } catch (e) {
