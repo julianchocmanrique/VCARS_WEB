@@ -35,6 +35,7 @@ export type Entry = {
   soatExpiry?: string;
   rtmExpiry?: string;
   wantsOldParts?: 'SI' | 'NO' | '';
+  intakePhotos?: string[];
   paso?: string;
   stepIndex?: number;
   status?: 'active' | 'done' | 'cancelled';
@@ -76,6 +77,9 @@ function normalizeEntry(value: unknown): Entry | null {
     soatExpiry: String(v.soatExpiry || ''),
     rtmExpiry: String(v.rtmExpiry || ''),
     wantsOldParts: (v.wantsOldParts === 'SI' || v.wantsOldParts === 'NO') ? v.wantsOldParts : '',
+    intakePhotos: Array.isArray(v.intakePhotos)
+      ? v.intakePhotos.map((x) => String(x || '')).filter(Boolean).slice(0, 6)
+      : [],
     paso: String(v.paso || ''),
     stepIndex: Number.isFinite(Number(v.stepIndex)) ? Number(v.stepIndex) : 0,
     status,

@@ -1,13 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { FormEvent, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
 import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
 import { createIngreso } from '@/lib/api';
 import { getEntries, setCurrentEntry, setEntries, type Entry } from '@/lib/storage';
 
 type HolderType = 'cliente' | 'empresa';
+
+const MAX_IMAGES = 6;
+const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -20,6 +23,15 @@ function buildOrderNumber(): string {
   const d = String(now.getDate()).padStart(2, '0');
   const t = String(now.getTime()).slice(-4);
   return `OS-${y}${m}${d}-${t}`;
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error(`No se pudo leer ${file.name}`));
+    reader.readAsDataURL(file);
+  });
 }
 
 export default function NuevoIngresoPage() {
@@ -51,11 +63,44 @@ export default function NuevoIngresoPage() {
   const [wantsOldParts, setWantsOldParts] = useState<'SI' | 'NO' | ''>('NO');
   const [soatExpiry, setSoatExpiry] = useState('');
   const [rtmExpiry, setRtmExpiry] = useState('');
+  const [intakePhotos, setIntakePhotos] = useState<string[]>([]);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const holderLabel = useMemo(() => (holderType === 'empresa' ? 'Empresa' : 'Cliente'), [holderType]);
+
+  async function onPickImages(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const remaining = Math.max(0, MAX_IMAGES - intakePhotos.length);
+    if (!remaining) {
+      setError(`Ya tienes el máximo de ${MAX_IMAGES} imágenes.`);
+      return;
+    }
+
+    const selected = files.slice(0, remaining);
+    const oversized = selected.find((f) => f.size > MAX_IMAGE_SIZE);
+    if (oversized) {
+      setError(`La imagen ${oversized.name} supera 3MB. Súbela más liviana.`);
+      return;
+    }
+
+    try {
+      const encoded = await Promise.all(selected.map(fileToDataUrl));
+      setIntakePhotos((prev) => [...prev, ...encoded].slice(0, MAX_IMAGES));
+      setError('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudieron cargar las imágenes.');
+    } finally {
+      e.target.value = '';
+    }
+  }
+
+  function removePhoto(index: number) {
+    setIntakePhotos((prev) => prev.filter((_, i) => i !== index));
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -113,6 +158,7 @@ export default function NuevoIngresoPage() {
       soatExpiry: soatExpiry.trim(),
       rtmExpiry: rtmExpiry.trim(),
       wantsOldParts,
+      intakePhotos,
       paso: 'Recepción (Ingreso)',
       stepIndex: 0,
       status: 'active',
@@ -340,6 +386,25 @@ export default function NuevoIngresoPage() {
               </div>
             </div>
           </div>
+
+          <h3 style={{ margin: '14px 0 8px' }}>Evidencias de ingreso (imágenes)</h3>
+          <label className="vc-label">Sube fotos del estado del vehículo (máx. {MAX_IMAGES}, 3MB c/u)</label>
+          <div className="vc-input-wrap">
+            <input type="file" accept="image/*" multiple onChange={onPickImages} />
+          </div>
+
+          {intakePhotos.length ? (
+            <div className="vc-photo-grid" style={{ marginTop: 10 }}>
+              {intakePhotos.map((src, idx) => (
+                <div key={`ph-${idx}`} className="vc-photo-item">
+                  <img src={src} alt={`Evidencia ${idx + 1}`} className="vc-photo-preview" />
+                  <button type="button" className="vc-btn" onClick={() => removePhoto(idx)} style={{ marginTop: 6 }}>
+                    Quitar
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
 
           {error ? <div className="vc-error">{error}</div> : null}
 

@@ -139,6 +139,19 @@ export default function VehiculoDetallePage() {
           </div>
         </section>
 
+        {vehicle?.intakePhotos?.length ? (
+          <section className="vc-card">
+            <h3>Evidencias de ingreso</h3>
+            <div className="vc-photo-grid">
+              {vehicle.intakePhotos.map((src, idx) => (
+                <a key={`ev-${idx}`} href={src} target="_blank" rel="noreferrer" className="vc-photo-item">
+                  <img src={src} alt={`Evidencia ${idx + 1}`} className="vc-photo-preview" />
+                </a>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <section className="vc-card">
           <h3>Linea de tiempo</h3>
           <ul className="vc-timeline">
