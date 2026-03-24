@@ -6,13 +6,25 @@ import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { canEditStep, getFormsForPlate, getRoleSteps, setStepField, setStepFields } from '@/lib/orderForms';
-import { getCurrentEntry, getEntries, getRole, getSession, type Role } from '@/lib/storage';
+import { getCurrentEntry, getEntries, getRole, getSession, setEntries, type Entry, type Role } from '@/lib/storage';
 
 type FieldDef = { key: string; label: string; placeholder: string };
 type QuoteRow = { sistema: string; trabajo: string; unitPrice: string; qty: string };
 type ExpenseRow = { actividad: string; tercero: string; cantidad: string; operario: string; costo: string };
 
 type InventoryValue = 'S' | 'N' | 'C' | 'I' | '';
+
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
+const PHOTO_SLOTS = [
+  { key: 'superior', label: 'Superior' },
+  { key: 'inferior', label: 'Inferior' },
+  { key: 'lateralDerecho', label: 'Lateral derecho' },
+  { key: 'lateralIzquierdo', label: 'Lateral izquierdo' },
+  { key: 'frontal', label: 'Frontal' },
+  { key: 'trasero', label: 'Trasero' },
+] as const;
+
+type PhotoSlotKey = (typeof PHOTO_SLOTS)[number]['key'];
 
 const STEP_FIELDS: Record<string, FieldDef[]> = {
   recepcion: [
@@ -77,6 +89,15 @@ function toNumberSafe(value: string): number {
   return Number.isFinite(v) ? v : 0;
 }
 
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('No se pudo leer ' + file.name));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function OrdenServicioPage() {
   const router = useRouter();
   const [role, setRole] = useState<Role>('administrativo');
@@ -84,6 +105,7 @@ export default function OrdenServicioPage() {
   const [startStepIndex, setStartStepIndex] = useState(0);
   const [formsByStep, setFormsByStep] = useState<Record<string, Record<string, string>>>({});
   const [stepPos, setStepPos] = useState(0);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     if (!getSession()) {
@@ -157,6 +179,19 @@ export default function OrdenServicioPage() {
     return parseJsonRows<Record<string, InventoryValue>>(formsByStep.recepcion?.inventarioAccesorios, {});
   }, [formsByStep.recepcion?.inventarioAccesorios]);
 
+  const receptionPhotos = useMemo(() => {
+    const fromForms = formsByStep.recepcion || {};
+    const fromEntry = getEntries().find((item) => String(item.placa || '').toUpperCase() === plate)?.intakePhotosByZone || {};
+    return {
+      superior: String(fromForms.photo_superior || fromEntry.superior || ''),
+      inferior: String(fromForms.photo_inferior || fromEntry.inferior || ''),
+      lateralDerecho: String(fromForms.photo_lateralDerecho || fromEntry.lateralDerecho || ''),
+      lateralIzquierdo: String(fromForms.photo_lateralIzquierdo || fromEntry.lateralIzquierdo || ''),
+      frontal: String(fromForms.photo_frontal || fromEntry.frontal || ''),
+      trasero: String(fromForms.photo_trasero || fromEntry.trasero || ''),
+    } as Record<PhotoSlotKey, string>;
+  }, [formsByStep.recepcion, plate]);
+
   function syncStepPatch(stepKey: string, patch: Record<string, string>) {
     if (!plate) return;
     const next = setStepFields(plate, stepKey, patch);
@@ -194,6 +229,49 @@ export default function OrdenServicioPage() {
   function setInventoryValue(item: string, value: InventoryValue) {
     const next = { ...inventory, [item]: value };
     syncStepPatch('recepcion', { inventarioAccesorios: JSON.stringify(next) });
+  }
+
+  function syncEntryReceptionPhotos(slot: PhotoSlotKey, src: string) {
+    const all = getEntries();
+    const idx = all.findIndex((item) => String(item.placa || '').toUpperCase() === plate);
+    if (idx < 0) return;
+
+    const currentEntry = all[idx] as Entry;
+    const nextZone = { ...(currentEntry.intakePhotosByZone || {}), [slot]: src };
+    const nextPhotos = PHOTO_SLOTS.map((item) => String(nextZone[item.key] || '')).filter(Boolean);
+
+    const nextEntry: Entry = {
+      ...currentEntry,
+      intakePhotosByZone: nextZone,
+      intakePhotos: nextPhotos,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const nextAll = [...all];
+    nextAll[idx] = nextEntry;
+    setEntries(nextAll);
+  }
+
+  async function onPickReceptionPhoto(slot: PhotoSlotKey, file?: File) {
+    if (!file) return;
+    if (file.size > MAX_IMAGE_SIZE) {
+      setUploadError('La imagen ' + file.name + ' supera 4MB. Súbela más liviana.');
+      return;
+    }
+
+    try {
+      const encoded = await fileToDataUrl(file);
+      syncStepPatch('recepcion', { ['photo_' + slot]: encoded });
+      syncEntryReceptionPhotos(slot, encoded);
+      setUploadError('');
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'No se pudo cargar la imagen.');
+    }
+  }
+
+  function removeReceptionPhoto(slot: PhotoSlotKey) {
+    syncStepPatch('recepcion', { ['photo_' + slot]: '' });
+    syncEntryReceptionPhotos(slot, '');
   }
 
   return (
@@ -275,6 +353,49 @@ export default function OrdenServicioPage() {
                       </div>
                     ))}
                   </div>
+
+                  <label className="vc-label" style={{ marginTop: 12 }}>Registro fotográfico por ángulo</label>
+                  <p className="vc-subtitle-small" style={{ marginTop: 4 }}>Sube o toma una foto por recuadro (superior, inferior, laterales, frontal y trasero).</p>
+
+                  <div className="vc-photo-grid" style={{ marginTop: 10 }}>
+                    {PHOTO_SLOTS.map((slot) => {
+                      const src = receptionPhotos[slot.key];
+                      return (
+                        <div key={slot.key} className="vc-photo-item">
+                          <p className="vc-photo-label">{slot.label}</p>
+
+                          {editable ? (
+                            <div className="vc-input-wrap">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                onChange={(e) => {
+                                  void onPickReceptionPhoto(slot.key, e.target.files?.[0]);
+                                  e.currentTarget.value = '';
+                                }}
+                              />
+                            </div>
+                          ) : null}
+
+                          {src ? (
+                            <>
+                              <img src={src} alt={'Foto ' + slot.label} className="vc-photo-preview" />
+                              {editable ? (
+                                <button type="button" className="vc-btn" style={{ marginTop: 6 }} onClick={() => removeReceptionPhoto(slot.key)}>
+                                  Quitar
+                                </button>
+                              ) : null}
+                            </>
+                          ) : (
+                            <div className="vc-photo-empty">Sin imagen</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {uploadError ? <div className="vc-error" style={{ marginTop: 8 }}>{uploadError}</div> : null}
                 </div>
               ) : null}
 

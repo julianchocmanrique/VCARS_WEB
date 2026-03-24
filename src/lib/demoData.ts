@@ -16,17 +16,22 @@ export type DemoFormsByPlate = Record<string, DemoFormsByStep>;
 
 const DEMO_VEHICLES: DemoVehicle[] = [
   { placa: 'BCD246', vehiculo: 'Volkswagen Gol 2014', cliente: 'Juli', telefono: '3001112233', empresa: 'juli@gm.com', stepIndex: 2, status: 'active' },
+
   { placa: 'TLL006', vehiculo: 'Suzuki Swift', cliente: 'Valentina Ruiz', telefono: '3012223344', empresa: 'congreso@gobierno.com', stepIndex: 0, status: 'active' },
   { placa: 'TLL005', vehiculo: 'Ford Fiesta', cliente: 'Santiago Castro', telefono: '3023334455', empresa: 'congreso@gobierno.com', stepIndex: 1, status: 'active' },
   { placa: 'TLL004', vehiculo: 'Chevrolet Onix', cliente: 'Diana Rojas', telefono: '3034445566', empresa: 'congreso@gobierno.com', stepIndex: 2, status: 'active' },
   { placa: 'PRUEBA123', vehiculo: 'Toyota Corolla', cliente: 'Equipo Congreso', telefono: '3045556677', empresa: 'congreso@gobierno.com', stepIndex: 3, status: 'active' },
   { placa: 'MUS818', vehiculo: 'Ford Mustang', cliente: 'Camilo Suarez', telefono: '3056667788', empresa: 'congreso@gobierno.com', stepIndex: 4, status: 'active' },
   { placa: 'LMB910', vehiculo: 'Lamborghini Huracan', cliente: 'Nicolas Vega', telefono: '3067778899', empresa: 'congreso@gobierno.com', stepIndex: 5, status: 'done' },
+  { placa: 'RNG445', vehiculo: 'Renault Duster', cliente: 'Patricia Gomez', telefono: '3123456789', empresa: 'congreso@gobierno.com', stepIndex: 2, status: 'active' },
+
   { placa: 'COR527', vehiculo: 'Toyota Corolla Cross', cliente: 'Laura Jimenez', telefono: '3078889900', empresa: 'alcaldia@alcaldia.com', stepIndex: 0, status: 'active' },
   { placa: 'TRX901', vehiculo: 'Chevrolet Tracker', cliente: 'Paula Perez', telefono: '3089990011', empresa: 'alcaldia@alcaldia.com', stepIndex: 2, status: 'active' },
   { placa: 'C8R001', vehiculo: 'Chevrolet Corvette C8', cliente: 'Andres Molina', telefono: '3090001122', empresa: 'alcaldia@alcaldia.com', stepIndex: 3, status: 'active' },
   { placa: 'SNT204', vehiculo: 'Nissan Sentra', cliente: 'Mario Lozano', telefono: '3101112233', empresa: 'alcaldia@alcaldia.com', stepIndex: 4, status: 'active' },
   { placa: 'BMW777', vehiculo: 'BMW Serie 3', cliente: 'Felipe Arias', telefono: '3112223344', empresa: 'alcaldia@alcaldia.com', stepIndex: 5, status: 'cancelled' },
+  { placa: 'KIA889', vehiculo: 'Kia Rio', cliente: 'Fernanda Lopez', telefono: '3134567890', empresa: 'alcaldia@alcaldia.com', stepIndex: 1, status: 'active' },
+  { placa: 'HYU330', vehiculo: 'Hyundai Tucson', cliente: 'Jorge Medina', telefono: '3145678901', empresa: 'alcaldia@alcaldia.com', stepIndex: 2, status: 'active' },
 ];
 
 type PhotoZone = 'superior' | 'inferior' | 'lateralDerecho' | 'lateralIzquierdo' | 'frontal' | 'trasero';

@@ -29,7 +29,6 @@ export default function IngresoActivoPage() {
   const [mounted, setMounted] = useState(false);
   const [role, setRoleState] = useState<Role>('administrativo');
   const [entries, setEntriesState] = useState<Entry[]>([]);
-  const [viewMode, setViewMode] = useState<'active' | 'history'>('active');
   const [warning, setWarning] = useState('');
 
   useEffect(() => {
@@ -83,20 +82,13 @@ export default function IngresoActivoPage() {
       return [current, ...entries];
     })();
 
-    const modeScoped = withCurrent.filter((item) =>
-      viewMode === 'history'
-        ? item.status === 'done' || item.status === 'cancelled'
-        : item.status !== 'done' && item.status !== 'cancelled',
-    );
-
-    if (role === 'tecnico') return modeScoped.filter((item) => item.status !== 'done' && item.status !== 'cancelled');
     if (role === 'cliente') {
       const identity = getClientIdentity();
-      return modeScoped.filter((item) => isEntryAllowed(identity, item));
+      return withCurrent.filter((item) => isEntryAllowed(identity, item));
     }
 
-    return modeScoped;
-  }, [entries, mounted, role, viewMode]);
+    return withCurrent;
+  }, [entries, mounted, role]);
 
   return (
     <main className="vc-page vc-shell process-premium-bg" suppressHydrationWarning>
@@ -112,15 +104,10 @@ export default function IngresoActivoPage() {
         <section className="vc-list-card process-wrap">
           <div className="vc-list-header">
             <div>
-              <h2 className="vc-list-title">{role === 'administrativo' && viewMode === 'history' ? 'Historial' : 'Explore Fleet'}</h2>
+              <h2 className="vc-list-title">Explore Fleet</h2>
               <p className="vc-list-subtitle">Tarjetas de vehículos en proceso</p>
             </div>
             <div className="vc-list-tools">
-              {role === 'administrativo' ? (
-                <button className="vc-pill" onClick={() => setViewMode((m) => (m === 'active' ? 'history' : 'active'))}>
-                  {viewMode === 'active' ? 'ACTIVOS' : 'HISTORIAL'}
-                </button>
-              ) : null}
               <span className="vc-pill">{filtered.length}</span>
             </div>
           </div>
