@@ -54,6 +54,8 @@ export type ApiVehicle = {
   id: string;
   plate: string;
   model?: string;
+  color?: string;
+  brand?: string;
   customer?: { name?: string; phone?: string };
   entries?: Array<{ id: string; createdAt?: string }>;
   createdAt?: string;
@@ -125,23 +127,31 @@ export async function createIngreso(payload: {
   plate: string;
   customerName: string;
   customerPhone?: string;
+  customerEmail?: string;
   vehicleModel?: string;
+  vehicleColor?: string;
   receivedBy?: string;
+  notes?: string;
+  mileageKm?: number;
+  fuelLevel?: string;
 }) {
   const vehicle = await createVehicle({
     plate: payload.plate,
     model: payload.vehicleModel || '',
+    color: payload.vehicleColor || '',
     customer: {
       name: payload.customerName,
       phone: payload.customerPhone || '',
-      email: '',
+      email: payload.customerEmail || '',
     },
   });
 
   const entry = await createEntry({
     vehicleId: vehicle.id,
     receivedBy: payload.receivedBy || '',
-    notes: '',
+    notes: payload.notes || '',
+    mileageKm: typeof payload.mileageKm === 'number' ? payload.mileageKm : undefined,
+    fuelLevel: payload.fuelLevel || '',
   });
 
   return { vehicle, entry };

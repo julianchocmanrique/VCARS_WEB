@@ -29,10 +29,12 @@ export function getDemoEntries(): Entry[] {
     const ts = new Date(now - index * 1000 * 60 * 14).toISOString();
     return {
       id: `demo-${item.placa}`,
+      orderNumber: `OS-DEMO-${index + 1}`,
       placa: item.placa,
       cliente: item.cliente,
       telefono: item.telefono,
       vehiculo: item.vehiculo,
+      color: 'No registrado',
       empresa: companyByPlate(item.placa),
       paso: normalizeStepTitle('Recepcion y orden de servicio'),
       stepIndex: 0,

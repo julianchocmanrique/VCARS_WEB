@@ -16,11 +16,25 @@ export type Session = {
 
 export type Entry = {
   id: string;
+  orderNumber?: string;
   placa: string;
   cliente?: string;
+  nitCc?: string;
+  direccion?: string;
   telefono?: string;
+  email?: string;
   vehiculo?: string;
+  color?: string;
   empresa?: string;
+  invoiceName?: string;
+  paymentMethod?: 'contado' | 'credito' | '';
+  creditDays?: string;
+  fuelLevel?: string;
+  receivedBy?: string;
+  expectedDeliveryDate?: string;
+  soatExpiry?: string;
+  rtmExpiry?: string;
+  wantsOldParts?: 'SI' | 'NO' | '';
   paso?: string;
   stepIndex?: number;
   status?: 'active' | 'done' | 'cancelled';
