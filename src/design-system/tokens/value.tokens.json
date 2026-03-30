@@ -1,0 +1,210 @@
+{
+  "meta": {
+    "name": "vcars-design-system",
+    "version": "1.0.0",
+    "source": "VCARS WEB Product Dossier",
+    "description": "Design system tokens inferred from VCARS WEB product needs and B2B SaaS workflow."
+  },
+  "color": {
+    "primitive": {
+      "neutral": {
+        "0": "#FFFFFF",
+        "25": "#F8FAFC",
+        "50": "#F1F5F9",
+        "100": "#E2E8F0",
+        "200": "#CBD5E1",
+        "300": "#94A3B8",
+        "400": "#64748B",
+        "500": "#475569",
+        "600": "#334155",
+        "700": "#1E293B",
+        "800": "#0F172A",
+        "900": "#08111F",
+        "950": "#020617"
+      },
+      "cyan": {
+        "50": "#ECFEFF",
+        "100": "#CFFAFE",
+        "200": "#A5F3FC",
+        "300": "#67E8F9",
+        "400": "#22D3EE",
+        "500": "#06B6D4",
+        "600": "#0891B2",
+        "700": "#0E7490",
+        "800": "#155E75",
+        "900": "#164E63"
+      },
+      "blue": {
+        "100": "#DBEAFE",
+        "300": "#93C5FD",
+        "500": "#3B82F6",
+        "700": "#1D4ED8",
+        "900": "#1E3A8A"
+      },
+      "green": {
+        "100": "#DCFCE7",
+        "300": "#86EFAC",
+        "500": "#22C55E",
+        "700": "#15803D",
+        "900": "#14532D"
+      },
+      "amber": {
+        "100": "#FEF3C7",
+        "300": "#FCD34D",
+        "500": "#F59E0B",
+        "700": "#B45309",
+        "900": "#78350F"
+      },
+      "red": {
+        "100": "#FEE2E2",
+        "300": "#FCA5A5",
+        "500": "#EF4444",
+        "700": "#B91C1C",
+        "900": "#7F1D1D"
+      },
+      "violet": {
+        "100": "#EDE9FE",
+        "300": "#C4B5FD",
+        "500": "#8B5CF6",
+        "700": "#6D28D9",
+        "900": "#4C1D95"
+      }
+    },
+    "semantic": {
+      "text": {
+        "primary": {"default": "{color.primitive.neutral.50}"},
+        "secondary": {"default": "{color.primitive.neutral.300}"},
+        "tertiary": {"default": "{color.primitive.neutral.400}"},
+        "inverse": {"default": "{color.primitive.neutral.900}"},
+        "link": {"default": "{color.primitive.cyan.400}", "hover": "{color.primitive.cyan.300}"},
+        "disabled": {"default": "{color.primitive.neutral.500}"},
+        "success": {"default": "{color.primitive.green.500}"},
+        "warning": {"default": "{color.primitive.amber.500}"},
+        "danger": {"default": "{color.primitive.red.500}"},
+        "info": {"default": "{color.primitive.blue.500}"}
+      },
+      "background": {
+        "canvas": {"default": "{color.primitive.neutral.950}"},
+        "surface": {
+          "base": "{color.primitive.neutral.900}",
+          "raised": "{color.primitive.neutral.800}",
+          "overlay": "rgba(8, 17, 31, 0.88)"
+        },
+        "action": {
+          "primary": {"default": "{color.primitive.cyan.500}", "hover": "{color.primitive.cyan.400}", "pressed": "{color.primitive.cyan.600}", "disabled": "{color.primitive.neutral.700}"},
+          "secondary": {"default": "{color.primitive.neutral.800}", "hover": "{color.primitive.neutral.700}", "pressed": "{color.primitive.neutral.600}", "disabled": "{color.primitive.neutral.800}"}
+        },
+        "status": {
+          "success": {"subtle": "rgba(34, 197, 94, 0.16)", "strong": "{color.primitive.green.700}"},
+          "warning": {"subtle": "rgba(245, 158, 11, 0.16)", "strong": "{color.primitive.amber.700}"},
+          "danger": {"subtle": "rgba(239, 68, 68, 0.16)", "strong": "{color.primitive.red.700}"},
+          "info": {"subtle": "rgba(59, 130, 246, 0.16)", "strong": "{color.primitive.blue.700}"}
+        },
+        "role": {
+          "admin": {"default": "{color.primitive.violet.700}"},
+          "technician": {"default": "{color.primitive.blue.700}"},
+          "customer": {"default": "{color.primitive.green.700}"},
+          "company": {"default": "{color.primitive.amber.700}"}
+        },
+        "stage": {
+          "reception": {"default": "{color.primitive.blue.700}"},
+          "diagnosis": {"default": "{color.primitive.amber.700}"},
+          "quotation": {"default": "{color.primitive.cyan.700}"},
+          "authorization": {"default": "{color.primitive.violet.700}"},
+          "execution": {"default": "{color.primitive.green.700}"},
+          "delivery": {"default": "{color.primitive.neutral.700}"}
+        }
+      },
+      "border": {
+        "subtle": {"default": "rgba(148, 163, 184, 0.16)"},
+        "strong": {"default": "rgba(148, 163, 184, 0.28)"},
+        "accent": {"default": "rgba(34, 211, 238, 0.42)"},
+        "focus": {"default": "{color.primitive.cyan.400}"},
+        "danger": {"default": "{color.primitive.red.500}"}
+      },
+      "icon": {
+        "primary": {"default": "{color.semantic.text.primary.default}"},
+        "secondary": {"default": "{color.semantic.text.secondary.default}"},
+        "accent": {"default": "{color.primitive.cyan.400}"},
+        "success": {"default": "{color.primitive.green.500}"},
+        "warning": {"default": "{color.primitive.amber.500}"},
+        "danger": {"default": "{color.primitive.red.500}"}
+      }
+    }
+  },
+  "text": {
+    "font": {
+      "family": {
+        "sans": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "mono": "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace"
+      },
+      "weight": {"regular": 400, "medium": 500, "semibold": 600, "bold": 700}
+    },
+    "display": {
+      "size-40": {"fontSize": 40, "lineHeight": 48, "weight": 700, "letterSpacing": -0.8},
+      "size-32": {"fontSize": 32, "lineHeight": 40, "weight": 700, "letterSpacing": -0.6}
+    },
+    "heading": {
+      "size-24": {"fontSize": 24, "lineHeight": 32, "weight": 700, "letterSpacing": -0.4},
+      "size-20": {"fontSize": 20, "lineHeight": 28, "weight": 600, "letterSpacing": -0.3},
+      "size-18": {"fontSize": 18, "lineHeight": 28, "weight": 600, "letterSpacing": -0.2}
+    },
+    "title": {
+      "size-16": {"fontSize": 16, "lineHeight": 24, "weight": 600, "letterSpacing": -0.1},
+      "size-14": {"fontSize": 14, "lineHeight": 20, "weight": 600, "letterSpacing": -0.05}
+    },
+    "body": {
+      "size-16": {"fontSize": 16, "lineHeight": 24, "weight": 400, "letterSpacing": 0},
+      "size-14": {"fontSize": 14, "lineHeight": 20, "weight": 400, "letterSpacing": 0},
+      "size-12": {"fontSize": 12, "lineHeight": 16, "weight": 400, "letterSpacing": 0}
+    },
+    "label": {
+      "size-14": {"fontSize": 14, "lineHeight": 20, "weight": 500, "letterSpacing": 0},
+      "size-12": {"fontSize": 12, "lineHeight": 16, "weight": 500, "letterSpacing": 0.1}
+    },
+    "code": {
+      "size-12": {"fontSize": 12, "lineHeight": 16, "weight": 500, "letterSpacing": 0}
+    }
+  },
+  "space": {
+    "0": 0,
+    "2": 2,
+    "4": 4,
+    "8": 8,
+    "12": 12,
+    "16": 16,
+    "20": 20,
+    "24": 24,
+    "32": 32,
+    "40": 40,
+    "48": 48,
+    "64": 64,
+    "80": 80,
+    "96": 96
+  },
+  "radius": {
+    "none": 0,
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 20,
+    "2xl": 24,
+    "full": 999
+  },
+  "elevation": {
+    "xs": "0 1px 2px rgba(2, 6, 23, 0.20)",
+    "sm": "0 4px 12px rgba(2, 6, 23, 0.24)",
+    "md": "0 8px 24px rgba(2, 6, 23, 0.28)",
+    "lg": "0 20px 48px rgba(2, 6, 23, 0.36)"
+  },
+  "motion": {
+    "duration": {"instant": 80, "fast": 160, "moderate": 240, "slow": 360},
+    "easing": {"standard": "cubic-bezier(0.2, 0, 0, 1)", "emphasized": "cubic-bezier(0.2, 0, 0, 1.12)"}
+  },
+  "component": {
+    "button": {"padding": {"x": "{space.16}", "y": "{space.12}"}, "radius": "{radius.md}", "gap": "{space.8}"},
+    "card": {"padding": "{space.24}", "radius": "{radius.lg}", "gap": "{space.16}"},
+    "input": {"padding": {"x": "{space.16}", "y": "{space.12}"}, "radius": "{radius.md}", "height": 48}
+  }
+}

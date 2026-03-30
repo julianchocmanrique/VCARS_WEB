@@ -1,0 +1,26 @@
+{
+  "color": {
+    "semantic": {
+      "text": {
+        "primary": {"default": "#F8FAFC"},
+        "secondary": {"default": "#CBD5E1"},
+        "tertiary": {"default": "#94A3B8"},
+        "inverse": {"default": "#0F172A"},
+        "link": {"default": "#22D3EE", "hover": "#67E8F9"},
+        "disabled": {"default": "#475569"},
+        "success": {"default": "#22C55E"},
+        "warning": {"default": "#F59E0B"},
+        "danger": {"default": "#EF4444"},
+        "info": {"default": "#3B82F6"}
+      },
+      "background": {
+        "canvas": {"default": "#020617"},
+        "surface": {"base": "#08111F", "raised": "#0F172A", "overlay": "rgba(8, 17, 31, 0.88)"},
+        "action": {
+          "primary": {"default": "#06B6D4", "hover": "#22D3EE", "pressed": "#0891B2", "disabled": "#1E293B"},
+          "secondary": {"default": "#0F172A", "hover": "#1E293B", "pressed": "#334155", "disabled": "#0F172A"}
+        }
+      }
+    }
+  }
+}
