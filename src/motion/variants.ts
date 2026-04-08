@@ -184,20 +184,21 @@ export const vcarsVariants = {
   },
 
   pageSwap(reduced: boolean): Variants {
+    // NOTE: Avoid CSS filter/blur here.
+    // Mobile Safari + framer-motion can intermittently fail to animate "filter"
+    // during route transitions, leaving pages stuck invisible until reload.
     return {
       hidden: reduced
         ? { opacity: 0 }
         : {
             opacity: 0,
             y: vcarsMotion.distance.storyY * 0.35,
-            filter: vcarsMotion.blur.component,
           },
       show: reduced
         ? { opacity: 1 }
         : {
             opacity: 1,
             y: 0,
-            filter: 'blur(0px)',
             transition: {
               duration: vcarsMotion.duration.story.base,
               ease: vcarsMotion.ease.refined,
@@ -208,7 +209,6 @@ export const vcarsVariants = {
         : {
             opacity: 0,
             y: -8,
-            filter: vcarsMotion.blur.micro,
             transition: {
               duration: vcarsMotion.duration.story.fast,
               ease: vcarsMotion.ease.exit,
