@@ -5,8 +5,11 @@ const nextConfig: NextConfig = {
 
   // Deploy under http://<host>/vcars
   basePath: "/vcars",
-  assetPrefix: "/vcars/",
   trailingSlash: true,
+
+  env: {
+    NEXT_PUBLIC_BASE_PATH: "/vcars",
+  },
 };
 
 export default nextConfig;

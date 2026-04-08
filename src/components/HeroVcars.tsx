@@ -1,6 +1,9 @@
 'use client';
 
 import Image from 'next/image';
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { vcarsMotion } from '@/motion/tokens';
@@ -61,7 +64,7 @@ export function HeroVcars({
       {!hasCopy ? (
         <div className="pointer-events-none absolute inset-0 z-[0] overflow-hidden">
           <Image
-            src="/cars/car2-hero-hd-flip.jpg"
+            src={`${BASE_PATH}/cars/car2-hero-hd-flip.jpg`}
             alt="Fondo VCARS"
             fill
             priority
@@ -86,7 +89,7 @@ export function HeroVcars({
       <div className={`relative z-[2] mx-auto w-full max-w-[1240px] px-4 sm:px-5 md:px-8 ${hasCopy ? 'pb-10 pt-5 md:pb-16 md:pt-8' : 'pb-6 pt-4 md:pb-8 md:pt-5'}`}>
         <div className={`flex items-center justify-between ${hasCopy ? 'mb-6 md:mb-10' : 'mb-4 md:mb-5'}`}>
           <div className="inline-flex items-center gap-3 rounded-full border border-[rgba(31,95,159,0.45)] bg-[rgba(26,27,30,0.76)] px-4 py-2">
-            <Image src="/vcars-v.png" alt="Vcars" width={22} height={22} className="h-[22px] w-[22px]" />
+            <Image src={`${BASE_PATH}/vcars-v.png`} alt="Vcars" width={22} height={22} className="h-[22px] w-[22px]" />
             <span className="text-sm font-semibold tracking-[0.18em] text-[#f5f5f5]">VCARS</span>
           </div>
 
@@ -186,7 +189,7 @@ export function HeroVcars({
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_65%_30%,rgba(69,164,237,0.16),transparent_44%)]" />
               <div className={`relative overflow-hidden rounded-[20px] border border-[rgba(58,61,66,0.55)] ${hasCopy ? 'aspect-[16/10]' : 'aspect-[16/8.4] md:aspect-[16/9]'}`}>
                 <Image
-                  src="/cars/car2-hero-hd-flip.jpg"
+                  src={`${BASE_PATH}/cars/car2-hero-hd-flip.jpg`}
                   alt="Vcars premium hero"
                   fill
                   priority

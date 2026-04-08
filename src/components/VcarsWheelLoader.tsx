@@ -1,6 +1,8 @@
 'use client';
 
 import Image from 'next/image';
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 import { useEffect, useMemo, useState } from 'react';
 import { motion, useReducedMotion, type TargetAndTransition } from 'framer-motion';
 import { vcarsMotion } from '@/motion/tokens';
@@ -111,7 +113,7 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
             }}
           >
             <Image
-              src="/cars/llanta-splash-premium.png"
+              src={`${BASE_PATH}/cars/llanta-splash-premium.png`}
               alt="Llanta VCARS"
               fill
               priority
