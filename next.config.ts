@@ -1,8 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactCompiler: true,
+
+  // Deploy under http://<host>/vcars
+  basePath: "/vcars",
+  assetPrefix: "/vcars/",
+  trailingSlash: true,
 };
 
 export default nextConfig;
