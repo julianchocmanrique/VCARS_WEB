@@ -19,35 +19,43 @@ function modelKey(model?: string, plate?: string): string {
   return 'tracker';
 }
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
+function withBasePath(path: string): string {
+  if (!BASE_PATH) return path;
+  if (!path.startsWith('/')) return `${BASE_PATH}/${path}`;
+  return `${BASE_PATH}${path}`;
+}
+
 const MODEL_MAIN_PHOTO: Record<string, string> = {
-  gol: '/cars/volkswagen-gol.jpg',
-  swift: '/cars/suzuki-swift.jpg',
-  corolla: '/cars/toyota-corolla.jpg',
-  mustang: '/cars/ford-mustang.jpg',
-  huracan: '/cars/lamborghini-huracan.jpg',
-  corvette: '/cars/chevrolet-corvette.jpg',
-  tracker: '/cars/chevrolet-tracker.jpg',
+  gol: withBasePath('/cars/volkswagen-gol.jpg'),
+  swift: withBasePath('/cars/suzuki-swift.jpg'),
+  corolla: withBasePath('/cars/toyota-corolla.jpg'),
+  mustang: withBasePath('/cars/ford-mustang.jpg'),
+  huracan: withBasePath('/cars/lamborghini-huracan.jpg'),
+  corvette: withBasePath('/cars/chevrolet-corvette.jpg'),
+  tracker: withBasePath('/cars/chevrolet-tracker.jpg'),
 };
 
 const EVIDENCE_POOL = [
-  '/cars/car2-hero-hd.jpg',
-  '/cars/car2-hero-hd-flip.jpg',
-  '/cars/car2-hero.jpg',
-  '/cars/car2-original.jpg',
-  '/cars/porsche-sunset.jpeg',
-  '/cars/llanta-loader.jpg',
-  '/cars/suzuki-swift.jpg',
-  '/cars/toyota-corolla.jpg',
-  '/cars/ford-mustang.jpg',
-  '/cars/lamborghini-huracan.jpg',
-  '/cars/chevrolet-corvette.jpg',
-  '/cars/chevrolet-tracker.jpg',
-  '/cars/volkswagen-gol.jpg',
+  withBasePath('/cars/car2-hero-hd.jpg'),
+  withBasePath('/cars/car2-hero-hd-flip.jpg'),
+  withBasePath('/cars/car2-hero.jpg'),
+  withBasePath('/cars/car2-original.jpg'),
+  withBasePath('/cars/porsche-sunset.jpeg'),
+  withBasePath('/cars/llanta-loader.jpg'),
+  withBasePath('/cars/suzuki-swift.jpg'),
+  withBasePath('/cars/toyota-corolla.jpg'),
+  withBasePath('/cars/ford-mustang.jpg'),
+  withBasePath('/cars/lamborghini-huracan.jpg'),
+  withBasePath('/cars/chevrolet-corvette.jpg'),
+  withBasePath('/cars/chevrolet-tracker.jpg'),
+  withBasePath('/cars/volkswagen-gol.jpg'),
 ] as const;
 
 export function getCarPhotoByModel(model?: string, plate?: string): string {
   const key = modelKey(model, plate);
-  return MODEL_MAIN_PHOTO[key] || '/cars/chevrolet-tracker.jpg';
+  return MODEL_MAIN_PHOTO[key] || withBasePath('/cars/chevrolet-tracker.jpg');
 }
 
 type EvidenceZone = 'superior' | 'inferior' | 'lateralDerecho' | 'lateralIzquierdo' | 'frontal' | 'trasero';
