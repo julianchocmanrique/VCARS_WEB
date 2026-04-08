@@ -5,7 +5,10 @@ const nextConfig: NextConfig = {
 
   // Deploy under http://<host>/vcars
   basePath: "/vcars",
-  trailingSlash: true,
+
+  // Avoid redirect loops / blank transitions on client navigation.
+  // Nginx already normalizes /vcars -> /vcars/.
+  trailingSlash: false,
 
   env: {
     NEXT_PUBLIC_BASE_PATH: "/vcars",
