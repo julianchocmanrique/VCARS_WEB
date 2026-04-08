@@ -2,8 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
-import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
+import { FlowHeader } from '@/components/FlowHeader';
+import { ActionButton, type ActionButtonState } from '@/components/ui/ActionButton';
+import { ActionFeedback, type ActionFeedbackType } from '@/components/ui/ActionFeedback';
 import { createIngreso } from '@/lib/api';
 import { getEntries, setCurrentEntry, setEntries, type Entry } from '@/lib/storage';
 
@@ -30,6 +32,11 @@ const EMPTY_INTAKE_PHOTOS: Record<PhotoSlotKey, string> = {
   frontal: '',
   trasero: '',
 };
+
+type FeedbackState = {
+  type: ActionFeedbackType;
+  message: string;
+} | null;
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -86,6 +93,8 @@ export default function NuevoIngresoPage() {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [submitState, setSubmitState] = useState<ActionButtonState>('idle');
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const holderLabel = useMemo(() => (holderType === 'empresa' ? 'Empresa' : 'Cliente'), [holderType]);
 
@@ -94,7 +103,10 @@ export default function NuevoIngresoPage() {
     if (!file) return;
 
     if (file.size > MAX_IMAGE_SIZE) {
-      setError(`La imagen ${file.name} supera 3MB. Súbela más liviana.`);
+      const message = `La imagen ${file.name} supera 3MB. Súbela más liviana.`;
+      setError(message);
+      setSubmitState('error');
+      setFeedback({ type: 'error', message });
       e.target.value = '';
       return;
     }
@@ -103,8 +115,13 @@ export default function NuevoIngresoPage() {
       const encoded = await fileToDataUrl(file);
       setIntakePhotosByZone((prev) => ({ ...prev, [slot]: encoded }));
       setError('');
+      setSubmitState('idle');
+      setFeedback(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo cargar la imagen.');
+      const message = err instanceof Error ? err.message : 'No se pudo cargar la imagen.';
+      setError(message);
+      setSubmitState('error');
+      setFeedback({ type: 'error', message });
     } finally {
       e.target.value = '';
     }
@@ -112,22 +129,34 @@ export default function NuevoIngresoPage() {
 
   function removePhoto(slot: PhotoSlotKey) {
     setIntakePhotosByZone((prev) => ({ ...prev, [slot]: '' }));
+    setSubmitState('idle');
+    setFeedback(null);
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
 
     if (!orderNumber.trim() || !entryDate.trim() || !placa.trim() || !holderName.trim() || !telefono.trim() || !vehiculo.trim() || !recibio.trim()) {
-      setError('Completa los campos obligatorios para guardar el ingreso.');
+      const message = 'Completa los campos obligatorios para guardar el ingreso.';
+      setError(message);
+      setSubmitState('error');
+      setFeedback({ type: 'error', message });
+      setTimeout(() => setSubmitState('idle'), 700);
       return;
     }
 
     if (paymentMethod === 'credito' && !creditDays.trim()) {
-      setError('Si la forma de pago es crédito, debes indicar los días de crédito.');
+      const message = 'Si la forma de pago es crédito, debes indicar los días de crédito.';
+      setError(message);
+      setSubmitState('error');
+      setFeedback({ type: 'error', message });
+      setTimeout(() => setSubmitState('idle'), 700);
       return;
     }
 
     setSaving(true);
+    setSubmitState('loading');
+    setFeedback(null);
     setError('');
 
     let backend: { vehicle?: { id?: string }; entry?: { id?: string } } | null = null;
@@ -189,9 +218,11 @@ export default function NuevoIngresoPage() {
     const next = [payload, ...list];
     setEntries(next);
     setCurrentEntry(payload);
+    setSubmitState('success');
+    setFeedback({ type: 'success', message: `Ingreso ${payload.placa} guardado correctamente.` });
 
     setSaving(false);
-    router.push('/ingreso-activo');
+    setTimeout(() => router.push('/ingreso-activo'), 260);
   }
 
   return (
@@ -200,11 +231,7 @@ export default function NuevoIngresoPage() {
       <div className="vc-bg-orb-right" />
 
       <section className="vc-panel vc-panel-narrow">
-        <header className="vc-head-block">
-          <BrandPill />
-          <h1 className="vc-title">Nuevo ingreso</h1>
-          <p className="vc-subtitle">Diligencia orden de servicio inicial con campos reales del taller</p>
-        </header>
+        <FlowHeader subtitle="Nuevo ingreso" />
 
         <form className="vc-form-card" onSubmit={onSubmit}>
           <h3 style={{ margin: '0 0 8px' }}>Control de orden</h3>
@@ -409,18 +436,21 @@ export default function NuevoIngresoPage() {
                 <div key={slot.key} className="vc-photo-item">
                   <p className="vc-photo-label">{slot.label}</p>
                   <div className="vc-input-wrap">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => onPickImage(slot.key, e)}
-                    />
+                    <input type="file" accept="image/*" onChange={(e) => onPickImage(slot.key, e)} />
                   </div>
                   {src ? (
                     <>
                       <img src={src} alt={`Foto ${slot.label}`} className="vc-photo-preview" />
-                      <button type="button" className="vc-btn" onClick={() => removePhoto(slot.key)} style={{ marginTop: 6 }}>
+                      <ActionButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        state="idle"
+                        onClick={() => removePhoto(slot.key)}
+                        className="mt-1.5 w-auto"
+                      >
                         Quitar
-                      </button>
+                      </ActionButton>
                     </>
                   ) : (
                     <div className="vc-photo-empty">Sin imagen</div>
@@ -430,11 +460,17 @@ export default function NuevoIngresoPage() {
             })}
           </div>
 
-          {error ? <div className="vc-error">{error}</div> : null}
+          <ActionFeedback show={Boolean(error)} type="error" message={error} />
 
-          <button className="vc-login-btn" disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar ingreso'}
-          </button>
+          <ActionFeedback
+            show={Boolean(feedback)}
+            type={feedback?.type || 'info'}
+            message={feedback?.message || ''}
+          />
+
+          <ActionButton type="submit" variant="primary" state={submitState} disabled={saving}>
+            {saving ? 'Guardando ingreso...' : 'Guardar ingreso'}
+          </ActionButton>
         </form>
       </section>
 

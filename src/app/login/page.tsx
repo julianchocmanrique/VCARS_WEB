@@ -4,14 +4,22 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
 import { DEMO_USERS, signIn } from '@/lib/auth';
 import { getSession } from '@/lib/storage';
-import { BrandPill } from '@/components/BrandPill';
+import { FlowHeader } from '@/components/FlowHeader';
+import { ActionButton, type ActionButtonState } from '@/components/ui/ActionButton';
+import { ActionFeedback, type ActionFeedbackType } from '@/components/ui/ActionFeedback';
+
+type FeedbackState = {
+  type: ActionFeedbackType;
+  message: string;
+} | null;
 
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [submitState, setSubmitState] = useState<ActionButtonState>('idle');
+  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   useEffect(() => {
     if (getSession()) router.replace('/home');
@@ -20,23 +28,28 @@ export default function LoginPage() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setSubmitState('loading');
+    setFeedback(null);
+
     const res = await signIn(username, password);
     setLoading(false);
+
     if (!res.ok) {
-      setError(res.error);
+      setSubmitState('error');
+      setFeedback({ type: 'error', message: res.error });
+      setTimeout(() => setSubmitState('idle'), 720);
       return;
     }
-    router.replace('/home');
+
+    setSubmitState('success');
+    setFeedback({ type: 'success', message: 'Acceso concedido. Entrando al panel...' });
+    setTimeout(() => router.replace('/home'), 320);
   }
 
   return (
     <main className="vc-page vc-auth-page">
       <section className="vc-auth-card">
-        <header className="vc-head-block">
-          <BrandPill />
-          <p className="vc-head-sub">Inicia sesión</p>
-        </header>
+        <FlowHeader subtitle="Inicia sesión" />
 
         <form onSubmit={onSubmit} className="vc-form-card">
           <label className="vc-label">Usuario</label>
@@ -60,11 +73,15 @@ export default function LoginPage() {
             />
           </div>
 
-          {error ? <div className="vc-error">{error}</div> : null}
+          <ActionFeedback
+            show={Boolean(feedback)}
+            type={feedback?.type || 'info'}
+            message={feedback?.message || ''}
+          />
 
-          <button className="vc-login-btn" disabled={loading}>
+          <ActionButton type="submit" variant="primary" state={submitState} disabled={loading} className="mt-3">
             {loading ? 'Validando...' : 'Ingresar'}
-          </button>
+          </ActionButton>
 
           <div className="vc-chip-row">
             {DEMO_USERS.map((u) => (
@@ -74,6 +91,8 @@ export default function LoginPage() {
                 onClick={() => {
                   setUsername(u.username);
                   setPassword(u.password);
+                  setFeedback(null);
+                  setSubmitState('idle');
                 }}
                 type="button"
               >

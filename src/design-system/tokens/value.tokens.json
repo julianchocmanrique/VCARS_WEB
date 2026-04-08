@@ -1,134 +1,206 @@
 {
   "meta": {
     "name": "vcars-design-system",
-    "version": "1.0.0",
-    "source": "VCARS WEB Product Dossier",
-    "description": "Design system tokens inferred from VCARS WEB product needs and B2B SaaS workflow."
+    "version": "2.0.0",
+    "source": "VCARS logo palette + product screens",
+    "description": "Scalable design tokens for VCARS B2B SaaS workshop operations."
   },
   "color": {
     "primitive": {
       "neutral": {
-        "0": "#FFFFFF",
-        "25": "#F8FAFC",
-        "50": "#F1F5F9",
-        "100": "#E2E8F0",
-        "200": "#CBD5E1",
-        "300": "#94A3B8",
-        "400": "#64748B",
-        "500": "#475569",
-        "600": "#334155",
-        "700": "#1E293B",
-        "800": "#0F172A",
-        "900": "#08111F",
-        "950": "#020617"
+        "0": "#ffffff",
+        "50": "#f4f6f8",
+        "100": "#e8ecf1",
+        "200": "#cfd6df",
+        "300": "#aeb8c4",
+        "400": "#8793a3",
+        "500": "#627085",
+        "600": "#455165",
+        "700": "#2e3849",
+        "800": "#1c2431",
+        "900": "#111722",
+        "950": "#090d14"
       },
-      "cyan": {
-        "50": "#ECFEFF",
-        "100": "#CFFAFE",
-        "200": "#A5F3FC",
-        "300": "#67E8F9",
-        "400": "#22D3EE",
-        "500": "#06B6D4",
-        "600": "#0891B2",
-        "700": "#0E7490",
-        "800": "#155E75",
-        "900": "#164E63"
+      "brand-blue": {
+        "100": "#d7e8f9",
+        "200": "#b5d3f3",
+        "300": "#8ab9ea",
+        "400": "#5f9edc",
+        "500": "#2a6fb7",
+        "600": "#1f5f9f",
+        "700": "#174f86",
+        "800": "#123f6b",
+        "900": "#0d2f50"
       },
-      "blue": {
-        "100": "#DBEAFE",
-        "300": "#93C5FD",
-        "500": "#3B82F6",
-        "700": "#1D4ED8",
-        "900": "#1E3A8A"
+      "brand-sky": {
+        "100": "#dff1ff",
+        "200": "#bfe4ff",
+        "300": "#94ceff",
+        "400": "#69b7f5",
+        "500": "#45a4ed",
+        "600": "#2f8ed6",
+        "700": "#2273b1",
+        "800": "#1a5c8f",
+        "900": "#15496f"
       },
-      "green": {
-        "100": "#DCFCE7",
-        "300": "#86EFAC",
-        "500": "#22C55E",
-        "700": "#15803D",
-        "900": "#14532D"
+      "brand-red": {
+        "100": "#ffe1e4",
+        "200": "#ffbcc5",
+        "300": "#ff8e9f",
+        "400": "#ff5f77",
+        "500": "#ea223d",
+        "600": "#d61934",
+        "700": "#b7122b",
+        "800": "#920e22",
+        "900": "#6e0a1a"
       },
-      "amber": {
-        "100": "#FEF3C7",
-        "300": "#FCD34D",
-        "500": "#F59E0B",
-        "700": "#B45309",
-        "900": "#78350F"
+      "status-green": {
+        "100": "#dcfce7",
+        "300": "#86efac",
+        "500": "#22c55e",
+        "700": "#15803d"
       },
-      "red": {
-        "100": "#FEE2E2",
-        "300": "#FCA5A5",
-        "500": "#EF4444",
-        "700": "#B91C1C",
-        "900": "#7F1D1D"
-      },
-      "violet": {
-        "100": "#EDE9FE",
-        "300": "#C4B5FD",
-        "500": "#8B5CF6",
-        "700": "#6D28D9",
-        "900": "#4C1D95"
+      "status-amber": {
+        "100": "#fef3c7",
+        "300": "#fcd34d",
+        "500": "#f59e0b",
+        "700": "#b45309"
       }
     },
     "semantic": {
-      "text": {
-        "primary": {"default": "{color.primitive.neutral.50}"},
-        "secondary": {"default": "{color.primitive.neutral.300}"},
-        "tertiary": {"default": "{color.primitive.neutral.400}"},
-        "inverse": {"default": "{color.primitive.neutral.900}"},
-        "link": {"default": "{color.primitive.cyan.400}", "hover": "{color.primitive.cyan.300}"},
-        "disabled": {"default": "{color.primitive.neutral.500}"},
-        "success": {"default": "{color.primitive.green.500}"},
-        "warning": {"default": "{color.primitive.amber.500}"},
-        "danger": {"default": "{color.primitive.red.500}"},
-        "info": {"default": "{color.primitive.blue.500}"}
-      },
       "background": {
-        "canvas": {"default": "{color.primitive.neutral.950}"},
+        "base": {
+          "default": "{color.primitive.neutral.950}",
+          "elevated": "{color.primitive.neutral.900}",
+          "canvas": "{color.primitive.neutral.950}",
+          "inverse": "{color.primitive.neutral.0}"
+        },
         "surface": {
-          "base": "{color.primitive.neutral.900}",
-          "raised": "{color.primitive.neutral.800}",
-          "overlay": "rgba(8, 17, 31, 0.88)"
+          "card": "{color.primitive.neutral.800}",
+          "card-hover": "{color.primitive.neutral.700}",
+          "panel": "{color.primitive.neutral.900}",
+          "overlay": "rgba(9, 13, 20, 0.82)",
+          "glass": "rgba(28, 36, 49, 0.74)"
+        },
+        "brand": {
+          "default": "{color.primitive.brand-blue.600}",
+          "subtle": "rgba(31, 95, 159, 0.18)",
+          "hero-glow": "rgba(234, 34, 61, 0.20)",
+          "accent": "{color.primitive.brand-red.500}"
         },
         "action": {
-          "primary": {"default": "{color.primitive.cyan.500}", "hover": "{color.primitive.cyan.400}", "pressed": "{color.primitive.cyan.600}", "disabled": "{color.primitive.neutral.700}"},
-          "secondary": {"default": "{color.primitive.neutral.800}", "hover": "{color.primitive.neutral.700}", "pressed": "{color.primitive.neutral.600}", "disabled": "{color.primitive.neutral.800}"}
+          "primary": {
+            "default": "{color.primitive.brand-red.500}",
+            "hover": "{color.primitive.brand-red.400}",
+            "pressed": "{color.primitive.brand-red.700}",
+            "disabled": "{color.primitive.neutral.700}"
+          },
+          "secondary": {
+            "default": "{color.primitive.neutral.700}",
+            "hover": "{color.primitive.neutral.600}",
+            "pressed": "{color.primitive.neutral.800}",
+            "disabled": "{color.primitive.neutral.700}"
+          },
+          "ghost": {
+            "default": "transparent",
+            "hover": "rgba(255, 255, 255, 0.06)",
+            "pressed": "rgba(255, 255, 255, 0.10)",
+            "disabled": "transparent"
+          }
         },
         "status": {
-          "success": {"subtle": "rgba(34, 197, 94, 0.16)", "strong": "{color.primitive.green.700}"},
-          "warning": {"subtle": "rgba(245, 158, 11, 0.16)", "strong": "{color.primitive.amber.700}"},
-          "danger": {"subtle": "rgba(239, 68, 68, 0.16)", "strong": "{color.primitive.red.700}"},
-          "info": {"subtle": "rgba(59, 130, 246, 0.16)", "strong": "{color.primitive.blue.700}"}
+          "success": {
+            "subtle": "rgba(34, 197, 94, 0.16)",
+            "strong": "{color.primitive.status-green.700}"
+          },
+          "warning": {
+            "subtle": "rgba(245, 158, 11, 0.16)",
+            "strong": "{color.primitive.status-amber.700}"
+          },
+          "danger": {
+            "subtle": "rgba(234, 34, 61, 0.18)",
+            "strong": "{color.primitive.brand-red.700}"
+          },
+          "info": {
+            "subtle": "rgba(69, 164, 237, 0.16)",
+            "strong": "{color.primitive.brand-sky.700}"
+          }
+        }
+      },
+      "text": {
+        "primary": {
+          "default": "{color.primitive.neutral.50}",
+          "inverse": "{color.primitive.neutral.900}",
+          "disabled": "{color.primitive.neutral.500}"
         },
-        "role": {
-          "admin": {"default": "{color.primitive.violet.700}"},
-          "technician": {"default": "{color.primitive.blue.700}"},
-          "customer": {"default": "{color.primitive.green.700}"},
-          "company": {"default": "{color.primitive.amber.700}"}
+        "secondary": {
+          "default": "{color.primitive.neutral.200}",
+          "muted": "{color.primitive.neutral.400}"
         },
-        "stage": {
-          "reception": {"default": "{color.primitive.blue.700}"},
-          "diagnosis": {"default": "{color.primitive.amber.700}"},
-          "quotation": {"default": "{color.primitive.cyan.700}"},
-          "authorization": {"default": "{color.primitive.violet.700}"},
-          "execution": {"default": "{color.primitive.green.700}"},
-          "delivery": {"default": "{color.primitive.neutral.700}"}
+        "brand": {
+          "default": "{color.primitive.brand-sky.400}",
+          "strong": "{color.primitive.brand-blue.400}",
+          "on-brand": "{color.primitive.neutral.0}"
+        },
+        "action": {
+          "link-default": "{color.primitive.brand-sky.400}",
+          "link-hover": "{color.primitive.brand-sky.300}",
+          "button-primary": "{color.primitive.neutral.0}",
+          "button-secondary": "{color.primitive.neutral.50}"
+        },
+        "status": {
+          "success": "{color.primitive.status-green.300}",
+          "warning": "{color.primitive.status-amber.300}",
+          "danger": "{color.primitive.brand-red.300}",
+          "info": "{color.primitive.brand-sky.300}"
         }
       },
       "border": {
-        "subtle": {"default": "rgba(148, 163, 184, 0.16)"},
-        "strong": {"default": "rgba(148, 163, 184, 0.28)"},
-        "accent": {"default": "rgba(34, 211, 238, 0.42)"},
-        "focus": {"default": "{color.primitive.cyan.400}"},
-        "danger": {"default": "{color.primitive.red.500}"}
+        "default": {
+          "default": "rgba(174, 184, 196, 0.22)",
+          "strong": "rgba(174, 184, 196, 0.34)",
+          "subtle": "rgba(174, 184, 196, 0.12)"
+        },
+        "brand": {
+          "default": "rgba(31, 95, 159, 0.48)",
+          "strong": "rgba(234, 34, 61, 0.56)"
+        },
+        "focus": {
+          "default": "{color.primitive.brand-sky.400}",
+          "danger": "{color.primitive.brand-red.500}"
+        }
       },
       "icon": {
-        "primary": {"default": "{color.semantic.text.primary.default}"},
-        "secondary": {"default": "{color.semantic.text.secondary.default}"},
-        "accent": {"default": "{color.primitive.cyan.400}"},
-        "success": {"default": "{color.primitive.green.500}"},
-        "warning": {"default": "{color.primitive.amber.500}"},
-        "danger": {"default": "{color.primitive.red.500}"}
+        "primary": {
+          "default": "{color.semantic.text.primary.default}"
+        },
+        "secondary": {
+          "default": "{color.semantic.text.secondary.default}"
+        },
+        "brand": {
+          "default": "{color.primitive.brand-blue.400}",
+          "accent": "{color.primitive.brand-red.500}"
+        },
+        "status": {
+          "success": "{color.primitive.status-green.500}",
+          "warning": "{color.primitive.status-amber.500}",
+          "danger": "{color.primitive.brand-red.500}",
+          "info": "{color.primitive.brand-sky.500}"
+        }
+      },
+      "role": {
+        "admin": {
+          "badge": "{color.primitive.brand-red.700}"
+        },
+        "technician": {
+          "badge": "{color.primitive.brand-blue.700}"
+        },
+        "client": {
+          "badge": "{color.primitive.brand-sky.700}"
+        },
+        "company": {
+          "badge": "{color.primitive.neutral.600}"
+        }
       }
     }
   },
@@ -137,33 +209,36 @@
       "family": {
         "sans": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         "mono": "JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, monospace"
-      },
-      "weight": {"regular": 400, "medium": 500, "semibold": 600, "bold": 700}
+      }
     },
     "display": {
-      "size-40": {"fontSize": 40, "lineHeight": 48, "weight": 700, "letterSpacing": -0.8},
-      "size-32": {"fontSize": 32, "lineHeight": 40, "weight": 700, "letterSpacing": -0.6}
+      "font-56-800-60": {"font-size": 56, "font-weight": 800, "line-height": 60, "letter-spacing": -1.2},
+      "font-48-700-56": {"font-size": 48, "font-weight": 700, "line-height": 56, "letter-spacing": -1.0},
+      "font-40-700-48": {"font-size": 40, "font-weight": 700, "line-height": 48, "letter-spacing": -0.8}
     },
     "heading": {
-      "size-24": {"fontSize": 24, "lineHeight": 32, "weight": 700, "letterSpacing": -0.4},
-      "size-20": {"fontSize": 20, "lineHeight": 28, "weight": 600, "letterSpacing": -0.3},
-      "size-18": {"fontSize": 18, "lineHeight": 28, "weight": 600, "letterSpacing": -0.2}
+      "font-32-700-40": {"font-size": 32, "font-weight": 700, "line-height": 40, "letter-spacing": -0.6},
+      "font-28-700-36": {"font-size": 28, "font-weight": 700, "line-height": 36, "letter-spacing": -0.4},
+      "font-24-700-32": {"font-size": 24, "font-weight": 700, "line-height": 32, "letter-spacing": -0.3}
     },
     "title": {
-      "size-16": {"fontSize": 16, "lineHeight": 24, "weight": 600, "letterSpacing": -0.1},
-      "size-14": {"fontSize": 14, "lineHeight": 20, "weight": 600, "letterSpacing": -0.05}
+      "font-20-600-28": {"font-size": 20, "font-weight": 600, "line-height": 28, "letter-spacing": -0.2},
+      "font-18-600-26": {"font-size": 18, "font-weight": 600, "line-height": 26, "letter-spacing": -0.16},
+      "font-16-600-24": {"font-size": 16, "font-weight": 600, "line-height": 24, "letter-spacing": -0.12}
     },
     "body": {
-      "size-16": {"fontSize": 16, "lineHeight": 24, "weight": 400, "letterSpacing": 0},
-      "size-14": {"fontSize": 14, "lineHeight": 20, "weight": 400, "letterSpacing": 0},
-      "size-12": {"fontSize": 12, "lineHeight": 16, "weight": 400, "letterSpacing": 0}
+      "font-18-400-28": {"font-size": 18, "font-weight": 400, "line-height": 28, "letter-spacing": 0},
+      "font-16-400-24": {"font-size": 16, "font-weight": 400, "line-height": 24, "letter-spacing": 0},
+      "font-14-400-20": {"font-size": 14, "font-weight": 400, "line-height": 20, "letter-spacing": 0},
+      "font-12-400-16": {"font-size": 12, "font-weight": 400, "line-height": 16, "letter-spacing": 0}
     },
     "label": {
-      "size-14": {"fontSize": 14, "lineHeight": 20, "weight": 500, "letterSpacing": 0},
-      "size-12": {"fontSize": 12, "lineHeight": 16, "weight": 500, "letterSpacing": 0.1}
+      "font-14-600-20": {"font-size": 14, "font-weight": 600, "line-height": 20, "letter-spacing": 0.1},
+      "font-12-600-16": {"font-size": 12, "font-weight": 600, "line-height": 16, "letter-spacing": 0.12},
+      "font-11-600-14": {"font-size": 11, "font-weight": 600, "line-height": 14, "letter-spacing": 0.14}
     },
     "code": {
-      "size-12": {"fontSize": 12, "lineHeight": 16, "weight": 500, "letterSpacing": 0}
+      "font-12-500-16": {"font-size": 12, "font-weight": 500, "line-height": 16, "letter-spacing": 0}
     }
   },
   "space": {
@@ -173,38 +248,66 @@
     "8": 8,
     "12": 12,
     "16": 16,
-    "20": 20,
     "24": 24,
     "32": 32,
     "40": 40,
     "48": 48,
-    "64": 64,
-    "80": 80,
-    "96": 96
+    "64": 64
   },
   "radius": {
     "none": 0,
-    "xs": 4,
-    "sm": 8,
-    "md": 12,
-    "lg": 16,
-    "xl": 20,
-    "2xl": 24,
+    "sm": 4,
+    "md": 8,
+    "lg": 12,
+    "xl": 16,
+    "2xl": 20,
     "full": 999
   },
   "elevation": {
-    "xs": "0 1px 2px rgba(2, 6, 23, 0.20)",
-    "sm": "0 4px 12px rgba(2, 6, 23, 0.24)",
-    "md": "0 8px 24px rgba(2, 6, 23, 0.28)",
-    "lg": "0 20px 48px rgba(2, 6, 23, 0.36)"
+    "xs": "0 1px 2px rgba(9, 13, 20, 0.24)",
+    "sm": "0 6px 14px rgba(9, 13, 20, 0.28)",
+    "md": "0 12px 28px rgba(9, 13, 20, 0.34)",
+    "lg": "0 20px 48px rgba(9, 13, 20, 0.42)",
+    "xl": "0 30px 72px rgba(9, 13, 20, 0.50)"
   },
   "motion": {
-    "duration": {"instant": 80, "fast": 160, "moderate": 240, "slow": 360},
-    "easing": {"standard": "cubic-bezier(0.2, 0, 0, 1)", "emphasized": "cubic-bezier(0.2, 0, 0, 1.12)"}
+    "duration": {
+      "micro-120": 120,
+      "micro-180": 180,
+      "component-220": 220,
+      "component-260": 260,
+      "story-360": 360,
+      "story-450": 450
+    },
+    "easing": {
+      "standard": "cubic-bezier(0.2, 0, 0, 1)",
+      "emphasized": "cubic-bezier(0.16, 1, 0.3, 1)",
+      "exit": "cubic-bezier(0.4, 0, 1, 1)"
+    }
   },
   "component": {
-    "button": {"padding": {"x": "{space.16}", "y": "{space.12}"}, "radius": "{radius.md}", "gap": "{space.8}"},
-    "card": {"padding": "{space.24}", "radius": "{radius.lg}", "gap": "{space.16}"},
-    "input": {"padding": {"x": "{space.16}", "y": "{space.12}"}, "radius": "{radius.md}", "height": 48}
+    "button": {
+      "padding-x": "{space.16}",
+      "padding-y": "{space.12}",
+      "gap": "{space.8}",
+      "radius": "{radius.lg}",
+      "height-md": 44
+    },
+    "card": {
+      "padding": "{space.24}",
+      "gap": "{space.16}",
+      "radius": "{radius.xl}"
+    },
+    "input": {
+      "height": 44,
+      "padding-x": "{space.12}",
+      "padding-y": "{space.8}",
+      "radius": "{radius.lg}"
+    },
+    "toast": {
+      "padding": "{space.16}",
+      "gap": "{space.8}",
+      "radius": "{radius.lg}"
+    }
   }
 }

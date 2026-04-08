@@ -1,5 +1,6 @@
 import { VCARS_PROCESS } from './process';
 import type { Entry } from './storage';
+import { getVehicleEvidencePhoto } from './carPhoto';
 
 type DemoVehicle = {
   placa: string;
@@ -36,9 +37,8 @@ const DEMO_VEHICLES: DemoVehicle[] = [
 
 type PhotoZone = 'superior' | 'inferior' | 'lateralDerecho' | 'lateralIzquierdo' | 'frontal' | 'trasero';
 
-function zonePhoto(plate: string, zone: PhotoZone): string {
-  const seed = `${plate.toLowerCase()}-${zone}`;
-  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/1200/800`;
+function zonePhoto(model: string, plate: string, color: string, zone: PhotoZone): string {
+  return getVehicleEvidencePhoto(model, plate, color, zone);
 }
 
 function toIsoDaysAgo(daysAgo: number): string {
@@ -81,12 +81,12 @@ export function getDemoEntries(): Entry[] {
   return DEMO_VEHICLES.map((item, index) => {
     const createdAt = toIsoDaysAgo(12 - index);
     const intakePhotosByZone = {
-      superior: zonePhoto(item.placa, 'superior'),
-      inferior: zonePhoto(item.placa, 'inferior'),
-      lateralDerecho: zonePhoto(item.placa, 'lateralDerecho'),
-      lateralIzquierdo: zonePhoto(item.placa, 'lateralIzquierdo'),
-      frontal: zonePhoto(item.placa, 'frontal'),
-      trasero: zonePhoto(item.placa, 'trasero'),
+      superior: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'superior'),
+      inferior: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'inferior'),
+      lateralDerecho: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'lateralDerecho'),
+      lateralIzquierdo: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'lateralIzquierdo'),
+      frontal: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'frontal'),
+      trasero: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'trasero'),
     };
 
     return {
@@ -123,6 +123,19 @@ export function getDemoEntries(): Entry[] {
       },
     };
   });
+}
+
+export function getDemoVehicleModelByPlate(plate: string): string {
+  const key = String(plate || '').trim().toUpperCase();
+  const found = DEMO_VEHICLES.find((item) => item.placa === key);
+  return found?.vehiculo || '';
+}
+
+export function getDemoVehicleColorByPlate(plate: string): string {
+  const key = String(plate || '').trim().toUpperCase();
+  const index = DEMO_VEHICLES.findIndex((item) => item.placa === key);
+  if (index < 0) return '';
+  return ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4];
 }
 
 export function getDemoFormsByPlate(): DemoFormsByPlate {

@@ -7,11 +7,12 @@ import { getVehicleByPlate } from '@/lib/api';
 import { apiVehicleToEntry } from '@/lib/mapper';
 import { applyDemoEntries } from '@/lib/demoData';
 import { getClientIdentity } from '@/lib/clientIdentity';
-import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
+import { FlowHeader } from '@/components/FlowHeader';
 import { getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 import { ensureDemoFormsSeed, getFormsForPlate, getRoleSteps, isClientQuoteReady, setStepFields } from '@/lib/orderForms';
 import { normalizeStepTitle, stepIndexFromTitle } from '@/lib/process';
+import { getVehicleEvidencePhoto } from '@/lib/carPhoto';
 
 const PHOTO_SLOTS = [
   { key: 'superior', label: 'Superior' },
@@ -21,6 +22,25 @@ const PHOTO_SLOTS = [
   { key: 'frontal', label: 'Frontal' },
   { key: 'trasero', label: 'Trasero' },
 ] as const;
+
+function evidenceImageStyle(zone: (typeof PHOTO_SLOTS)[number]['key']): React.CSSProperties {
+  switch (zone) {
+    case 'superior':
+      return { objectPosition: '50% 8%', transform: 'scale(1.6)' };
+    case 'inferior':
+      return { objectPosition: '50% 95%', transform: 'scale(1.6)' };
+    case 'lateralDerecho':
+      return { objectPosition: '72% 58%', transform: 'scale(1.25)' };
+    case 'lateralIzquierdo':
+      return { objectPosition: '28% 58%', transform: 'scale(1.25)' };
+    case 'frontal':
+      return { objectPosition: '24% 62%', transform: 'scale(1.45)' };
+    case 'trasero':
+      return { objectPosition: '80% 62%', transform: 'scale(1.45)' };
+    default:
+      return {};
+  }
+}
 
 export default function VehiculoDetallePage() {
   const router = useRouter();
@@ -32,6 +52,11 @@ export default function VehiculoDetallePage() {
   const [stepIndex, setStepIndex] = useState(0);
   const [formsByStep, setFormsByStep] = useState<Record<string, Record<string, string>>>({});
   const [warning, setWarning] = useState('');
+  const [openBlocks, setOpenBlocks] = useState({
+    resumenPrincipal: true,
+    contactoFacturacion: false,
+    fechasDocumentos: false,
+  });
 
   useEffect(() => {
     if (!getSession()) {
@@ -99,6 +124,9 @@ export default function VehiculoDetallePage() {
     return prev !== undefined ? visibleIndices.indexOf(prev) : 0;
   })();
 
+  const currentVisibleStep = visibleSteps[Math.max(0, displayCurrentIndex)];
+  const continueHref = `/orden-servicio?startStep=${currentVisibleStep?.index ?? stepIndex}&plate=${encodeURIComponent(plate)}`;
+
   const quoteReady = isClientQuoteReady(formsByStep);
   const approvalIndex = stepIndexFromTitle('Autorización del cliente');
   const clientCanAuthorize = role === 'cliente' && quoteReady && stepIndex >= approvalIndex;
@@ -108,7 +136,11 @@ export default function VehiculoDetallePage() {
   const intakePhotosByZone = useMemo(() => {
     const zone = vehicle?.intakePhotosByZone || {};
     const legacy = vehicle?.intakePhotos || [];
-    return {
+    const plateSeed = vehicle?.placa || plate;
+    const modelSeed = vehicle?.vehiculo || '';
+    const colorSeed = vehicle?.color || '';
+
+    const current = {
       superior: String(zone.superior || legacy[0] || ''),
       inferior: String(zone.inferior || legacy[1] || ''),
       lateralDerecho: String(zone.lateralDerecho || legacy[2] || ''),
@@ -116,7 +148,20 @@ export default function VehiculoDetallePage() {
       frontal: String(zone.frontal || legacy[4] || ''),
       trasero: String(zone.trasero || legacy[5] || ''),
     };
-  }, [vehicle]);
+
+    const values = Object.values(current).filter(Boolean);
+    const allSame = values.length >= 3 && new Set(values).size === 1;
+    if (!allSame) return current;
+
+    return {
+      superior: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'superior'),
+      inferior: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'inferior'),
+      lateralDerecho: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'lateralDerecho'),
+      lateralIzquierdo: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'lateralIzquierdo'),
+      frontal: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'frontal'),
+      trasero: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'trasero'),
+    };
+  }, [vehicle, plate]);
   const hasIntakePhotos = PHOTO_SLOTS.some((slot) => intakePhotosByZone[slot.key]);
 
   function setApprovalPatch(patch: Record<string, string>) {
@@ -125,42 +170,65 @@ export default function VehiculoDetallePage() {
     setFormsByStep(next);
   }
 
+  function toggleBlock(key: keyof typeof openBlocks) {
+    setOpenBlocks((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
   return (
     <main className="vc-page vc-shell" suppressHydrationWarning>
       <div className="vc-bg-orb-left" />
       <div className="vc-bg-orb-right" />
 
       <section className="vc-panel vc-panel-narrow">
-        <header className="vc-detail-head">
-          <Link href="/ingreso-activo" className="vc-back-btn">‹</Link>
-          <div>
-            <BrandPill />
-            <p className="vc-head-sub">Detalle del vehiculo</p>
-          </div>
-        </header>
+        <FlowHeader backHref="/ingreso-activo" subtitle="Detalle del vehículo" />
 
         {warning ? <div className="vc-warning">No se pudo cargar vehículo desde backend: {warning}</div> : null}
 
         <section className="vc-card">
           <h3>Resumen</h3>
-          <div className="vc-summary-grid">
-            <span>No. orden</span><strong>{vehicle?.orderNumber || '-'}</strong>
-            <span>Placa</span><strong>{vehicle?.placa || '-'}</strong>
-            <span>Cliente</span><strong>{role === 'cliente' ? (clientCompanyName || vehicle?.cliente || '-') : (vehicle?.cliente || '-')}</strong>
-            <span>Vehículo</span><strong>{vehicle?.vehiculo || '-'}</strong>
-            <span>Color</span><strong>{vehicle?.color || '-'}</strong>
-            <span>Teléfono</span><strong>{vehicle?.telefono || '-'}</strong>
-            <span>NIT/CC</span><strong>{vehicle?.nitCc || '-'}</strong>
-            <span>Correo</span><strong>{vehicle?.email || '-'}</strong>
-            <span>Facturación</span><strong>{vehicle?.invoiceName || '-'}</strong>
-            <span>Pago</span><strong>{vehicle?.paymentMethod || '-'}</strong>
-            <span>Días crédito</span><strong>{vehicle?.creditDays || '-'}</strong>
-            <span>Fecha ingreso</span><strong>{vehicle?.fecha ? String(vehicle.fecha).slice(0, 10) : '-'}</strong>
-            <span>Fecha prevista entrega</span><strong>{vehicle?.expectedDeliveryDate || '-'}</strong>
-            <span>SOAT</span><strong>{vehicle?.soatExpiry || '-'}</strong>
-            <span>Tecnomecánica</span><strong>{vehicle?.rtmExpiry || '-'}</strong>
-            <span>Paso actual</span><strong>{vehicle?.paso || '-'}</strong>
-          </div>
+
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('resumenPrincipal')} aria-expanded={openBlocks.resumenPrincipal}>
+            <span>Datos principales</span>
+            <span>{openBlocks.resumenPrincipal ? '−' : '+'}</span>
+          </button>
+          {openBlocks.resumenPrincipal ? (
+            <div className="vc-summary-grid">
+              <span>No. orden</span><strong>{vehicle?.orderNumber || '-'}</strong>
+              <span>Placa</span><strong>{vehicle?.placa || '-'}</strong>
+              <span>Cliente</span><strong>{role === 'cliente' ? (clientCompanyName || vehicle?.cliente || '-') : (vehicle?.cliente || '-')}</strong>
+              <span>Vehículo</span><strong>{vehicle?.vehiculo || '-'}</strong>
+              <span>Color</span><strong>{vehicle?.color || '-'}</strong>
+              <span>Paso actual</span><strong>{vehicle?.paso || '-'}</strong>
+            </div>
+          ) : null}
+
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('contactoFacturacion')} aria-expanded={openBlocks.contactoFacturacion}>
+            <span>Contacto y facturación</span>
+            <span>{openBlocks.contactoFacturacion ? '−' : '+'}</span>
+          </button>
+          {openBlocks.contactoFacturacion ? (
+            <div className="vc-summary-grid">
+              <span>Teléfono</span><strong>{vehicle?.telefono || '-'}</strong>
+              <span>NIT/CC</span><strong>{vehicle?.nitCc || '-'}</strong>
+              <span>Correo</span><strong>{vehicle?.email || '-'}</strong>
+              <span>Facturación</span><strong>{vehicle?.invoiceName || '-'}</strong>
+              <span>Pago</span><strong>{vehicle?.paymentMethod || '-'}</strong>
+              <span>Días crédito</span><strong>{vehicle?.creditDays || '-'}</strong>
+            </div>
+          ) : null}
+
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('fechasDocumentos')} aria-expanded={openBlocks.fechasDocumentos}>
+            <span>Fechas y documentos</span>
+            <span>{openBlocks.fechasDocumentos ? '−' : '+'}</span>
+          </button>
+          {openBlocks.fechasDocumentos ? (
+            <div className="vc-summary-grid">
+              <span>Fecha ingreso</span><strong>{vehicle?.fecha ? String(vehicle.fecha).slice(0, 10) : '-'}</strong>
+              <span>Fecha prevista entrega</span><strong>{vehicle?.expectedDeliveryDate || '-'}</strong>
+              <span>SOAT</span><strong>{vehicle?.soatExpiry || '-'}</strong>
+              <span>Tecnomecánica</span><strong>{vehicle?.rtmExpiry || '-'}</strong>
+            </div>
+          ) : null}
         </section>
 
         {hasIntakePhotos ? (
@@ -171,10 +239,15 @@ export default function VehiculoDetallePage() {
                 const src = intakePhotosByZone[slot.key];
                 return (
                   <div key={slot.key} className="vc-photo-item">
-                    <p className="vc-photo-label">{slot.label}</p>
+                    <p className="vc-photo-title">{slot.label}</p>
                     {src ? (
-                      <a href={src} target="_blank" rel="noreferrer">
-                        <img src={src} alt={`Evidencia ${slot.label}`} className="vc-photo-preview" />
+                      <a href={src} target="_blank" rel="noreferrer" className="vc-photo-link">
+                        <img
+                          src={src}
+                          alt={`Evidencia ${slot.label}`}
+                          className="vc-photo-preview"
+                          style={evidenceImageStyle(slot.key)}
+                        />
                       </a>
                     ) : (
                       <div className="vc-photo-empty">Sin imagen</div>
@@ -198,7 +271,7 @@ export default function VehiculoDetallePage() {
 
           {role !== 'cliente' ? (
             <div className="vc-inline-actions">
-              <Link href="/orden-servicio" className="vc-login-btn vc-summary-btn vc-continue-btn">Continuar →</Link>
+              <Link href={continueHref} className="vc-login-btn vc-summary-btn vc-continue-btn">Continuar →</Link>
             </div>
           ) : (
             <div className="vc-inline-actions">

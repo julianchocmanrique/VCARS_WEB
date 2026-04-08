@@ -1,25 +1,86 @@
 {
   "color": {
     "semantic": {
-      "text": {
-        "primary": {"default": "#0F172A"},
-        "secondary": {"default": "#334155"},
-        "tertiary": {"default": "#64748B"},
-        "inverse": {"default": "#FFFFFF"},
-        "link": {"default": "#0891B2", "hover": "#0E7490"},
-        "disabled": {"default": "#94A3B8"},
-        "success": {"default": "#15803D"},
-        "warning": {"default": "#B45309"},
-        "danger": {"default": "#B91C1C"},
-        "info": {"default": "#1D4ED8"}
-      },
       "background": {
-        "canvas": {"default": "#F8FAFC"},
-        "surface": {"base": "#FFFFFF", "raised": "#F1F5F9", "overlay": "rgba(248, 250, 252, 0.92)"},
+        "base": {
+          "default": "#f4f6f8",
+          "elevated": "#ffffff",
+          "canvas": "#f4f6f8",
+          "inverse": "#090d14"
+        },
+        "surface": {
+          "card": "#ffffff",
+          "card-hover": "#e8ecf1",
+          "panel": "#f4f6f8",
+          "overlay": "rgba(244, 246, 248, 0.90)",
+          "glass": "rgba(255, 255, 255, 0.78)"
+        },
+        "brand": {
+          "default": "#2a6fb7",
+          "subtle": "rgba(42, 111, 183, 0.12)",
+          "hero-glow": "rgba(234, 34, 61, 0.12)",
+          "accent": "#d61934"
+        },
         "action": {
-          "primary": {"default": "#0891B2", "hover": "#0E7490", "pressed": "#155E75", "disabled": "#CBD5E1"},
-          "secondary": {"default": "#E2E8F0", "hover": "#CBD5E1", "pressed": "#94A3B8", "disabled": "#E2E8F0"}
+          "primary": {
+            "default": "#d61934",
+            "hover": "#ea223d",
+            "pressed": "#b7122b",
+            "disabled": "#cfd6df"
+          },
+          "secondary": {
+            "default": "#e8ecf1",
+            "hover": "#cfd6df",
+            "pressed": "#aeb8c4",
+            "disabled": "#e8ecf1"
+          },
+          "ghost": {
+            "default": "transparent",
+            "hover": "rgba(17, 23, 34, 0.06)",
+            "pressed": "rgba(17, 23, 34, 0.10)",
+            "disabled": "transparent"
+          }
+        },
+        "status": {
+          "success": {"subtle": "rgba(34, 197, 94, 0.12)", "strong": "#15803d"},
+          "warning": {"subtle": "rgba(245, 158, 11, 0.14)", "strong": "#b45309"},
+          "danger": {"subtle": "rgba(214, 25, 52, 0.12)", "strong": "#b7122b"},
+          "info": {"subtle": "rgba(69, 164, 237, 0.12)", "strong": "#2273b1"}
         }
+      },
+      "text": {
+        "primary": {"default": "#111722", "inverse": "#ffffff", "disabled": "#8793a3"},
+        "secondary": {"default": "#455165", "muted": "#627085"},
+        "brand": {"default": "#1f5f9f", "strong": "#174f86", "on-brand": "#ffffff"},
+        "action": {
+          "link-default": "#1f5f9f",
+          "link-hover": "#174f86",
+          "button-primary": "#ffffff",
+          "button-secondary": "#111722"
+        },
+        "status": {
+          "success": "#15803d",
+          "warning": "#b45309",
+          "danger": "#b7122b",
+          "info": "#2273b1"
+        }
+      },
+      "border": {
+        "default": {"default": "rgba(69, 81, 101, 0.20)", "strong": "rgba(69, 81, 101, 0.32)", "subtle": "rgba(69, 81, 101, 0.10)"},
+        "brand": {"default": "rgba(31, 95, 159, 0.36)", "strong": "rgba(214, 25, 52, 0.44)"},
+        "focus": {"default": "#45a4ed", "danger": "#d61934"}
+      },
+      "icon": {
+        "primary": {"default": "#111722"},
+        "secondary": {"default": "#455165"},
+        "brand": {"default": "#1f5f9f", "accent": "#d61934"},
+        "status": {"success": "#15803d", "warning": "#b45309", "danger": "#d61934", "info": "#2273b1"}
+      },
+      "role": {
+        "admin": {"badge": "#d61934"},
+        "technician": {"badge": "#1f5f9f"},
+        "client": {"badge": "#2273b1"},
+        "company": {"badge": "#627085"}
       }
     }
   }

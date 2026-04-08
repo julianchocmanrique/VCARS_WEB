@@ -1,25 +1,86 @@
 {
   "color": {
     "semantic": {
-      "text": {
-        "primary": {"default": "#F8FAFC"},
-        "secondary": {"default": "#CBD5E1"},
-        "tertiary": {"default": "#94A3B8"},
-        "inverse": {"default": "#0F172A"},
-        "link": {"default": "#22D3EE", "hover": "#67E8F9"},
-        "disabled": {"default": "#475569"},
-        "success": {"default": "#22C55E"},
-        "warning": {"default": "#F59E0B"},
-        "danger": {"default": "#EF4444"},
-        "info": {"default": "#3B82F6"}
-      },
       "background": {
-        "canvas": {"default": "#020617"},
-        "surface": {"base": "#08111F", "raised": "#0F172A", "overlay": "rgba(8, 17, 31, 0.88)"},
+        "base": {
+          "default": "#090d14",
+          "elevated": "#111722",
+          "canvas": "#090d14",
+          "inverse": "#ffffff"
+        },
+        "surface": {
+          "card": "#1c2431",
+          "card-hover": "#2e3849",
+          "panel": "#111722",
+          "overlay": "rgba(9, 13, 20, 0.82)",
+          "glass": "rgba(28, 36, 49, 0.74)"
+        },
+        "brand": {
+          "default": "#1f5f9f",
+          "subtle": "rgba(31, 95, 159, 0.18)",
+          "hero-glow": "rgba(234, 34, 61, 0.20)",
+          "accent": "#ea223d"
+        },
         "action": {
-          "primary": {"default": "#06B6D4", "hover": "#22D3EE", "pressed": "#0891B2", "disabled": "#1E293B"},
-          "secondary": {"default": "#0F172A", "hover": "#1E293B", "pressed": "#334155", "disabled": "#0F172A"}
+          "primary": {
+            "default": "#ea223d",
+            "hover": "#ff5f77",
+            "pressed": "#b7122b",
+            "disabled": "#2e3849"
+          },
+          "secondary": {
+            "default": "#2e3849",
+            "hover": "#455165",
+            "pressed": "#1c2431",
+            "disabled": "#2e3849"
+          },
+          "ghost": {
+            "default": "transparent",
+            "hover": "rgba(255, 255, 255, 0.06)",
+            "pressed": "rgba(255, 255, 255, 0.10)",
+            "disabled": "transparent"
+          }
+        },
+        "status": {
+          "success": {"subtle": "rgba(34, 197, 94, 0.16)", "strong": "#15803d"},
+          "warning": {"subtle": "rgba(245, 158, 11, 0.16)", "strong": "#b45309"},
+          "danger": {"subtle": "rgba(234, 34, 61, 0.18)", "strong": "#b7122b"},
+          "info": {"subtle": "rgba(69, 164, 237, 0.16)", "strong": "#2273b1"}
         }
+      },
+      "text": {
+        "primary": {"default": "#f4f6f8", "inverse": "#111722", "disabled": "#627085"},
+        "secondary": {"default": "#cfd6df", "muted": "#8793a3"},
+        "brand": {"default": "#69b7f5", "strong": "#5f9edc", "on-brand": "#ffffff"},
+        "action": {
+          "link-default": "#69b7f5",
+          "link-hover": "#94ceff",
+          "button-primary": "#ffffff",
+          "button-secondary": "#f4f6f8"
+        },
+        "status": {
+          "success": "#86efac",
+          "warning": "#fcd34d",
+          "danger": "#ff8e9f",
+          "info": "#94ceff"
+        }
+      },
+      "border": {
+        "default": {"default": "rgba(174, 184, 196, 0.22)", "strong": "rgba(174, 184, 196, 0.34)", "subtle": "rgba(174, 184, 196, 0.12)"},
+        "brand": {"default": "rgba(31, 95, 159, 0.48)", "strong": "rgba(234, 34, 61, 0.56)"},
+        "focus": {"default": "#69b7f5", "danger": "#ea223d"}
+      },
+      "icon": {
+        "primary": {"default": "#f4f6f8"},
+        "secondary": {"default": "#cfd6df"},
+        "brand": {"default": "#5f9edc", "accent": "#ea223d"},
+        "status": {"success": "#22c55e", "warning": "#f59e0b", "danger": "#ea223d", "info": "#45a4ed"}
+      },
+      "role": {
+        "admin": {"badge": "#b7122b"},
+        "technician": {"badge": "#174f86"},
+        "client": {"badge": "#2273b1"},
+        "company": {"badge": "#455165"}
       }
     }
   }

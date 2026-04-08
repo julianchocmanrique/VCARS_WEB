@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { BrandPill } from '@/components/BrandPill';
 import { BottomNav } from '@/components/BottomNav';
+import { FlowHeader } from '@/components/FlowHeader';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { canEditStep, getFormsForPlate, getRoleSteps, setStepField, setStepFields } from '@/lib/orderForms';
 import { getCurrentEntry, getEntries, getRole, getSession, setEntries, type Entry, type Role } from '@/lib/storage';
@@ -280,10 +280,11 @@ export default function OrdenServicioPage() {
       <div className="vc-bg-orb-right" />
 
       <section className="vc-panel vc-panel-narrow">
-        <header className="vc-detail-head">
-          <BrandPill />
-          <p className="vc-head-sub">Orden de servicio {plate ? `· ${plate}` : ''}</p>
-        </header>
+        <FlowHeader
+          backHref={plate ? `/vehiculos/${encodeURIComponent(plate)}` : '/ingreso-activo'}
+          subtitle={`Orden de servicio${plate ? ` · ${plate}` : ''}`}
+          inlineSubtitle
+        />
 
         <section className="vc-card">
           <h3>{current?.title || 'Orden de servicio'}</h3>
@@ -402,7 +403,7 @@ export default function OrdenServicioPage() {
               {currentKey === 'cotizacion_formal' ? (
                 <div className="vc-card" style={{ padding: 12 }}>
                   <h3 style={{ marginBottom: 8 }}>Items de cotización</h3>
-                  <div className="vc-table-wrap">
+                  <div className="vc-table-wrap vc-table-wrap--desktop">
                     <table className="vc-table">
                       <thead>
                         <tr>
@@ -453,6 +454,69 @@ export default function OrdenServicioPage() {
                         })}
                       </tbody>
                     </table>
+                  </div>
+
+                  <div className="vc-quote-mobile-list">
+                    {quoteRows.map((row, idx) => {
+                      const line = toNumberSafe(row.unitPrice) * toNumberSafe(row.qty || '1');
+                      return (
+                        <article key={`qm-${idx}`} className="vc-quote-mobile-card">
+                          <div>
+                            <label className="vc-label">Sistema</label>
+                            <div className="vc-input-wrap">
+                              <input disabled={!editable} value={row.sistema} onChange={(e) => {
+                                const next = [...quoteRows];
+                                next[idx] = { ...next[idx], sistema: e.target.value };
+                                setQuoteRows(next);
+                              }} />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="vc-label">Trabajo o repuesto</label>
+                            <div className="vc-input-wrap">
+                              <input disabled={!editable} value={row.trabajo} onChange={(e) => {
+                                const next = [...quoteRows];
+                                next[idx] = { ...next[idx], trabajo: e.target.value };
+                                setQuoteRows(next);
+                              }} />
+                            </div>
+                          </div>
+                          <div className="vc-grid-2 vc-grid-2--mobile">
+                            <div>
+                              <label className="vc-label">Valor unitario</label>
+                              <div className="vc-input-wrap">
+                                <input disabled={!editable} value={row.unitPrice} onChange={(e) => {
+                                  const next = [...quoteRows];
+                                  next[idx] = { ...next[idx], unitPrice: e.target.value };
+                                  setQuoteRows(next);
+                                }} />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="vc-label">Cantidad</label>
+                              <div className="vc-input-wrap">
+                                <input disabled={!editable} value={row.qty} onChange={(e) => {
+                                  const next = [...quoteRows];
+                                  next[idx] = { ...next[idx], qty: e.target.value };
+                                  setQuoteRows(next);
+                                }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="vc-summary-grid" style={{ marginTop: 6 }}>
+                            <span>Total línea</span><strong>${asMoney(line)}</strong>
+                          </div>
+
+                          {editable ? (
+                            <button type="button" className="vc-btn" onClick={() => {
+                              const next = quoteRows.filter((_, i) => i !== idx);
+                              setQuoteRows(next.length ? next : [{ sistema: '', trabajo: '', unitPrice: '', qty: '1' }]);
+                            }}>Quitar ítem</button>
+                          ) : null}
+                        </article>
+                      );
+                    })}
                   </div>
 
                   {editable ? (

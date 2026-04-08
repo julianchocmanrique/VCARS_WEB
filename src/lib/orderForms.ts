@@ -1,5 +1,6 @@
 import type { Role } from './storage';
-import { getDemoFormsByPlate } from './demoData';
+import { getDemoFormsByPlate, getDemoVehicleColorByPlate, getDemoVehicleModelByPlate } from './demoData';
+import { getVehicleEvidencePhoto } from './carPhoto';
 import { VCARS_PROCESS, type ProcessStep } from './process';
 
 const ORDER_FORMS_KEY = '@vcars_order_forms';
@@ -36,12 +37,50 @@ function mergeDemoForms(existing: FormsByPlate, demo: FormsByPlate): FormsByPlat
   return merged;
 }
 
+function migrateLegacyDemoPhotoFields(all: FormsByPlate): FormsByPlate {
+  const next: FormsByPlate = { ...all };
+  const zoneByKey = {
+    photo_superior: 'superior',
+    photo_inferior: 'inferior',
+    photo_lateralDerecho: 'lateralDerecho',
+    photo_lateralIzquierdo: 'lateralIzquierdo',
+    photo_frontal: 'frontal',
+    photo_trasero: 'trasero',
+  } as const;
+
+  for (const plate of Object.keys(next)) {
+    const model = getDemoVehicleModelByPlate(plate);
+    if (!model) continue;
+
+    const color = getDemoVehicleColorByPlate(plate);
+    const byPlate = next[plate] || {};
+    const recepcion = { ...(byPlate.recepcion || {}) };
+    let changed = false;
+
+    for (const [key, zone] of Object.entries(zoneByKey)) {
+      const current = String(recepcion[key] || '').trim();
+      const expected = getVehicleEvidencePhoto(model, plate, color, zone);
+      if (!current || current !== expected || current.includes('picsum.photos') || current.includes('source.unsplash.com')) {
+        recepcion[key] = expected;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      next[plate] = { ...byPlate, recepcion };
+    }
+  }
+
+  return next;
+}
+
 export function ensureDemoFormsSeed(): FormsByPlate {
   const existing = readAll();
   const demo = getDemoFormsByPlate();
   const merged = mergeDemoForms(existing, demo);
-  writeAll(merged);
-  return merged;
+  const migrated = migrateLegacyDemoPhotoFields(merged);
+  writeAll(migrated);
+  return migrated;
 }
 
 export function getFormsForPlate(plate: string): FormsByStep {
