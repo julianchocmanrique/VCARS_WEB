@@ -14,7 +14,7 @@ export function PageTransitionShell({ children, className }: PageTransitionShell
   const reduced = useReducedMotion();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="sync" initial={false}>
       <motion.div
         key={pathname}
         variants={vcarsVariants.pageSwap(Boolean(reduced))}
