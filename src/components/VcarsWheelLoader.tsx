@@ -110,16 +110,23 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
             animate={spinAnim}
             style={{
               filter: 'drop-shadow(0 20px 42px rgba(0,0,0,0.58))',
+              transformOrigin: '50% 50%',
             }}
           >
-            <Image
-              src={`${BASE_PATH}/cars/llanta-splash-premium.png`}
-              alt="Llanta VCARS"
-              fill
-              priority
-              className="object-contain object-center"
-              sizes="(max-width: 640px) 280px, 420px"
-            />
+            {/*
+              The source PNG has a bit of uneven transparent padding, which makes rotation
+              look off-center. We compensate slightly with a subtle translate + scale.
+            */}
+            <div className="absolute inset-0" style={{ transform: 'translateY(-2px) scale(1.06)' }}>
+              <Image
+                src={`${BASE_PATH}/cars/llanta-splash-premium.png`}
+                alt="Llanta VCARS"
+                fill
+                priority
+                className="object-contain object-center"
+                sizes="(max-width: 640px) 280px, 420px"
+              />
+            </div>
 
             <motion.div
               className="pointer-events-none absolute inset-[13%] rounded-full border border-[rgba(255,219,103,0.36)]"
