@@ -21,7 +21,7 @@ const ITEMS: NavItem[] = [
 ];
 
 function Icon({ name, active }: { name: Tab; active: boolean }) {
-  const stroke = active ? '#0b0b0c' : '#d1d5db';
+  const stroke = active ? '#f5f5f5' : '#d1d5db';
 
   if (name === 'home') {
     return (

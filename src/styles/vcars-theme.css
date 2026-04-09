@@ -39,7 +39,8 @@
 
   --vc-blue: var(--color-base-blue-600);
   --vc-blue-light: var(--color-base-sky-500);
-  --vc-yellow: #f4df2f;
+  /* Active tab highlight color (was yellow) */
+  --vc-yellow: var(--color-base-red-500);
 
   /* Neutralized outer atmosphere with cool-blue brand glow */
   --vc-overlay-1: rgba(69, 164, 237, 0.09);
