@@ -61,7 +61,7 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
 
   return (
     <motion.div
-      className="fixed inset-0 z-[9999] grid place-items-center overflow-hidden"
+      className="fixed inset-0 z-[2147483647] grid place-items-center overflow-hidden"
       role="status"
       aria-label="Cargando VCARS"
       style={{
