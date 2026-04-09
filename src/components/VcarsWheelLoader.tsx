@@ -22,16 +22,16 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     if (prefersReducedMotion) {
-      timers.push(setTimeout(() => setPhase('reveal'), 220));
-      timers.push(setTimeout(onComplete, 560));
+      timers.push(setTimeout(() => setPhase('reveal'), 260));
+      timers.push(setTimeout(onComplete, 780));
       return () => timers.forEach((timer) => clearTimeout(timer));
     }
 
-    timers.push(setTimeout(() => setPhase('scan'), 280));
-    timers.push(setTimeout(() => setPhase('spin'), 760));
-    timers.push(setTimeout(() => setPhase('boost'), 1480));
-    timers.push(setTimeout(() => setPhase('reveal'), 2280));
-    timers.push(setTimeout(onComplete, 2620));
+    timers.push(setTimeout(() => setPhase('scan'), 360));
+    timers.push(setTimeout(() => setPhase('spin'), 980));
+    timers.push(setTimeout(() => setPhase('boost'), 1900));
+    timers.push(setTimeout(() => setPhase('reveal'), 2900));
+    timers.push(setTimeout(onComplete, 3320));
 
     return () => timers.forEach((timer) => clearTimeout(timer));
   }, [onComplete, prefersReducedMotion]);
