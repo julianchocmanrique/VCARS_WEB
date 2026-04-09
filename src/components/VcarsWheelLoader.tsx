@@ -27,11 +27,11 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
       return () => timers.forEach((timer) => clearTimeout(timer));
     }
 
-    timers.push(setTimeout(() => setPhase('scan'), 360));
-    timers.push(setTimeout(() => setPhase('spin'), 980));
-    timers.push(setTimeout(() => setPhase('boost'), 1900));
-    timers.push(setTimeout(() => setPhase('reveal'), 2900));
-    timers.push(setTimeout(onComplete, 3320));
+    timers.push(setTimeout(() => setPhase('scan'), 420));
+    timers.push(setTimeout(() => setPhase('spin'), 1180));
+    timers.push(setTimeout(() => setPhase('boost'), 2280));
+    timers.push(setTimeout(() => setPhase('reveal'), 3600));
+    timers.push(setTimeout(onComplete, 4100));
 
     return () => timers.forEach((timer) => clearTimeout(timer));
   }, [onComplete, prefersReducedMotion]);
@@ -42,14 +42,14 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
     if (phase === 'spin') {
       return {
         rotate: 360,
-        transition: { duration: 1.7, ease: 'linear' as const, repeat: Infinity },
+        transition: { duration: 1.35, ease: 'linear' as const, repeat: Infinity },
       };
     }
 
     if (phase === 'boost') {
       return {
         rotate: 360,
-        transition: { duration: 0.65, ease: 'linear' as const, repeat: Infinity },
+        transition: { duration: 0.52, ease: 'linear' as const, repeat: Infinity },
       };
     }
 
