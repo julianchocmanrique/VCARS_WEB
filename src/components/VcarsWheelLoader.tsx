@@ -113,11 +113,7 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
               transformOrigin: '50% 50%',
             }}
           >
-            {/*
-              The source PNG has a bit of uneven transparent padding, which makes rotation
-              look off-center. We compensate slightly with a subtle translate + scale.
-            */}
-            <div className="absolute inset-0" style={{ transform: 'translateY(-2px) scale(1.06)' }}>
+            <div className="absolute inset-0">
               <Image
                 src={`${BASE_PATH}/cars/llanta-splash-premium.png`}
                 alt="Llanta VCARS"
