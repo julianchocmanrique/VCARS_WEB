@@ -1,8 +1,12 @@
 'use client';
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { usePathname } from 'next/navigation';
-import { vcarsVariants } from '@/motion/variants';
+// NOTE: We intentionally keep this shell extremely stable.
+// Some mobile/desktop browsers can show blank screens when combining:
+// - route changes (Next App Router)
+// - framer-motion AnimatePresence keyed by pathname
+// - CSS filters / heavy animations
+//
+// If you want transitions later, re-introduce them carefully behind a feature flag.
 
 type PageTransitionShellProps = {
   children: React.ReactNode;
@@ -10,22 +14,5 @@ type PageTransitionShellProps = {
 };
 
 export function PageTransitionShell({ children, className }: PageTransitionShellProps) {
-  const pathname = usePathname();
-  const reduced = useReducedMotion();
-
-  return (
-    <AnimatePresence mode="sync" initial={false}>
-      <motion.div
-        key={pathname}
-        variants={vcarsVariants.pageSwap(Boolean(reduced))}
-        initial="hidden"
-        animate="show"
-        exit="exit"
-        className={className}
-        style={{ willChange: 'transform, opacity, filter' }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
-  );
+  return <div className={className}>{children}</div>;
 }
