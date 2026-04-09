@@ -42,14 +42,14 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
     if (phase === 'spin') {
       return {
         rotate: 360,
-        transition: { duration: 2.4, ease: 'linear' as const, repeat: Infinity },
+        transition: { duration: 1.7, ease: 'linear' as const, repeat: Infinity },
       };
     }
 
     if (phase === 'boost') {
       return {
         rotate: 360,
-        transition: { duration: 0.85, ease: 'linear' as const, repeat: Infinity },
+        transition: { duration: 0.65, ease: 'linear' as const, repeat: Infinity },
       };
     }
 
