@@ -15,7 +15,9 @@ export function InitialLoaderGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {children}
+      <div aria-hidden={showLoader} style={showLoader ? { visibility: 'hidden' } : undefined}>
+        {children}
+      </div>
       <AnimatePresence>{showLoader ? <VcarsWheelLoader onComplete={handleComplete} /> : null}</AnimatePresence>
     </>
   );

@@ -98,7 +98,7 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
         }}
       />
 
-      <div className="relative flex flex-col items-center">
+      <div className="relative flex flex-col items-center px-6 py-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 40px)' }}>
         <motion.div
           className="relative"
           initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, scale: 0.86, filter: 'blur(5px)' }}
@@ -106,7 +106,7 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
           transition={{ duration: 0.46, ease: vcarsMotion.ease.refined }}
         >
           <motion.div
-            className="relative h-[380px] w-[380px] sm:h-[500px] sm:w-[500px]"
+            className="relative h-[280px] w-[280px] sm:h-[420px] sm:w-[420px]"
             animate={spinAnim}
             style={{
               filter: 'drop-shadow(0 20px 42px rgba(0,0,0,0.58))',
@@ -118,7 +118,7 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
               fill
               priority
               className="object-contain object-center"
-              sizes="(max-width: 640px) 380px, 500px"
+              sizes="(max-width: 640px) 280px, 420px"
             />
 
             <motion.div
@@ -195,7 +195,7 @@ export function VcarsWheelLoader({ onComplete, message = 'Inicializando VCARS' }
         </motion.div>
 
         <motion.div
-          className="mt-5 text-[12px] tracking-[0.18em] text-[#d1d5db]"
+          className="mt-6 text-[12px] font-semibold tracking-[0.12em] text-[#d1d5db]"
           initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 6 }}
           animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ delay: prefersReducedMotion ? 0 : 0.14, duration: 0.34 }}
