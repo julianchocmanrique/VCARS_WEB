@@ -41,7 +41,7 @@
   --vc-blue-light: var(--color-base-sky-500);
   /* Active tab highlight color (was yellow) */
   /* Active tab highlight color (wine red) */
-  --vc-yellow: #bf1f2f;
+  --vc-yellow: #f4df2f;
 
   /* Neutralized outer atmosphere with cool-blue brand glow */
   --vc-overlay-1: rgba(69, 164, 237, 0.09);
