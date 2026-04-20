@@ -24,7 +24,7 @@ type ProcessStage = 'all' | 'recepcion' | 'diagnostico' | 'ejecucion' | 'entrega
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'home', label: 'Inicio', href: '/home' },
-  { key: 'new', label: 'Nuevo ingreso', href: '/nuevo-ingreso' },
+  { key: 'new', label: 'Nueva orden', href: '/nuevo-ingreso' },
   { key: 'process', label: 'Proceso', href: '/ingreso-activo' },
 ];
 
@@ -262,7 +262,7 @@ export default function IngresoActivoClient() {
                       name={vehicle.name}
                       version={vehicle.version}
                       client={role === 'cliente' ? (clientCompanyName || item.cliente || 'Cliente') : (item.cliente || 'Cliente')}
-                      process={item.paso || 'Recepción (Ingreso)'}
+                      process={item.paso || 'Orden de servicio'}
                       plate={item.placa}
                       statusLabel={statusLabel(item)}
                       metricA={{ label: 'OT', value: item.orderNumber || item.id.replace('entry-', '').slice(0, 6).toUpperCase() }}

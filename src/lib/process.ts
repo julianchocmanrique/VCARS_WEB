@@ -13,7 +13,7 @@ export type ProcessStep = {
 export const VCARS_PROCESS: ProcessStep[] = [
   {
     key: 'recepcion',
-    title: 'Recepción (Ingreso)',
+    title: 'Orden de servicio',
     visibleRoles: [ADMIN, TECH, CLIENT],
   },
   {
@@ -46,6 +46,7 @@ export const VCARS_PROCESS: ProcessStep[] = [
 const LEGACY_TITLE_MAP: Record<string, string> = {
   Recepcion: VCARS_PROCESS[0].title,
   'Recepcion y orden de servicio': VCARS_PROCESS[0].title,
+  'Recepción (Ingreso)': VCARS_PROCESS[0].title,
   'Cotizacion detallada': VCARS_PROCESS[1].title,
   Cotizacion: VCARS_PROCESS[2].title,
   'Aprobacion del cliente': VCARS_PROCESS[3].title,

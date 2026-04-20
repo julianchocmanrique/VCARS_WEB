@@ -36,7 +36,7 @@ const PROFILE_LABEL: Record<Role, string> = {
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'home', label: 'Inicio', href: '/home' },
-  { key: 'new', label: 'Nuevo ingreso', href: '/nuevo-ingreso' },
+  { key: 'new', label: 'Nueva orden', href: '/nuevo-ingreso' },
   { key: 'process', label: 'Proceso', href: '/ingreso-activo' },
 ];
 
@@ -278,7 +278,7 @@ export default function HomePage() {
           roleLabel={PROFILE_LABEL[role]}
           headline=""
           subheadline=""
-          primaryCtaLabel={scopedCurrent ? 'Abrir ingreso activo' : 'Crear nuevo ingreso'}
+          primaryCtaLabel={scopedCurrent ? 'Abrir orden activa' : 'Crear orden de servicio'}
           primaryCtaHref={scopedCurrent ? `/vehiculos/${encodeURIComponent(scopedCurrent.placa)}` : '/nuevo-ingreso'}
           secondaryCtaLabel="Ver vehículos en proceso"
           secondaryCtaHref="/ingreso-activo"
@@ -302,23 +302,23 @@ export default function HomePage() {
                 <div className="vc-summary-hero vc-summary-hero-upgrade">
                   <div className="vc-summary-copy">
                     <div className="vc-summary-topline">
-                      <p className="vc-mini vc-mini-blue">INGRESO ACTIVO</p>
+                      <p className="vc-mini vc-mini-blue">ORDEN ACTIVA</p>
                       <span className="vc-status-chip">{activeStatusLabel}</span>
                     </div>
                     <h3 className="vc-summary-title">
-                      {scopedCurrent ? `${scopedCurrent.vehiculo || 'Vehiculo'} · ${scopedCurrent.placa}` : 'Sin ingreso activo'}
+                      {scopedCurrent ? `${scopedCurrent.vehiculo || 'Vehiculo'} · ${scopedCurrent.placa}` : 'Sin orden activa'}
                     </h3>
                     <p className="vc-summary-text">
                       {scopedCurrent
                         ? `${(role === 'cliente' ? (clientCompanyName || scopedCurrent.cliente || '-') : (scopedCurrent.cliente || '-'))} · ${scopedCurrent.status === 'done' ? 'Finalizado' : scopedCurrent.status === 'cancelled' ? 'Cancelado' : 'Activo'}`
-                        : 'Crea un ingreso o entra al proceso para continuar.'}
+                        : 'Crea una orden de servicio o entra al proceso para continuar.'}
                     </p>
                   </div>
                   <motion.div whileHover={vcarsMicroMotion.whileHover} whileTap={vcarsMicroMotion.whileTap} transition={vcarsMicroMotion.transition}><Link
                     className="vc-login-btn vc-summary-btn vc-yellow vc-summary-cta"
                     href={scopedCurrent ? `/vehiculos/${encodeURIComponent(scopedCurrent.placa)}` : '/ingreso-activo'}
                   >
-                    {scopedCurrent ? 'Abrir ingreso ->' : 'Crear ingreso ->'}
+                    {scopedCurrent ? 'Abrir orden ->' : 'Crear orden ->'}
                   </Link></motion.div>
                 </div>
 
@@ -396,7 +396,7 @@ export default function HomePage() {
                       <div className="vc-movement-icon" aria-hidden="true">🚘</div>
                       <div className="vc-movement-text">
                         <strong>{item.vehiculo || item.placa} · {item.placa}</strong>
-                        <p>{role === 'cliente' ? (clientCompanyName || item.cliente || '-') : (item.cliente || '-')} · {item.paso || 'Recepcion (Ingreso)'}</p>
+                        <p>{role === 'cliente' ? (clientCompanyName || item.cliente || '-') : (item.cliente || '-')} · {item.paso || 'Orden de servicio'}</p>
                       </div>
                       <span className="vc-movement-go" aria-hidden="true">›</span>
                     </Link></motion.div>

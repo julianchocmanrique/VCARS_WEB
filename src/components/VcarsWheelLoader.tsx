@@ -1,11 +1,11 @@
 'use client';
 
 import Image from 'next/image';
-
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 import { useEffect, useMemo, useState } from 'react';
 import { motion, useReducedMotion, type TargetAndTransition } from 'framer-motion';
 import { vcarsMotion } from '@/motion/tokens';
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 type LoaderPhase = 'intro' | 'scan' | 'spin' | 'boost' | 'reveal';
 

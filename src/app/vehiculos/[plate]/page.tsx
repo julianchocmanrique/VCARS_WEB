@@ -23,6 +23,19 @@ const PHOTO_SLOTS = [
   { key: 'trasero', label: 'Trasero' },
 ] as const;
 
+function normalizeLegacyStepLabel(label?: string): string {
+  const raw = String(label || '').trim();
+  if (!raw) return '';
+  const normalized = raw
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  if (normalized.includes('recepcion') && normalized.includes('ingreso')) return 'Orden de servicio';
+  if (normalized === 'recepcion') return 'Orden de servicio';
+  if (normalized === 'recepcion (orden de servicio)') return 'Orden de servicio';
+  return raw;
+}
+
 function evidenceImageStyle(zone: (typeof PHOTO_SLOTS)[number]['key']): React.CSSProperties {
   switch (zone) {
     case 'superior':
@@ -198,7 +211,7 @@ export default function VehiculoDetallePage() {
               <span>Cliente</span><strong>{role === 'cliente' ? (clientCompanyName || vehicle?.cliente || '-') : (vehicle?.cliente || '-')}</strong>
               <span>Vehículo</span><strong>{vehicle?.vehiculo || '-'}</strong>
               <span>Color</span><strong>{vehicle?.color || '-'}</strong>
-              <span>Paso actual</span><strong>{vehicle?.paso || '-'}</strong>
+              <span>Paso actual</span><strong>{normalizeLegacyStepLabel(vehicle?.paso) || '-'}</strong>
             </div>
           ) : null}
 
@@ -264,7 +277,7 @@ export default function VehiculoDetallePage() {
           <ul className="vc-timeline">
             {visibleSteps.map((step, idx) => (
               <li key={step.key} className={idx <= displayCurrentIndex ? 'done' : ''}>
-                {step.title}
+                {normalizeLegacyStepLabel(step.title)}
               </li>
             ))}
           </ul>
@@ -347,7 +360,7 @@ export default function VehiculoDetallePage() {
                 >
                   <div className="vc-form-row-left">
                     <span className={`vc-form-dot ${idx <= displayCurrentIndex ? 'done' : ''}`} />
-                    <span>{step.title}</span>
+                    <span>{normalizeLegacyStepLabel(step.title)}</span>
                   </div>
                   <span className="vc-form-edit">✎</span>
                 </Link>

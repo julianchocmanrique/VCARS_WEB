@@ -19,18 +19,27 @@ export type Entry = {
   orderNumber?: string;
   placa: string;
   cliente?: string;
+  ownerName?: string;
+  companyEntity?: string;
   nitCc?: string;
   direccion?: string;
   telefono?: string;
   email?: string;
   vehiculo?: string;
+  marca?: string;
+  modelo?: string;
   color?: string;
   empresa?: string;
   invoiceName?: string;
+  billingNitCc?: string;
   paymentMethod?: 'contado' | 'credito' | '';
   creditDays?: string;
   fuelLevel?: string;
   receivedBy?: string;
+  tecnicoAsignado?: string;
+  additionalAccessoriesNotes?: string;
+  condicionFisica?: string;
+  inventarioAccesorios?: string;
   expectedDeliveryDate?: string;
   soatExpiry?: string;
   rtmExpiry?: string;
@@ -91,18 +100,27 @@ function normalizeEntry(value: unknown): Entry | null {
     orderNumber: String(v.orderNumber || ''),
     placa,
     cliente: String(v.cliente || ''),
+    ownerName: String(v.ownerName || ''),
+    companyEntity: String(v.companyEntity || ''),
     nitCc: String(v.nitCc || ''),
     direccion: String(v.direccion || ''),
     telefono: String(v.telefono || ''),
     email: String(v.email || ''),
     vehiculo: String(v.vehiculo || ''),
+    marca: String(v.marca || ''),
+    modelo: String(v.modelo || ''),
     color: String(v.color || ''),
     empresa: String(v.empresa || ''),
     invoiceName: String(v.invoiceName || ''),
+    billingNitCc: String(v.billingNitCc || ''),
     paymentMethod: (v.paymentMethod === 'contado' || v.paymentMethod === 'credito') ? v.paymentMethod : '',
     creditDays: String(v.creditDays || ''),
     fuelLevel: String(v.fuelLevel || ''),
     receivedBy: String(v.receivedBy || ''),
+    tecnicoAsignado: String(v.tecnicoAsignado || ''),
+    additionalAccessoriesNotes: String(v.additionalAccessoriesNotes || ''),
+    condicionFisica: String(v.condicionFisica || ''),
+    inventarioAccesorios: String(v.inventarioAccesorios || ''),
     expectedDeliveryDate: String(v.expectedDeliveryDate || ''),
     soatExpiry: String(v.soatExpiry || ''),
     rtmExpiry: String(v.rtmExpiry || ''),

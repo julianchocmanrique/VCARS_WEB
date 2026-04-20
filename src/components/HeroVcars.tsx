@@ -1,13 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { vcarsMotion } from '@/motion/tokens';
 import { vcarsMicroMotion, vcarsVariants } from '@/motion/variants';
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 type HeroVcarsProps = {
   roleLabel: string;
@@ -176,7 +175,7 @@ export function HeroVcars({
                     Ir a Proceso
                   </Link>
                   <Link href={primaryCtaHref} className="inline-flex min-h-10 items-center justify-center rounded-full border border-[rgba(31,95,159,0.55)] bg-[rgba(31,95,159,0.18)] px-4 text-xs font-semibold text-[#dff1ff] transition hover:bg-[rgba(31,95,159,0.28)]">
-                    Ver ingreso activo
+                    Ver orden activa
                   </Link>
                 </div>
               </motion.div>

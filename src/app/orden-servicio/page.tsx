@@ -31,6 +31,7 @@ const STEP_FIELDS: Record<string, FieldDef[]> = {
     { key: 'fallaCliente', label: 'Falla reportada por el cliente', placeholder: 'Describe la falla' },
     { key: 'kilometraje', label: 'Kilometraje (km)', placeholder: '123456' },
     { key: 'tecnicoAsignado', label: 'Técnico asignado', placeholder: 'Nombre del técnico' },
+    { key: 'observacionesAccesorios', label: 'Observaciones / Accesorios adicionales', placeholder: 'Detalle de accesorios y observaciones' },
     { key: 'wantsOldParts', label: '¿Desea conservar piezas cambiadas? (SI/NO)', placeholder: 'SI o NO' },
     { key: 'soatExpiry', label: 'SOAT (vencimiento)', placeholder: 'YYYY-MM-DD' },
     { key: 'rtmExpiry', label: 'Tecnomecánica (vencimiento)', placeholder: 'YYYY-MM-DD' },
