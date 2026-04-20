@@ -69,6 +69,7 @@ export default function VehiculoDetallePage() {
     resumenPrincipal: true,
     contactoFacturacion: false,
     fechasDocumentos: false,
+    vehiculoRecepcion: false,
   });
 
   useEffect(() => {
@@ -146,6 +147,7 @@ export default function VehiculoDetallePage() {
 
   const quoteData = formsByStep.cotizacion_formal || {};
   const approvalData = formsByStep.aprobacion || {};
+  const receptionData = formsByStep.recepcion || {};
   const intakePhotosByZone = useMemo(() => {
     const zone = vehicle?.intakePhotosByZone || {};
     const legacy = vehicle?.intakePhotos || [];
@@ -221,11 +223,15 @@ export default function VehiculoDetallePage() {
           </button>
           {openBlocks.contactoFacturacion ? (
             <div className="vc-summary-grid">
+              <span>Propietario</span><strong>{vehicle?.ownerName || vehicle?.cliente || '-'}</strong>
+              <span>Empresa / Entidad</span><strong>{vehicle?.companyEntity || vehicle?.empresa || '-'}</strong>
               <span>Teléfono</span><strong>{vehicle?.telefono || '-'}</strong>
               <span>NIT/CC</span><strong>{vehicle?.nitCc || '-'}</strong>
+              <span>Dirección</span><strong>{vehicle?.direccion || '-'}</strong>
               <span>Correo</span><strong>{vehicle?.email || '-'}</strong>
-              <span>Facturación</span><strong>{vehicle?.invoiceName || '-'}</strong>
-              <span>Pago</span><strong>{vehicle?.paymentMethod || '-'}</strong>
+              <span>Factura a nombre de</span><strong>{vehicle?.invoiceName || '-'}</strong>
+              <span>NIT/CC facturación</span><strong>{vehicle?.billingNitCc || '-'}</strong>
+              <span>Forma de pago</span><strong>{vehicle?.paymentMethod || '-'}</strong>
               <span>Días crédito</span><strong>{vehicle?.creditDays || '-'}</strong>
             </div>
           ) : null}
@@ -242,11 +248,30 @@ export default function VehiculoDetallePage() {
               <span>Tecnomecánica</span><strong>{vehicle?.rtmExpiry || '-'}</strong>
             </div>
           ) : null}
+
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('vehiculoRecepcion')} aria-expanded={openBlocks.vehiculoRecepcion}>
+            <span>Vehículo y recepción</span>
+            <span>{openBlocks.vehiculoRecepcion ? '−' : '+'}</span>
+          </button>
+          {openBlocks.vehiculoRecepcion ? (
+            <div className="vc-summary-grid">
+              <span>Marca</span><strong>{vehicle?.marca || '-'}</strong>
+              <span>Modelo</span><strong>{vehicle?.modelo || '-'}</strong>
+              <span>Color</span><strong>{vehicle?.color || '-'}</strong>
+              <span>Nivel combustible</span><strong>{vehicle?.fuelLevel || '-'}</strong>
+              <span>Kilometraje</span><strong>{receptionData.kilometraje || '-'}</strong>
+              <span>Técnico asignado</span><strong>{receptionData.tecnicoAsignado || vehicle?.tecnicoAsignado || '-'}</strong>
+              <span>Conserva piezas</span><strong>{receptionData.wantsOldParts || vehicle?.wantsOldParts || '-'}</strong>
+              <span>Falla cliente</span><strong>{receptionData.fallaCliente || '-'}</strong>
+              <span>Obs. accesorios</span><strong>{receptionData.observacionesAccesorios || vehicle?.additionalAccessoriesNotes || '-'}</strong>
+              <span>Condición física</span><strong>{receptionData.condicionFisica || vehicle?.condicionFisica || '-'}</strong>
+            </div>
+          ) : null}
         </section>
 
         {hasIntakePhotos ? (
           <section className="vc-card">
-            <h3>Evidencias de ingreso</h3>
+            <h3>Evidencias de orden de servicio</h3>
             <div className="vc-photo-grid">
               {PHOTO_SLOTS.map((slot) => {
                 const src = intakePhotosByZone[slot.key];
