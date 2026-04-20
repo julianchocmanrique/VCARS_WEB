@@ -179,6 +179,10 @@ export default function OrdenServicioPage() {
   const inventory = useMemo(() => {
     return parseJsonRows<Record<string, InventoryValue>>(formsByStep.recepcion?.inventarioAccesorios, {});
   }, [formsByStep.recepcion?.inventarioAccesorios]);
+  const entryForPlate = useMemo(
+    () => getEntries().find((item) => String(item.placa || '').toUpperCase() === plate) || null,
+    [plate, formsByStep],
+  );
 
   const receptionPhotos = useMemo(() => {
     const fromForms = formsByStep.recepcion || {};
@@ -232,25 +236,31 @@ export default function OrdenServicioPage() {
     syncStepPatch('recepcion', { inventarioAccesorios: JSON.stringify(next) });
   }
 
-  function syncEntryReceptionPhotos(slot: PhotoSlotKey, src: string) {
+  function syncEntryPatch(patch: Partial<Entry>) {
     const all = getEntries();
     const idx = all.findIndex((item) => String(item.placa || '').toUpperCase() === plate);
     if (idx < 0) return;
 
     const currentEntry = all[idx] as Entry;
-    const nextZone = { ...(currentEntry.intakePhotosByZone || {}), [slot]: src };
-    const nextPhotos = PHOTO_SLOTS.map((item) => String(nextZone[item.key] || '')).filter(Boolean);
-
     const nextEntry: Entry = {
       ...currentEntry,
-      intakePhotosByZone: nextZone,
-      intakePhotos: nextPhotos,
+      ...patch,
       updatedAt: new Date().toISOString(),
     };
-
     const nextAll = [...all];
     nextAll[idx] = nextEntry;
     setEntries(nextAll);
+  }
+
+  function syncEntryReceptionPhotos(slot: PhotoSlotKey, src: string) {
+    const currentZone = entryForPlate?.intakePhotosByZone || {};
+    const nextZone = { ...currentZone, [slot]: src };
+    const nextPhotos = PHOTO_SLOTS.map((item) => String(nextZone[item.key] || '')).filter(Boolean);
+
+    syncEntryPatch({
+      intakePhotosByZone: nextZone,
+      intakePhotos: nextPhotos,
+    });
   }
 
   async function onPickReceptionPhoto(slot: PhotoSlotKey, file?: File) {
@@ -313,25 +323,365 @@ export default function OrdenServicioPage() {
             </div>
           ) : (
             <div className="vc-step-fields">
-              {fields.map((field) => (
-                <div key={field.key}>
-                  <label className="vc-label">{field.label}</label>
-                  <div className="vc-input-wrap">
-                    <input
-                      value={formsByStep[currentKey]?.[field.key] || ''}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        updateField(field.key, value);
-                        if (currentKey === 'aprobacion' && field.key === 'decisionCliente' && value.trim()) {
-                          updateField('decisionClienteAt', new Date().toISOString());
-                        }
-                      }}
-                      placeholder={field.placeholder}
-                      disabled={!editable}
-                    />
+              {currentKey !== 'recepcion' ? (
+                fields.map((field) => (
+                  <div key={field.key}>
+                    <label className="vc-label">{field.label}</label>
+                    <div className="vc-input-wrap">
+                      <input
+                        value={formsByStep[currentKey]?.[field.key] || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          updateField(field.key, value);
+                          if (currentKey === 'aprobacion' && field.key === 'decisionCliente' && value.trim()) {
+                            updateField('decisionClienteAt', new Date().toISOString());
+                          }
+                        }}
+                        placeholder={field.placeholder}
+                        disabled={!editable}
+                      />
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="space-y-3">
+                  <details open>
+                    <summary className="vc-label" style={{ cursor: 'pointer', marginBottom: 8 }}>Control de orden y cliente</summary>
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">No. orden</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.orderNumber || ''}
+                            onChange={(e) => syncEntryPatch({ orderNumber: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Fecha entrada</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            type="date"
+                            value={String(entryForPlate?.fecha || '').slice(0, 10)}
+                            onChange={(e) => syncEntryPatch({ fecha: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">Fecha prevista entrega</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            type="date"
+                            value={entryForPlate?.expectedDeliveryDate || ''}
+                            onChange={(e) => syncEntryPatch({ expectedDeliveryDate: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Placa</label>
+                        <div className="vc-input-wrap">
+                          <input value={entryForPlate?.placa || plate} disabled />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">Propietario</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.ownerName || entryForPlate?.cliente || ''}
+                            onChange={(e) => syncEntryPatch({ ownerName: e.target.value, cliente: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">NIT / C.C</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.nitCc || ''}
+                            onChange={(e) => syncEntryPatch({ nitCc: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">Empresa / Entidad</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.companyEntity || entryForPlate?.empresa || ''}
+                            onChange={(e) => syncEntryPatch({ companyEntity: e.target.value, empresa: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Dirección</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.direccion || ''}
+                            onChange={(e) => syncEntryPatch({ direccion: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">Teléfono de contacto</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.telefono || ''}
+                            onChange={(e) => syncEntryPatch({ telefono: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">E-mail</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.email || ''}
+                            onChange={(e) => syncEntryPatch({ email: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+
+                  <details>
+                    <summary className="vc-label" style={{ cursor: 'pointer', marginBottom: 8 }}>Facturación</summary>
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">Factura a nombre de</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.invoiceName || ''}
+                            onChange={(e) => syncEntryPatch({ invoiceName: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">NIT / C.C facturación</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.billingNitCc || ''}
+                            onChange={(e) => syncEntryPatch({ billingNitCc: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">Forma de pago</label>
+                        <div className="vc-input-wrap">
+                          <select
+                            className="vc-select"
+                            value={entryForPlate?.paymentMethod || ''}
+                            onChange={(e) => syncEntryPatch({ paymentMethod: e.target.value as Entry['paymentMethod'] })}
+                            disabled={!editable}
+                          >
+                            <option value="">Seleccionar</option>
+                            <option value="contado">Contado</option>
+                            <option value="credito">Crédito</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Días crédito</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.creditDays || ''}
+                            onChange={(e) => syncEntryPatch({ creditDays: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+
+                  <details>
+                    <summary className="vc-label" style={{ cursor: 'pointer', marginBottom: 8 }}>Información del vehículo y recepción</summary>
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">Marca</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.marca || ''}
+                            onChange={(e) => syncEntryPatch({ marca: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Modelo</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.modelo || ''}
+                            onChange={(e) => syncEntryPatch({ modelo: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">Color</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={entryForPlate?.color || ''}
+                            onChange={(e) => syncEntryPatch({ color: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Nivel combustible</label>
+                        <div className="vc-input-wrap">
+                          <select
+                            className="vc-select"
+                            value={entryForPlate?.fuelLevel || ''}
+                            onChange={(e) => syncEntryPatch({ fuelLevel: e.target.value })}
+                            disabled={!editable}
+                          >
+                            <option value="">Seleccionar</option>
+                            <option value="E">E</option>
+                            <option value="1/4">1/4</option>
+                            <option value="1/2">1/2</option>
+                            <option value="3/4">3/4</option>
+                            <option value="F">F</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">Kilometraje</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={formsByStep.recepcion?.kilometraje || ''}
+                            onChange={(e) => syncStepPatch('recepcion', { kilometraje: e.target.value })}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Técnico asignado</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={formsByStep.recepcion?.tecnicoAsignado || ''}
+                            onChange={(e) => {
+                              syncStepPatch('recepcion', { tecnicoAsignado: e.target.value });
+                              syncEntryPatch({ tecnicoAsignado: e.target.value });
+                            }}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <label className="vc-label">Observaciones / Accesorios adicionales</label>
+                    <div className="vc-input-wrap">
+                      <input
+                        value={formsByStep.recepcion?.observacionesAccesorios || ''}
+                        onChange={(e) => syncStepPatch('recepcion', { observacionesAccesorios: e.target.value })}
+                        disabled={!editable}
+                      />
+                    </div>
+
+                    <label className="vc-label">Falla reportada por el cliente</label>
+                    <div className="vc-input-wrap">
+                      <input
+                        value={formsByStep.recepcion?.fallaCliente || ''}
+                        onChange={(e) => syncStepPatch('recepcion', { fallaCliente: e.target.value })}
+                        disabled={!editable}
+                      />
+                    </div>
+
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">¿Desea conservar piezas?</label>
+                        <div className="vc-input-wrap">
+                          <select
+                            className="vc-select"
+                            value={formsByStep.recepcion?.wantsOldParts || ''}
+                            onChange={(e) => {
+                              syncStepPatch('recepcion', { wantsOldParts: e.target.value });
+                              syncEntryPatch({ wantsOldParts: e.target.value as Entry['wantsOldParts'] });
+                            }}
+                            disabled={!editable}
+                          >
+                            <option value="">Seleccionar</option>
+                            <option value="SI">SI</option>
+                            <option value="NO">NO</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Reporte condición física</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            value={formsByStep.recepcion?.condicionFisica || ''}
+                            onChange={(e) => {
+                              syncStepPatch('recepcion', { condicionFisica: e.target.value });
+                              syncEntryPatch({ condicionFisica: e.target.value });
+                            }}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="vc-grid-2">
+                      <div>
+                        <label className="vc-label">SOAT (vencimiento)</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            type="date"
+                            value={formsByStep.recepcion?.soatExpiry || entryForPlate?.soatExpiry || ''}
+                            onChange={(e) => {
+                              syncStepPatch('recepcion', { soatExpiry: e.target.value });
+                              syncEntryPatch({ soatExpiry: e.target.value });
+                            }}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Tecnomecánica (vencimiento)</label>
+                        <div className="vc-input-wrap">
+                          <input
+                            type="date"
+                            value={formsByStep.recepcion?.rtmExpiry || entryForPlate?.rtmExpiry || ''}
+                            onChange={(e) => {
+                              syncStepPatch('recepcion', { rtmExpiry: e.target.value });
+                              syncEntryPatch({ rtmExpiry: e.target.value });
+                            }}
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </details>
                 </div>
-              ))}
+              )}
 
               {currentKey === 'recepcion' ? (
                 <div>
