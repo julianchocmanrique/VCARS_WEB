@@ -396,6 +396,20 @@ a { color: inherit; text-decoration: none; }
   border-color: rgba(69, 164, 237, 0.4);
   background: rgba(69, 164, 237, 0.12);
 }
+.vc-form-icon.is-disabled,
+.vc-form-icon:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: transparent;
+  background: transparent;
+  color: var(--vc-muted);
+}
+.vc-form-icon.is-disabled:hover,
+.vc-form-icon:disabled:hover {
+  color: var(--vc-muted);
+  border-color: transparent;
+  background: transparent;
+}
 
 .vc-label { color: var(--vc-muted); font-size: 12px; font-weight: 700; margin-top: 10px; display: block; }
 .vc-input-wrap { margin-top: 8px; border: 1px solid var(--vc-border); border-radius: 14px; background: var(--vc-surface-alt); padding: 10px 12px; }

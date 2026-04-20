@@ -202,6 +202,7 @@ export default function VehiculoDetallePage() {
   }
 
   function downloadServiceOrder() {
+    if (!isServiceOrderComplete) return;
     if (typeof window === 'undefined') return;
     try {
       const safePlate = String(vehicle?.placa || plate || 'sin-placa').replace(/[^a-z0-9_-]+/gi, '_');
@@ -449,9 +450,20 @@ export default function VehiculoDetallePage() {
                         aria-label="Descargar orden de servicio"
                         title="Descargar orden de servicio"
                       >
-                        ⤓
+                        ↓
                       </button>
-                    ) : null}
+                    ) : (
+                      <button
+                        type="button"
+                        className="vc-form-icon is-disabled"
+                        onClick={downloadServiceOrder}
+                        aria-label="Descarga disponible al completar la orden"
+                        title="Completa la orden para habilitar la descarga"
+                        disabled
+                      >
+                        ↓
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
