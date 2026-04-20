@@ -90,6 +90,13 @@ function toNumberSafe(value: string): number {
   return Number.isFinite(v) ? v : 0;
 }
 
+function nextInventoryValue(current: InventoryValue): InventoryValue {
+  const order: InventoryValue[] = ['', 'S', 'N', 'C', 'I'];
+  const idx = order.indexOf(current || '');
+  if (idx < 0) return 'S';
+  return order[(idx + 1) % order.length];
+}
+
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -688,21 +695,28 @@ export default function OrdenServicioPage() {
                   <label className="vc-label">Inventario de accesorios (S/N/C/I)</label>
                   <div className="vc-grid-2">
                     {INVENTORY_ITEMS.map((item) => (
-                      <div key={item} className="vc-input-wrap" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center' }}>
+                      <button
+                        key={item}
+                        type="button"
+                        className="vc-input-wrap"
+                        style={{
+                          width: '100%',
+                          display: 'grid',
+                          gridTemplateColumns: '1fr auto',
+                          gap: 10,
+                          alignItems: 'center',
+                          textAlign: 'left',
+                          opacity: editable ? 1 : 0.72,
+                          cursor: editable ? 'pointer' : 'not-allowed',
+                        }}
+                        disabled={!editable}
+                        onClick={() => setInventoryValue(item, nextInventoryValue(inventory[item] || ''))}
+                        aria-label={`Cambiar estado de ${item}`}
+                        title="Click para cambiar entre -, S, N, C, I"
+                      >
                         <span style={{ fontSize: 12, color: 'var(--vc-muted)', textTransform: 'capitalize' }}>{item}</span>
-                        <select
-                          className="vc-select"
-                          value={inventory[item] || ''}
-                          disabled={!editable}
-                          onChange={(e) => setInventoryValue(item, e.target.value as InventoryValue)}
-                        >
-                          <option value="">-</option>
-                          <option value="S">S</option>
-                          <option value="N">N</option>
-                          <option value="C">C</option>
-                          <option value="I">I</option>
-                        </select>
-                      </div>
+                        <strong style={{ fontSize: 15, letterSpacing: '0.08em' }}>{inventory[item] || '-'}</strong>
+                      </button>
                     ))}
                   </div>
 
