@@ -143,11 +143,23 @@ export default function VehiculoDetallePage() {
 
   const quoteReady = isClientQuoteReady(formsByStep);
   const approvalIndex = stepIndexFromTitle('Autorización del cliente');
+  const finishIndex = stepIndexFromTitle('Entrega / Cierre (Admin)');
   const clientCanAuthorize = role === 'cliente' && quoteReady && stepIndex >= approvalIndex;
 
   const quoteData = formsByStep.cotizacion_formal || {};
   const approvalData = formsByStep.aprobacion || {};
   const receptionData = formsByStep.recepcion || {};
+  const entregaData = formsByStep.entrega || {};
+  const normalizedStatus = String(vehicle?.status || '').toLowerCase();
+  const isServiceOrderComplete = stepIndex >= finishIndex
+    || normalizedStatus === 'done'
+    || normalizedStatus === 'completed'
+    || normalizedStatus === 'finalizado'
+    || normalizedStatus === 'cerrado'
+    || normalizedStatus === 'closed'
+    || normalizedStatus === 'entregado'
+    || Boolean(entregaData.fechaEntregaReal)
+    || Boolean(entregaData.firmaRecibe);
   const intakePhotosByZone = useMemo(() => {
     const zone = vehicle?.intakePhotosByZone || {};
     const legacy = vehicle?.intakePhotos || [];
@@ -187,6 +199,38 @@ export default function VehiculoDetallePage() {
 
   function toggleBlock(key: keyof typeof openBlocks) {
     setOpenBlocks((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  function downloadServiceOrder() {
+    if (typeof window === 'undefined') return;
+    try {
+      const safePlate = String(vehicle?.placa || plate || 'sin-placa').replace(/[^a-z0-9_-]+/gi, '_');
+      const payload = {
+        generadoEn: new Date().toISOString(),
+        placa: plate,
+        estado: {
+          pasoActual: normalizeLegacyStepLabel(vehicle?.paso),
+          indicePaso: stepIndex,
+          status: vehicle?.status || '',
+          completada: isServiceOrderComplete,
+        },
+        vehiculo: vehicle || {},
+        formularios: formsByStep,
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+      const href = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = href;
+      anchor.download = `orden-servicio-${safePlate}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(href);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'No se pudo generar la descarga';
+      setWarning(msg);
+    }
   }
 
   return (
@@ -378,17 +422,38 @@ export default function VehiculoDetallePage() {
             <h3>Formularios</h3>
             <div className="vc-forms-list">
               {visibleSteps.map((step, idx) => (
-                <Link
-                  key={step.key}
-                  href={`/orden-servicio?startStep=${step.index}&plate=${encodeURIComponent(plate)}`}
-                  className="vc-form-row"
-                >
-                  <div className="vc-form-row-left">
-                    <span className={`vc-form-dot ${idx <= displayCurrentIndex ? 'done' : ''}`} />
-                    <span>{normalizeLegacyStepLabel(step.title)}</span>
+                <div key={step.key} className="vc-form-row">
+                  <Link
+                    href={`/orden-servicio?startStep=${step.index}&plate=${encodeURIComponent(plate)}`}
+                    className="vc-form-row-main"
+                  >
+                    <div className="vc-form-row-left">
+                      <span className={`vc-form-dot ${idx <= displayCurrentIndex ? 'done' : ''}`} />
+                      <span>{normalizeLegacyStepLabel(step.title)}</span>
+                    </div>
+                  </Link>
+                  <div className="vc-form-actions">
+                    <Link
+                      href={`/orden-servicio?startStep=${step.index}&plate=${encodeURIComponent(plate)}`}
+                      className="vc-form-icon"
+                      aria-label={`Editar ${normalizeLegacyStepLabel(step.title)}`}
+                      title={`Editar ${normalizeLegacyStepLabel(step.title)}`}
+                    >
+                      ✎
+                    </Link>
+                    {isServiceOrderComplete ? (
+                      <button
+                        type="button"
+                        className="vc-form-icon"
+                        onClick={downloadServiceOrder}
+                        aria-label="Descargar orden de servicio"
+                        title="Descargar orden de servicio"
+                      >
+                        ⤓
+                      </button>
+                    ) : null}
                   </div>
-                  <span className="vc-form-edit">✎</span>
-                </Link>
+                </div>
               ))}
             </div>
           </section>
