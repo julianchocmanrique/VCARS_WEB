@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
@@ -13,6 +13,7 @@ type QuoteRow = { sistema: string; trabajo: string; unitPrice: string; qty: stri
 type ExpenseRow = { actividad: string; tercero: string; cantidad: string; operario: string; costo: string };
 
 type InventoryValue = 'S' | 'N' | 'C' | 'I' | '';
+type SignaturePadKey = 'cliente' | 'taller';
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
 const PHOTO_SLOTS = [
@@ -135,6 +136,18 @@ export default function OrdenServicioPage() {
   const [validationError, setValidationError] = useState('');
   const [fuelLevelUi, setFuelLevelUi] = useState<FuelLevelValue>('1/2');
   const [entryRefreshTick, setEntryRefreshTick] = useState(0);
+  const signatureCanvasRefs = useRef<Record<SignaturePadKey, HTMLCanvasElement | null>>({
+    cliente: null,
+    taller: null,
+  });
+  const signatureDrawingRef = useRef<Record<SignaturePadKey, boolean>>({
+    cliente: false,
+    taller: false,
+  });
+  const signatureLastPointRef = useRef<Record<SignaturePadKey, { x: number; y: number } | null>>({
+    cliente: null,
+    taller: null,
+  });
   const [openReceptionBlocks, setOpenReceptionBlocks] = useState({
     controlOrden: true,
     facturacion: false,
@@ -242,6 +255,115 @@ export default function OrdenServicioPage() {
       trasero: String(fromForms.photo_trasero || fromEntry.trasero || ''),
     } as Record<PhotoSlotKey, string>;
   }, [formsByStep.recepcion, plate]);
+
+  const signatureFieldKey: Record<SignaturePadKey, 'firmaClienteEmpresa' | 'firmaTallerRecibe'> = {
+    cliente: 'firmaClienteEmpresa',
+    taller: 'firmaTallerRecibe',
+  };
+
+  function syncSignatureCanvasFromValue(key: SignaturePadKey, value: string) {
+    const canvas = signatureCanvasRefs.current[key];
+    if (!canvas || typeof window === 'undefined') return;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    ctx.fillStyle = 'rgba(10, 12, 17, 0.86)';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    if (String(value || '').startsWith('data:image/')) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      };
+      img.src = value;
+    }
+  }
+
+  useEffect(() => {
+    syncSignatureCanvasFromValue('cliente', String(formsByStep.recepcion?.firmaClienteEmpresa || ''));
+    syncSignatureCanvasFromValue('taller', String(formsByStep.recepcion?.firmaTallerRecibe || ''));
+  }, [formsByStep.recepcion?.firmaClienteEmpresa, formsByStep.recepcion?.firmaTallerRecibe]);
+
+  function getSignatureContext(key: SignaturePadKey) {
+    const canvas = signatureCanvasRefs.current[key];
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    return { canvas, ctx };
+  }
+
+  function getSignaturePoint(canvas: HTMLCanvasElement, event: ReactPointerEvent<HTMLCanvasElement>) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+  }
+
+  function handleSignaturePointerDown(key: SignaturePadKey, event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (!editable) return;
+    const refs = getSignatureContext(key);
+    if (!refs || !refs.ctx) return;
+    const { canvas, ctx } = refs;
+    canvas.setPointerCapture(event.pointerId);
+    signatureDrawingRef.current[key] = true;
+    const point = getSignaturePoint(canvas, event);
+    signatureLastPointRef.current[key] = point;
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineWidth = 2.6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#e6f3ff';
+  }
+
+  function handleSignaturePointerMove(key: SignaturePadKey, event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (!signatureDrawingRef.current[key]) return;
+    const refs = getSignatureContext(key);
+    if (!refs || !refs.ctx) return;
+    const { canvas, ctx } = refs;
+    const point = getSignaturePoint(canvas, event);
+    const last = signatureLastPointRef.current[key];
+    if (!last) {
+      signatureLastPointRef.current[key] = point;
+      return;
+    }
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+    signatureLastPointRef.current[key] = point;
+  }
+
+  function saveSignature(key: SignaturePadKey) {
+    const refs = getSignatureContext(key);
+    if (!refs) return;
+    const dataUrl = refs.canvas.toDataURL('image/png');
+    syncStepPatch('recepcion', { [signatureFieldKey[key]]: dataUrl });
+  }
+
+  function handleSignaturePointerUp(key: SignaturePadKey, event: ReactPointerEvent<HTMLCanvasElement>) {
+    const refs = getSignatureContext(key);
+    if (refs) {
+      try {
+        refs.canvas.releasePointerCapture(event.pointerId);
+      } catch {
+        // no-op when pointer is already released
+      }
+    }
+    if (!signatureDrawingRef.current[key]) return;
+    signatureDrawingRef.current[key] = false;
+    signatureLastPointRef.current[key] = null;
+    saveSignature(key);
+  }
+
+  function clearSignature(key: SignaturePadKey) {
+    syncStepPatch('recepcion', { [signatureFieldKey[key]]: '' });
+  }
 
   function syncStepPatch(stepKey: string, patch: Record<string, string>) {
     if (!plate) return;
@@ -961,26 +1083,38 @@ export default function OrdenServicioPage() {
                     <div className="vc-grid-2" style={{ marginTop: 10 }}>
                       <div>
                         <label className="vc-label">Firma cliente / empresa</label>
-                        <div className="vc-input-wrap vc-input-wrap-emphasis">
-                          <input
-                            className="vc-input-emphasis"
-                            value={formsByStep.recepcion?.firmaClienteEmpresa || ''}
-                            onChange={(e) => syncStepPatch('recepcion', { firmaClienteEmpresa: e.target.value })}
-                            placeholder="Nombre y firma de cliente o empresa"
-                            disabled={!editable}
+                        <div className="vc-signature-box">
+                          <canvas
+                            ref={(node) => { signatureCanvasRefs.current.cliente = node; }}
+                            className="vc-signature-canvas"
+                            onPointerDown={(e) => handleSignaturePointerDown('cliente', e)}
+                            onPointerMove={(e) => handleSignaturePointerMove('cliente', e)}
+                            onPointerUp={(e) => handleSignaturePointerUp('cliente', e)}
+                            onPointerLeave={(e) => handleSignaturePointerUp('cliente', e)}
                           />
+                          <div className="vc-signature-actions">
+                            <button type="button" className="vc-btn" onClick={() => clearSignature('cliente')} disabled={!editable}>
+                              Limpiar
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <div>
                         <label className="vc-label">Firma taller (quien recibe)</label>
-                        <div className="vc-input-wrap vc-input-wrap-emphasis">
-                          <input
-                            className="vc-input-emphasis"
-                            value={formsByStep.recepcion?.firmaTallerRecibe || ''}
-                            onChange={(e) => syncStepPatch('recepcion', { firmaTallerRecibe: e.target.value })}
-                            placeholder="Nombre y firma de quien recibe"
-                            disabled={!editable}
+                        <div className="vc-signature-box">
+                          <canvas
+                            ref={(node) => { signatureCanvasRefs.current.taller = node; }}
+                            className="vc-signature-canvas"
+                            onPointerDown={(e) => handleSignaturePointerDown('taller', e)}
+                            onPointerMove={(e) => handleSignaturePointerMove('taller', e)}
+                            onPointerUp={(e) => handleSignaturePointerUp('taller', e)}
+                            onPointerLeave={(e) => handleSignaturePointerUp('taller', e)}
                           />
+                          <div className="vc-signature-actions">
+                            <button type="button" className="vc-btn" onClick={() => clearSignature('taller')} disabled={!editable}>
+                              Limpiar
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
