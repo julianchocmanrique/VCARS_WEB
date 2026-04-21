@@ -269,6 +269,11 @@ export default function OrdenServicioPage() {
     taller: 'firmaTallerRecibe',
   };
 
+  function getSignatureValue(key: SignaturePadKey): string {
+    const field = signatureFieldKey[key];
+    return String(formsByStep.recepcion?.[field] || '');
+  }
+
   function syncSignatureCanvasFromValue(key: SignaturePadKey, value: string) {
     const canvas = signatureCanvasRefs.current[key];
     if (!canvas || typeof window === 'undefined') return;
@@ -292,10 +297,51 @@ export default function OrdenServicioPage() {
     }
   }
 
+  function repaintSignaturesWithRetry(attempt = 0) {
+    if (currentKey !== 'recepcion') return;
+    if (!openReceptionBlocks.firmas) return;
+    const clienteCanvas = signatureCanvasRefs.current.cliente;
+    const tallerCanvas = signatureCanvasRefs.current.taller;
+    const clienteReady = Boolean(clienteCanvas && clienteCanvas.getBoundingClientRect().width > 8);
+    const tallerReady = Boolean(tallerCanvas && tallerCanvas.getBoundingClientRect().width > 8);
+
+    if (!clienteReady || !tallerReady) {
+      if (attempt >= 8 || typeof window === 'undefined') return;
+      window.requestAnimationFrame(() => repaintSignaturesWithRetry(attempt + 1));
+      return;
+    }
+
+    syncSignatureCanvasFromValue('cliente', getSignatureValue('cliente'));
+    syncSignatureCanvasFromValue('taller', getSignatureValue('taller'));
+  }
+
   useEffect(() => {
     syncSignatureCanvasFromValue('cliente', String(formsByStep.recepcion?.firmaClienteEmpresa || ''));
     syncSignatureCanvasFromValue('taller', String(formsByStep.recepcion?.firmaTallerRecibe || ''));
   }, [formsByStep.recepcion?.firmaClienteEmpresa, formsByStep.recepcion?.firmaTallerRecibe]);
+
+  useEffect(() => {
+    repaintSignaturesWithRetry();
+  }, [currentKey, openReceptionBlocks.firmas]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onResize = () => repaintSignaturesWithRetry();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [currentKey, openReceptionBlocks.firmas]);
+
+  function registerSignatureCanvasRef(key: SignaturePadKey, node: HTMLCanvasElement | null) {
+    signatureCanvasRefs.current[key] = node;
+    if (!node) return;
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        syncSignatureCanvasFromValue(key, getSignatureValue(key));
+      });
+      return;
+    }
+    syncSignatureCanvasFromValue(key, getSignatureValue(key));
+  }
 
   function getSignatureContext(key: SignaturePadKey) {
     const canvas = signatureCanvasRefs.current[key];
@@ -1117,7 +1163,7 @@ export default function OrdenServicioPage() {
                         <label className="vc-label">Firma cliente / empresa</label>
                         <div className="vc-signature-box">
                           <canvas
-                            ref={(node) => { signatureCanvasRefs.current.cliente = node; }}
+                            ref={(node) => { registerSignatureCanvasRef('cliente', node); }}
                             className="vc-signature-canvas"
                             onPointerDown={(e) => handleSignaturePointerDown('cliente', e)}
                             onPointerMove={(e) => handleSignaturePointerMove('cliente', e)}
@@ -1139,7 +1185,7 @@ export default function OrdenServicioPage() {
                         <label className="vc-label">Firma taller (quien recibe)</label>
                         <div className="vc-signature-box">
                           <canvas
-                            ref={(node) => { signatureCanvasRefs.current.taller = node; }}
+                            ref={(node) => { registerSignatureCanvasRef('taller', node); }}
                             className="vc-signature-canvas"
                             onPointerDown={(e) => handleSignaturePointerDown('taller', e)}
                             onPointerMove={(e) => handleSignaturePointerMove('taller', e)}
