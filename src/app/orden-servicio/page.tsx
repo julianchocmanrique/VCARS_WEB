@@ -692,7 +692,10 @@ export default function OrdenServicioPage() {
 
               {currentKey === 'recepcion' ? (
                 <div>
-                  <label className="vc-label vc-os-inventory-title">Inventario de accesorios (S/N/C/I)</label>
+                  <label className="vc-label vc-os-inventory-title">Inventario de accesorios</label>
+                  <p className="vc-subtitle-small" style={{ marginTop: 0, marginBottom: 8 }}>
+                    S: Sí / N: No / C: Completo / I: Incompleto
+                  </p>
                   <div className="vc-grid-2">
                     {INVENTORY_ITEMS.map((item) => (
                       <button

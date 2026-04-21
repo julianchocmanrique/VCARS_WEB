@@ -559,9 +559,9 @@ export default function NuevoIngresoPage() {
             </div>
           </div>
 
-          <h3 style={{ margin: '14px 0 8px' }}>Inventario de accesorios (S/N/C/I)</h3>
+          <h3 style={{ margin: '14px 0 8px' }}>Inventario de accesorios</h3>
           <p className="vc-subtitle-small" style={{ marginTop: 0 }}>
-            `S`: Si, `N`: No, `C`: Completo, `I`: Incompleto
+            S: Sí / N: No / C: Completo / I: Incompleto
           </p>
           <div className="vc-grid-2">
             {INVENTORY_ITEMS.map((item) => (
