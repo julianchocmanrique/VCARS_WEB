@@ -209,7 +209,8 @@ export default function VehiculoDetallePage() {
     setOpenBlocks((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  function downloadServiceOrder() {
+  function downloadServiceOrder(stepKey?: string, stepTitle?: string) {
+    if (stepKey && !stepCompletionByKey[stepKey]) return;
     if (typeof window === 'undefined') return;
     (async () => {
       try {
@@ -217,9 +218,14 @@ export default function VehiculoDetallePage() {
         const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
         const safePlate = String(vehicle?.placa || plate || 'sin-placa').replace(/[^a-z0-9_-]+/gi, '_');
+        const selectedStepTitle = stepTitle ? normalizeLegacyStepLabel(stepTitle) : 'Orden de servicio';
+        const selectedForms = stepKey
+          ? { [stepKey]: formsByStep[stepKey] || {} }
+          : formsByStep;
         const payload = {
           generadoEn: new Date().toISOString(),
           placa: plate,
+          formulario: selectedStepTitle,
           estado: {
             pasoActual: normalizeLegacyStepLabel(vehicle?.paso),
             indicePaso: stepIndex,
@@ -227,7 +233,7 @@ export default function VehiculoDetallePage() {
             completada: isServiceOrderComplete,
           },
           vehiculo: vehicle || {},
-          formularios: formsByStep,
+          formularios: selectedForms,
         };
 
         const jsonText = JSON.stringify(payload, null, 2);
@@ -239,7 +245,7 @@ export default function VehiculoDetallePage() {
 
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text(`Orden de servicio - ${safePlate}`, marginX, cursorY);
+        doc.text(`${selectedStepTitle} - ${safePlate}`, marginX, cursorY);
         cursorY += 8;
 
         doc.setFont('helvetica', 'normal');
@@ -255,7 +261,8 @@ export default function VehiculoDetallePage() {
           cursorY += lineHeight;
         }
 
-        doc.save(`orden-servicio-${safePlate}.pdf`);
+        const safeStep = selectedStepTitle.replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
+        doc.save(`orden-servicio-${safePlate}-${safeStep}.pdf`);
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'No se pudo generar la descarga en PDF';
         setWarning(msg);
@@ -471,15 +478,28 @@ export default function VehiculoDetallePage() {
                     >
                       ✎
                     </Link>
-                    <button
-                      type="button"
-                      className="vc-form-icon"
-                      onClick={downloadServiceOrder}
-                      aria-label="Descargar orden de servicio en PDF"
-                      title="Descargar orden de servicio en PDF"
-                    >
-                      ↓
-                    </button>
+                    {stepCompletionByKey[step.key] ? (
+                      <button
+                        type="button"
+                        className="vc-form-icon"
+                        onClick={() => downloadServiceOrder(step.key, step.title)}
+                        aria-label={`Descargar ${normalizeLegacyStepLabel(step.title)} en PDF`}
+                        title={`Descargar ${normalizeLegacyStepLabel(step.title)} en PDF`}
+                      >
+                        ↓
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="vc-form-icon is-disabled"
+                        onClick={() => downloadServiceOrder(step.key, step.title)}
+                        aria-label={`Descarga bloqueada: ${normalizeLegacyStepLabel(step.title)} incompleto`}
+                        title="Completa este formulario para habilitar la descarga"
+                        disabled
+                      >
+                        ↓
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
