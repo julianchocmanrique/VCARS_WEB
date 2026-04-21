@@ -219,7 +219,18 @@ export function getDemoFormsByPlate(): DemoFormsByPlate {
 export function applyDemoEntries(existing: Entry[]): Entry[] {
   const demo = getDemoEntries();
   const existingList = Array.isArray(existing) ? existing : [];
+  const existingByPlate = new Map(
+    existingList.map((item) => [String(item.placa || '').toUpperCase(), item] as const),
+  );
+
+  const mergedDemo = demo.map((demoEntry) => {
+    const key = String(demoEntry.placa || '').toUpperCase();
+    const existingEntry = existingByPlate.get(key);
+    if (!existingEntry) return demoEntry;
+    return { ...demoEntry, ...existingEntry };
+  });
+
   const demoPlates = new Set(demo.map((d) => d.placa));
   const custom = existingList.filter((item) => !demoPlates.has(String(item.placa || '').toUpperCase()));
-  return [...demo, ...custom];
+  return [...mergedDemo, ...custom];
 }

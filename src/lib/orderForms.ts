@@ -29,10 +29,14 @@ function writeAll(value: FormsByPlate): void {
 }
 
 function mergeDemoForms(existing: FormsByPlate, demo: FormsByPlate): FormsByPlate {
-  const merged: FormsByPlate = { ...demo };
-  for (const [plate, forms] of Object.entries(existing || {})) {
-    if (merged[plate]) continue;
-    merged[plate] = forms;
+  const merged: FormsByPlate = { ...(existing || {}) };
+  for (const [plate, demoForms] of Object.entries(demo || {})) {
+    const existingForms = merged[plate] || {};
+    const nextByStep: FormsByStep = { ...demoForms };
+    for (const [stepKey, existingStep] of Object.entries(existingForms)) {
+      nextByStep[stepKey] = { ...(demoForms?.[stepKey] || {}), ...(existingStep || {}) };
+    }
+    merged[plate] = nextByStep;
   }
   return merged;
 }
