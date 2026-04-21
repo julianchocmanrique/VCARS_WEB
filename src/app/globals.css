@@ -480,6 +480,11 @@ a { color: inherit; text-decoration: none; }
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
 }
+.vc-vehicle-fuel-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
 .vc-fuel-chip {
   min-height: 30px;
   border-radius: 10px;
@@ -494,6 +499,11 @@ a { color: inherit; text-decoration: none; }
   border-color: rgba(69, 164, 237, 0.65);
   color: #e6f3ff;
   background: linear-gradient(135deg, rgba(18, 18, 20, 0.9), rgba(31, 95, 159, 0.26));
+}
+@media (max-width: 700px) {
+  .vc-vehicle-fuel-layout {
+    grid-template-columns: 1fr;
+  }
 }
 .vc-file-hidden-input {
   display: none;

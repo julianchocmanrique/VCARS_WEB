@@ -578,7 +578,18 @@ export default function OrdenServicioPage() {
                   </button>
                   {openReceptionBlocks.infoVehiculo ? (
                     <>
-                    <div className="vc-grid-2">
+                    <div>
+                      <label className="vc-label">Color</label>
+                      <div className="vc-input-wrap">
+                        <input
+                          value={entryForPlate?.color || ''}
+                          onChange={(e) => syncEntryPatch({ color: e.target.value })}
+                          disabled={!editable}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="vc-vehicle-fuel-layout">
                       <div>
                         <label className="vc-label">Marca</label>
                         <div className="vc-input-wrap">
@@ -588,8 +599,7 @@ export default function OrdenServicioPage() {
                             disabled={!editable}
                           />
                         </div>
-                      </div>
-                      <div>
+
                         <label className="vc-label">Modelo</label>
                         <div className="vc-input-wrap">
                           <input
@@ -599,19 +609,7 @@ export default function OrdenServicioPage() {
                           />
                         </div>
                       </div>
-                    </div>
 
-                    <div className="vc-grid-2">
-                      <div>
-                        <label className="vc-label">Color</label>
-                        <div className="vc-input-wrap">
-                          <input
-                            value={entryForPlate?.color || ''}
-                            onChange={(e) => syncEntryPatch({ color: e.target.value })}
-                            disabled={!editable}
-                          />
-                        </div>
-                      </div>
                       <div>
                         <label className="vc-label">Nivel combustible</label>
                         <div className="vc-input-wrap vc-fuel-wrap">
