@@ -800,13 +800,16 @@ export default function OrdenServicioPage() {
                       <div className="vc-photo-grid" style={{ marginTop: 10 }}>
                         {PHOTO_SLOTS.map((slot) => {
                           const src = receptionPhotos[slot.key];
+                          const inputId = `upload-photo-${slot.key}`;
                           return (
                             <div key={slot.key} className="vc-photo-item">
                               <p className="vc-photo-label">{slot.label}</p>
 
                               {editable ? (
-                                <div className="vc-input-wrap">
+                                <>
                                   <input
+                                    id={inputId}
+                                    className="vc-file-hidden-input"
                                     type="file"
                                     accept="image/*"
                                     capture="environment"
@@ -815,7 +818,10 @@ export default function OrdenServicioPage() {
                                       e.currentTarget.value = '';
                                     }}
                                   />
-                                </div>
+                                  <label htmlFor={inputId} className="vc-btn vc-photo-upload-btn">
+                                    Subir foto
+                                  </label>
+                                </>
                               ) : null}
 
                               {src ? (
