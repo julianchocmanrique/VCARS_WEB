@@ -134,6 +134,7 @@ export default function OrdenServicioPage() {
   const [uploadError, setUploadError] = useState('');
   const [validationError, setValidationError] = useState('');
   const [fuelLevelUi, setFuelLevelUi] = useState<FuelLevelValue>('1/2');
+  const [entryRefreshTick, setEntryRefreshTick] = useState(0);
   const [openReceptionBlocks, setOpenReceptionBlocks] = useState({
     controlOrden: true,
     facturacion: false,
@@ -215,7 +216,7 @@ export default function OrdenServicioPage() {
   }, [formsByStep.recepcion?.inventarioAccesorios]);
   const entryForPlate = useMemo(
     () => getEntries().find((item) => String(item.placa || '').toUpperCase() === plate) || null,
-    [plate, formsByStep],
+    [plate, formsByStep, entryRefreshTick],
   );
   const selectedFuelLevel = fuelLevelUi;
   const fuelNeedleAngle = useMemo(() => {
@@ -294,6 +295,7 @@ export default function OrdenServicioPage() {
     const nextAll = [...all];
     nextAll[idx] = nextEntry;
     setEntries(nextAll);
+    setEntryRefreshTick((t) => t + 1);
   }
 
   function syncEntryReceptionPhotos(slot: PhotoSlotKey, src: string) {
@@ -504,7 +506,7 @@ export default function OrdenServicioPage() {
                         <div className="vc-input-wrap">
                           <input
                             value={entryForPlate?.orderNumber || ''}
-                            disabled
+                            onChange={(e) => syncEntryPatch({ orderNumber: e.target.value })}
                           />
                         </div>
                       </div>
@@ -536,7 +538,7 @@ export default function OrdenServicioPage() {
                       <div>
                         <label className="vc-label">Placa</label>
                         <div className="vc-input-wrap">
-                          <input value={entryForPlate?.placa || plate} disabled />
+                          <input value={entryForPlate?.placa || plate} onChange={(e) => syncEntryPatch({ placa: e.target.value.toUpperCase() })} />
                         </div>
                       </div>
                     </div>
