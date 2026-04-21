@@ -70,6 +70,16 @@ const INVENTORY_ITEMS = [
   'copasRuedas', 'manijas', 'elevavidrios', 'controlRemoto', 'lavaVidrio', 'tapaPanel', 'controlAA', 'tarjetaPropiedad',
 ];
 
+const FUEL_LEVELS = [
+  { value: 'E', label: 'E', ratio: 0 },
+  { value: '1/4', label: '1/4', ratio: 0.25 },
+  { value: '1/2', label: '1/2', ratio: 0.5 },
+  { value: '3/4', label: '3/4', ratio: 0.75 },
+  { value: 'F', label: 'F', ratio: 1 },
+] as const;
+
+type FuelLevelValue = (typeof FUEL_LEVELS)[number]['value'];
+
 function parseJsonRows<T>(raw: string | undefined, fallback: T): T {
   if (!raw) return fallback;
   try {
@@ -95,6 +105,14 @@ function nextInventoryValue(current: InventoryValue): InventoryValue {
   const idx = order.indexOf(current || '');
   if (idx < 0) return 'S';
   return order[(idx + 1) % order.length];
+}
+
+function normalizeFuelLevel(raw?: string): FuelLevelValue {
+  const value = String(raw || '').trim().toUpperCase();
+  if (value === 'E' || value === '1/4' || value === '1/2' || value === '3/4' || value === 'F') return value;
+  if (value === 'FULL') return 'F';
+  if (value === 'EMPTY') return 'E';
+  return '1/2';
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -197,6 +215,12 @@ export default function OrdenServicioPage() {
     () => getEntries().find((item) => String(item.placa || '').toUpperCase() === plate) || null,
     [plate, formsByStep],
   );
+  const selectedFuelLevel = normalizeFuelLevel(entryForPlate?.fuelLevel || '');
+  const fuelNeedleAngle = useMemo(() => {
+    const match = FUEL_LEVELS.find((item) => item.value === selectedFuelLevel);
+    const ratio = match ? match.ratio : 0.5;
+    return -78 + (ratio * 156);
+  }, [selectedFuelLevel]);
 
   const receptionPhotos = useMemo(() => {
     const fromForms = formsByStep.recepcion || {};
@@ -585,20 +609,27 @@ export default function OrdenServicioPage() {
                       </div>
                       <div>
                         <label className="vc-label">Nivel combustible</label>
-                        <div className="vc-input-wrap">
-                          <select
-                            className="vc-select"
-                            value={entryForPlate?.fuelLevel || ''}
-                            onChange={(e) => syncEntryPatch({ fuelLevel: e.target.value })}
-                            disabled={!editable}
-                          >
-                            <option value="">Seleccionar</option>
-                            <option value="E">E</option>
-                            <option value="1/4">1/4</option>
-                            <option value="1/2">1/2</option>
-                            <option value="3/4">3/4</option>
-                            <option value="F">F</option>
-                          </select>
+                        <div className="vc-input-wrap vc-fuel-wrap">
+                          <div className="vc-fuel-gauge">
+                            <div className="vc-fuel-arc" />
+                            <div className="vc-fuel-needle" style={{ transform: `translateX(-50%) rotate(${fuelNeedleAngle}deg)` }} />
+                            <div className="vc-fuel-pivot" />
+                            <span className="vc-fuel-mark vc-fuel-mark-e">E</span>
+                            <span className="vc-fuel-mark vc-fuel-mark-f">F</span>
+                          </div>
+                          <div className="vc-fuel-level-row">
+                            {FUEL_LEVELS.map((level) => (
+                              <button
+                                key={level.value}
+                                type="button"
+                                className={`vc-fuel-chip ${selectedFuelLevel === level.value ? 'is-active' : ''}`}
+                                onClick={() => syncEntryPatch({ fuelLevel: level.value })}
+                                disabled={!editable}
+                              >
+                                {level.label}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
