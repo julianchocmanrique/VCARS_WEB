@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { getFormsForPlate, getRoleSteps, setStepField, setStepFields } from '@/lib/orderForms';
+import { getMissingRequiredFields } from '@/lib/orderStepValidation';
 import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 
 type FieldDef = { key: string; label: string; placeholder: string };
@@ -536,78 +537,9 @@ export default function OrdenServicioPage() {
     setOpenReceptionBlocks((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  function hasValue(value: unknown): boolean {
-    return String(value ?? '').trim().length > 0;
-  }
-
-  function isOptionalObservacion(value: string): boolean {
-    return /observ/i.test(String(value || ''));
-  }
-
   function validateCurrentStep(): string[] {
     if (!editable) return [];
-
-    const missing: string[] = [];
-
-    if (currentKey === 'recepcion') {
-      const reception = formsByStep.recepcion || {};
-      const requiredReception: Array<{ label: string; value: unknown }> = [
-        { label: 'Fecha entrada', value: String(entryForPlate?.fecha || '').slice(0, 10) },
-        { label: 'Fecha prevista entrega', value: entryForPlate?.expectedDeliveryDate },
-        { label: 'Propietario', value: entryForPlate?.ownerName || entryForPlate?.cliente },
-        { label: 'NIT / C.C', value: entryForPlate?.nitCc },
-        { label: 'Empresa / Entidad', value: entryForPlate?.companyEntity || entryForPlate?.empresa },
-        { label: 'Dirección', value: entryForPlate?.direccion },
-        { label: 'Teléfono de contacto', value: entryForPlate?.telefono },
-        { label: 'E-mail', value: entryForPlate?.email },
-        { label: 'Factura a nombre de', value: entryForPlate?.invoiceName },
-        { label: 'NIT / C.C facturación', value: entryForPlate?.billingNitCc },
-        { label: 'Forma de pago', value: entryForPlate?.paymentMethod },
-        { label: 'Días crédito', value: entryForPlate?.creditDays },
-        { label: 'Marca', value: entryForPlate?.marca },
-        { label: 'Modelo', value: entryForPlate?.modelo },
-        { label: 'Color', value: entryForPlate?.color },
-        { label: 'Nivel combustible', value: selectedFuelLevel },
-        { label: 'Kilometraje', value: reception.kilometraje },
-        { label: 'Técnico asignado', value: reception.tecnicoAsignado },
-        { label: 'Falla reportada por el cliente', value: reception.fallaCliente },
-        { label: '¿Desea conservar piezas?', value: reception.wantsOldParts },
-        { label: 'Reporte condición física', value: reception.condicionFisica },
-        { label: 'SOAT (vencimiento)', value: reception.soatExpiry || entryForPlate?.soatExpiry },
-        { label: 'Tecnomecánica (vencimiento)', value: reception.rtmExpiry || entryForPlate?.rtmExpiry },
-        { label: 'Firma cliente / empresa', value: reception.firmaClienteEmpresa },
-        { label: 'Firma taller (quien recibe)', value: reception.firmaTallerRecibe },
-      ];
-
-      requiredReception.forEach((item) => {
-        if (!hasValue(item.value)) missing.push(item.label);
-      });
-
-      INVENTORY_ITEMS.forEach((item) => {
-        if (!hasValue(inventory[item])) missing.push(`Inventario: ${item}`);
-      });
-
-      PHOTO_SLOTS.forEach((slot) => {
-        if (!hasValue(receptionPhotos[slot.key])) missing.push(`Foto ${slot.label}`);
-      });
-    } else {
-      fields.forEach((field) => {
-        if (isOptionalObservacion(field.key) || isOptionalObservacion(field.label)) return;
-        if (!hasValue(stepValues[field.key])) missing.push(field.label);
-      });
-
-      if (currentKey === 'cotizacion_formal') {
-        const hasIncomplete = quoteRows.some((row) => !hasValue(row.sistema) || !hasValue(row.trabajo) || !hasValue(row.unitPrice) || !hasValue(row.qty));
-        if (hasIncomplete) missing.push('Items de cotización');
-      }
-
-      if (currentKey === 'trabajo') {
-        const hasIncomplete = expenseRows.some((row) => !hasValue(row.actividad) || !hasValue(row.tercero) || !hasValue(row.cantidad) || !hasValue(row.operario) || !hasValue(row.costo));
-        if (hasIncomplete) missing.push('Gastos / ejecución');
-      }
-    }
-
-    return missing;
+    return getMissingRequiredFields(currentKey, formsByStep, entryForPlate);
   }
 
   function handleNextStep() {

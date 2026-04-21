@@ -11,6 +11,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 import { ensureDemoFormsSeed, getFormsForPlate, getRoleSteps, isClientQuoteReady, setStepFields } from '@/lib/orderForms';
+import { isStepComplete } from '@/lib/orderStepValidation';
 import { normalizeStepTitle, stepIndexFromTitle } from '@/lib/process';
 import { getVehicleEvidencePhoto } from '@/lib/carPhoto';
 
@@ -150,11 +151,12 @@ export default function VehiculoDetallePage() {
   const approvalData = formsByStep.aprobacion || {};
   const receptionData = formsByStep.recepcion || {};
   const entregaData = formsByStep.entrega || {};
-  const hasStepData = (stepKey: string) => {
-    const values = Object.values(formsByStep[stepKey] || {});
-    return values.some((value) => String(value ?? '').trim().length > 0);
-  };
-  const allVisibleStepsHaveData = visibleSteps.length > 0 && visibleSteps.every((step) => hasStepData(step.key));
+  const stepCompletionByKey = useMemo(() => {
+    return Object.fromEntries(
+      visibleSteps.map((step) => [step.key, isStepComplete(step.key, formsByStep, vehicle)]),
+    ) as Record<string, boolean>;
+  }, [visibleSteps, formsByStep, vehicle]);
+  const allVisibleStepsComplete = visibleSteps.length > 0 && visibleSteps.every((step) => stepCompletionByKey[step.key]);
   const normalizedStatus = String(vehicle?.status || '').toLowerCase();
   const isServiceOrderComplete = stepIndex >= finishIndex
     || normalizedStatus === 'done'
@@ -165,7 +167,7 @@ export default function VehiculoDetallePage() {
     || normalizedStatus === 'entregado'
     || Boolean(entregaData.fechaEntregaReal)
     || Boolean(entregaData.firmaRecibe)
-    || allVisibleStepsHaveData;
+    || allVisibleStepsComplete;
   const intakePhotosByZone = useMemo(() => {
     const zone = vehicle?.intakePhotosByZone || {};
     const legacy = vehicle?.intakePhotos || [];
@@ -351,8 +353,8 @@ export default function VehiculoDetallePage() {
         <section className="vc-card">
           <h3>Linea de tiempo</h3>
           <ul className="vc-timeline">
-            {visibleSteps.map((step, idx) => (
-              <li key={step.key} className={idx <= displayCurrentIndex ? 'done' : ''}>
+            {visibleSteps.map((step) => (
+              <li key={step.key} className={stepCompletionByKey[step.key] ? 'done' : ''}>
                 {normalizeLegacyStepLabel(step.title)}
               </li>
             ))}
@@ -428,14 +430,14 @@ export default function VehiculoDetallePage() {
           <section className="vc-card">
             <h3>Formularios</h3>
             <div className="vc-forms-list">
-              {visibleSteps.map((step, idx) => (
+              {visibleSteps.map((step) => (
                 <div key={step.key} className="vc-form-row">
                   <Link
                     href={`/orden-servicio?startStep=${step.index}&plate=${encodeURIComponent(plate)}`}
                     className="vc-form-row-main"
                   >
                     <div className="vc-form-row-left">
-                      <span className={`vc-form-dot ${idx <= displayCurrentIndex ? 'done' : ''}`} />
+                      <span className={`vc-form-dot ${stepCompletionByKey[step.key] ? 'done' : ''}`} />
                       <span>{normalizeLegacyStepLabel(step.title)}</span>
                     </div>
                   </Link>
