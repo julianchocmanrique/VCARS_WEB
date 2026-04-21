@@ -6,7 +6,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { getFormsForPlate, getRoleSteps, setStepField, setStepFields } from '@/lib/orderForms';
-import { getCurrentEntry, getEntries, getRole, getSession, setEntries, type Entry, type Role } from '@/lib/storage';
+import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 
 type FieldDef = { key: string; label: string; placeholder: string };
 type QuoteRow = { sistema: string; trabajo: string; unitPrice: string; qty: string };
@@ -136,6 +136,7 @@ export default function OrdenServicioPage() {
   const [validationError, setValidationError] = useState('');
   const [fuelLevelUi, setFuelLevelUi] = useState<FuelLevelValue>('1/2');
   const [entryRefreshTick, setEntryRefreshTick] = useState(0);
+  const [entryForPlate, setEntryForPlate] = useState<Entry | null>(null);
   const signatureCanvasRefs = useRef<Record<SignaturePadKey, HTMLCanvasElement | null>>({
     cliente: null,
     taller: null,
@@ -228,10 +229,13 @@ export default function OrdenServicioPage() {
   const inventory = useMemo(() => {
     return parseJsonRows<Record<string, InventoryValue>>(formsByStep.recepcion?.inventarioAccesorios, {});
   }, [formsByStep.recepcion?.inventarioAccesorios]);
-  const entryForPlate = useMemo(
+  const persistedEntryForPlate = useMemo(
     () => getEntries().find((item) => String(item.placa || '').toUpperCase() === plate) || null,
     [plate, formsByStep, entryRefreshTick],
   );
+  useEffect(() => {
+    setEntryForPlate(persistedEntryForPlate);
+  }, [persistedEntryForPlate?.id, persistedEntryForPlate?.updatedAt, plate]);
   const selectedFuelLevel = fuelLevelUi;
   const fuelNeedleAngle = useMemo(() => {
     const match = FUEL_LEVELS.find((item) => item.value === selectedFuelLevel);
@@ -406,18 +410,40 @@ export default function OrdenServicioPage() {
 
   function syncEntryPatch(patch: Partial<Entry>) {
     const all = getEntries();
-    const idx = all.findIndex((item) => String(item.placa || '').toUpperCase() === plate);
-    if (idx < 0) return;
+    const resolvedPlate = String(patch.placa || plate || entryForPlate?.placa || getCurrentEntry()?.placa || '').toUpperCase();
+    let idx = all.findIndex((item) => String(item.placa || '').toUpperCase() === resolvedPlate);
+    if (idx < 0 && entryForPlate?.id) {
+      idx = all.findIndex((item) => item.id === entryForPlate.id);
+    }
+    if (idx < 0) {
+      const base = entryForPlate || getCurrentEntry();
+      if (!base) return;
+      const nextEntry: Entry = {
+        ...base,
+        ...patch,
+        placa: String((patch.placa || base.placa || resolvedPlate)).toUpperCase(),
+        updatedAt: new Date().toISOString(),
+      };
+      setCurrentEntry(nextEntry);
+      const nextAll = [nextEntry, ...all];
+      setEntries(nextAll);
+      setEntryForPlate(nextEntry);
+      setEntryRefreshTick((t) => t + 1);
+      return;
+    }
 
     const currentEntry = all[idx] as Entry;
     const nextEntry: Entry = {
       ...currentEntry,
       ...patch,
+      placa: String((patch.placa || currentEntry.placa || resolvedPlate)).toUpperCase(),
       updatedAt: new Date().toISOString(),
     };
     const nextAll = [...all];
     nextAll[idx] = nextEntry;
     setEntries(nextAll);
+    setCurrentEntry(nextEntry);
+    setEntryForPlate(nextEntry);
     setEntryRefreshTick((t) => t + 1);
   }
 
