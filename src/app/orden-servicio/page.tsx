@@ -629,8 +629,9 @@ export default function OrdenServicioPage() {
                     </div>
 
                     <label className="vc-label">Observaciones / Accesorios adicionales</label>
-                    <div className="vc-input-wrap">
+                    <div className="vc-input-wrap vc-input-wrap-emphasis">
                       <input
+                        className="vc-input-emphasis"
                         value={formsByStep.recepcion?.observacionesAccesorios || ''}
                         onChange={(e) => syncStepPatch('recepcion', { observacionesAccesorios: e.target.value })}
                         disabled={!editable}
@@ -638,8 +639,9 @@ export default function OrdenServicioPage() {
                     </div>
 
                     <label className="vc-label">Falla reportada por el cliente</label>
-                    <div className="vc-input-wrap">
+                    <div className="vc-input-wrap vc-input-wrap-emphasis">
                       <input
+                        className="vc-input-emphasis"
                         value={formsByStep.recepcion?.fallaCliente || ''}
                         onChange={(e) => syncStepPatch('recepcion', { fallaCliente: e.target.value })}
                         disabled={!editable}
