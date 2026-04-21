@@ -118,7 +118,8 @@ export default function OrdenServicioPage() {
     controlOrden: true,
     facturacion: false,
     infoVehiculo: false,
-    inventario: true,
+    inventario: false,
+    fotos: false,
   });
 
   useEffect(() => {
@@ -757,48 +758,55 @@ export default function OrdenServicioPage() {
                     </>
                   ) : null}
 
-                  <label className="vc-label" style={{ marginTop: 12 }}>Registro fotográfico por ángulo</label>
-                  <p className="vc-subtitle-small" style={{ marginTop: 4 }}>Sube o toma una foto por recuadro (superior, inferior, laterales, frontal y trasero).</p>
+                  <button type="button" className="vc-accordion-toggle" onClick={() => toggleReceptionBlock('fotos')} aria-expanded={openReceptionBlocks.fotos}>
+                    <span>Registro fotográfico por ángulo</span>
+                    <span>{openReceptionBlocks.fotos ? '−' : '+'}</span>
+                  </button>
+                  {openReceptionBlocks.fotos ? (
+                    <>
+                      <p className="vc-subtitle-small" style={{ marginTop: 4 }}>Sube o toma una foto por recuadro (superior, inferior, laterales, frontal y trasero).</p>
 
-                  <div className="vc-photo-grid" style={{ marginTop: 10 }}>
-                    {PHOTO_SLOTS.map((slot) => {
-                      const src = receptionPhotos[slot.key];
-                      return (
-                        <div key={slot.key} className="vc-photo-item">
-                          <p className="vc-photo-label">{slot.label}</p>
+                      <div className="vc-photo-grid" style={{ marginTop: 10 }}>
+                        {PHOTO_SLOTS.map((slot) => {
+                          const src = receptionPhotos[slot.key];
+                          return (
+                            <div key={slot.key} className="vc-photo-item">
+                              <p className="vc-photo-label">{slot.label}</p>
 
-                          {editable ? (
-                            <div className="vc-input-wrap">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                onChange={(e) => {
-                                  void onPickReceptionPhoto(slot.key, e.target.files?.[0]);
-                                  e.currentTarget.value = '';
-                                }}
-                              />
-                            </div>
-                          ) : null}
-
-                          {src ? (
-                            <>
-                              <img src={src} alt={'Foto ' + slot.label} className="vc-photo-preview" />
                               {editable ? (
-                                <button type="button" className="vc-btn" style={{ marginTop: 6 }} onClick={() => removeReceptionPhoto(slot.key)}>
-                                  Quitar
-                                </button>
+                                <div className="vc-input-wrap">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={(e) => {
+                                      void onPickReceptionPhoto(slot.key, e.target.files?.[0]);
+                                      e.currentTarget.value = '';
+                                    }}
+                                  />
+                                </div>
                               ) : null}
-                            </>
-                          ) : (
-                            <div className="vc-photo-empty">Sin imagen</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
 
-                  {uploadError ? <div className="vc-error" style={{ marginTop: 8 }}>{uploadError}</div> : null}
+                              {src ? (
+                                <>
+                                  <img src={src} alt={'Foto ' + slot.label} className="vc-photo-preview" />
+                                  {editable ? (
+                                    <button type="button" className="vc-btn" style={{ marginTop: 6 }} onClick={() => removeReceptionPhoto(slot.key)}>
+                                      Quitar
+                                    </button>
+                                  ) : null}
+                                </>
+                              ) : (
+                                <div className="vc-photo-empty">Sin imagen</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {uploadError ? <div className="vc-error" style={{ marginTop: 8 }}>{uploadError}</div> : null}
+                    </>
+                  ) : null}
                 </div>
               ) : null}
 
