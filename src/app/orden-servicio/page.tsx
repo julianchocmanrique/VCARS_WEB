@@ -351,9 +351,9 @@ export default function OrdenServicioPage() {
                   </div>
                 ))
               ) : (
-                <div className="space-y-3">
-                  <details open>
-                    <summary className="vc-label" style={{ cursor: 'pointer', marginBottom: 8 }}>Control de orden y cliente</summary>
+                <div className="vc-os-sections">
+                  <details className="vc-os-section" open>
+                    <summary className="vc-os-section-title">Control de orden y cliente</summary>
                     <div className="vc-grid-2">
                       <div>
                         <label className="vc-label">No. orden</label>
@@ -468,8 +468,8 @@ export default function OrdenServicioPage() {
                     </div>
                   </details>
 
-                  <details>
-                    <summary className="vc-label" style={{ cursor: 'pointer', marginBottom: 8 }}>Facturación</summary>
+                  <details className="vc-os-section">
+                    <summary className="vc-os-section-title">Facturación</summary>
                     <div className="vc-grid-2">
                       <div>
                         <label className="vc-label">Factura a nombre de</label>
@@ -522,8 +522,8 @@ export default function OrdenServicioPage() {
                     </div>
                   </details>
 
-                  <details>
-                    <summary className="vc-label" style={{ cursor: 'pointer', marginBottom: 8 }}>Información del vehículo y recepción</summary>
+                  <details className="vc-os-section">
+                    <summary className="vc-os-section-title">Información del vehículo y recepción</summary>
                     <div className="vc-grid-2">
                       <div>
                         <label className="vc-label">Marca</label>
@@ -692,7 +692,7 @@ export default function OrdenServicioPage() {
 
               {currentKey === 'recepcion' ? (
                 <div>
-                  <label className="vc-label">Inventario de accesorios (S/N/C/I)</label>
+                  <label className="vc-label vc-os-inventory-title">Inventario de accesorios (S/N/C/I)</label>
                   <div className="vc-grid-2">
                     {INVENTORY_ITEMS.map((item) => (
                       <button
@@ -714,8 +714,8 @@ export default function OrdenServicioPage() {
                         aria-label={`Cambiar estado de ${item}`}
                         title="Click para cambiar entre -, S, N, C, I"
                       >
-                        <span style={{ fontSize: 12, color: 'var(--vc-muted)', textTransform: 'capitalize' }}>{item}</span>
-                        <strong style={{ fontSize: 15, letterSpacing: '0.08em' }}>{inventory[item] || '-'}</strong>
+                        <span className="vc-os-inventory-item-label">{item}</span>
+                        <strong className="vc-os-inventory-item-value">{inventory[item] || '-'}</strong>
                       </button>
                     ))}
                   </div>
