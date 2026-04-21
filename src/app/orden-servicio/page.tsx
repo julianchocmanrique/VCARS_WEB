@@ -132,6 +132,7 @@ export default function OrdenServicioPage() {
   const [formsByStep, setFormsByStep] = useState<Record<string, Record<string, string>>>({});
   const [stepPos, setStepPos] = useState(0);
   const [uploadError, setUploadError] = useState('');
+  const [validationError, setValidationError] = useState('');
   const [fuelLevelUi, setFuelLevelUi] = useState<FuelLevelValue>('1/2');
   const [openReceptionBlocks, setOpenReceptionBlocks] = useState({
     controlOrden: true,
@@ -332,6 +333,106 @@ export default function OrdenServicioPage() {
     setOpenReceptionBlocks((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
+  function hasValue(value: unknown): boolean {
+    return String(value ?? '').trim().length > 0;
+  }
+
+  function isOptionalObservacion(value: string): boolean {
+    return /observ/i.test(String(value || ''));
+  }
+
+  function validateCurrentStep(): string[] {
+    if (!editable) return [];
+
+    const missing: string[] = [];
+
+    if (currentKey === 'recepcion') {
+      const reception = formsByStep.recepcion || {};
+      const requiredReception: Array<{ label: string; value: unknown }> = [
+        { label: 'No. orden', value: entryForPlate?.orderNumber },
+        { label: 'Fecha entrada', value: String(entryForPlate?.fecha || '').slice(0, 10) },
+        { label: 'Fecha prevista entrega', value: entryForPlate?.expectedDeliveryDate },
+        { label: 'Propietario', value: entryForPlate?.ownerName || entryForPlate?.cliente },
+        { label: 'NIT / C.C', value: entryForPlate?.nitCc },
+        { label: 'Empresa / Entidad', value: entryForPlate?.companyEntity || entryForPlate?.empresa },
+        { label: 'Dirección', value: entryForPlate?.direccion },
+        { label: 'Teléfono de contacto', value: entryForPlate?.telefono },
+        { label: 'E-mail', value: entryForPlate?.email },
+        { label: 'Factura a nombre de', value: entryForPlate?.invoiceName },
+        { label: 'NIT / C.C facturación', value: entryForPlate?.billingNitCc },
+        { label: 'Forma de pago', value: entryForPlate?.paymentMethod },
+        { label: 'Días crédito', value: entryForPlate?.creditDays },
+        { label: 'Marca', value: entryForPlate?.marca },
+        { label: 'Modelo', value: entryForPlate?.modelo },
+        { label: 'Color', value: entryForPlate?.color },
+        { label: 'Nivel combustible', value: selectedFuelLevel },
+        { label: 'Kilometraje', value: reception.kilometraje },
+        { label: 'Técnico asignado', value: reception.tecnicoAsignado },
+        { label: 'Falla reportada por el cliente', value: reception.fallaCliente },
+        { label: '¿Desea conservar piezas?', value: reception.wantsOldParts },
+        { label: 'Reporte condición física', value: reception.condicionFisica },
+        { label: 'SOAT (vencimiento)', value: reception.soatExpiry || entryForPlate?.soatExpiry },
+        { label: 'Tecnomecánica (vencimiento)', value: reception.rtmExpiry || entryForPlate?.rtmExpiry },
+        { label: 'Firma cliente / empresa', value: reception.firmaClienteEmpresa },
+        { label: 'Firma taller (quien recibe)', value: reception.firmaTallerRecibe },
+      ];
+
+      requiredReception.forEach((item) => {
+        if (!hasValue(item.value)) missing.push(item.label);
+      });
+
+      INVENTORY_ITEMS.forEach((item) => {
+        if (!hasValue(inventory[item])) missing.push(`Inventario: ${item}`);
+      });
+
+      PHOTO_SLOTS.forEach((slot) => {
+        if (!hasValue(receptionPhotos[slot.key])) missing.push(`Foto ${slot.label}`);
+      });
+    } else {
+      fields.forEach((field) => {
+        if (isOptionalObservacion(field.key) || isOptionalObservacion(field.label)) return;
+        if (!hasValue(stepValues[field.key])) missing.push(field.label);
+      });
+
+      if (currentKey === 'cotizacion_formal') {
+        const hasIncomplete = quoteRows.some((row) => !hasValue(row.sistema) || !hasValue(row.trabajo) || !hasValue(row.unitPrice) || !hasValue(row.qty));
+        if (hasIncomplete) missing.push('Items de cotización');
+      }
+
+      if (currentKey === 'trabajo') {
+        const hasIncomplete = expenseRows.some((row) => !hasValue(row.actividad) || !hasValue(row.tercero) || !hasValue(row.cantidad) || !hasValue(row.operario) || !hasValue(row.costo));
+        if (hasIncomplete) missing.push('Gastos / ejecución');
+      }
+    }
+
+    return missing;
+  }
+
+  function handleNextStep() {
+    const missing = validateCurrentStep();
+    if (missing.length) {
+      setValidationError(`Completa los campos obligatorios para continuar. Faltan ${missing.length}.`);
+      return;
+    }
+    setValidationError('');
+    setStepPos((s) => Math.min(Math.max(steps.length - 1, 0), s + 1));
+  }
+
+  function handleStepTabClick(nextIndex: number) {
+    if (nextIndex <= stepPos) {
+      setValidationError('');
+      setStepPos(nextIndex);
+      return;
+    }
+    const missing = validateCurrentStep();
+    if (missing.length) {
+      setValidationError(`Completa los campos obligatorios para continuar. Faltan ${missing.length}.`);
+      return;
+    }
+    setValidationError('');
+    setStepPos(nextIndex);
+  }
+
   return (
     <main className="vc-page vc-shell" suppressHydrationWarning>
       <div className="vc-bg-orb-left" />
@@ -352,7 +453,7 @@ export default function OrdenServicioPage() {
               <button
                 key={item.key}
                 className={`vc-step-tab ${idx === stepPos ? 'is-active' : ''}`}
-                onClick={() => setStepPos(idx)}
+                onClick={() => handleStepTabClick(idx)}
                 type="button"
               >
                 {idx + 1}
@@ -1082,16 +1183,24 @@ export default function OrdenServicioPage() {
           )}
 
           <div className="vc-wizard-actions">
-            <button className="vc-btn" disabled={stepPos === 0} onClick={() => setStepPos((s) => Math.max(0, s - 1))}>
+            <button
+              className="vc-btn"
+              disabled={stepPos === 0}
+              onClick={() => {
+                setValidationError('');
+                setStepPos((s) => Math.max(0, s - 1));
+              }}
+            >
               Anterior
             </button>
             <button
               className="vc-login-btn vc-wizard-next"
-              onClick={() => setStepPos((s) => Math.min(Math.max(steps.length - 1, 0), s + 1))}
+              onClick={handleNextStep}
             >
               {stepPos === steps.length - 1 ? 'Finalizar' : 'Siguiente'}
             </button>
           </div>
+          {validationError ? <div className="vc-error" style={{ marginTop: 8 }}>{validationError}</div> : null}
         </section>
       </section>
 
