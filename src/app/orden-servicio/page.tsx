@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
-import { canEditStep, getFormsForPlate, getRoleSteps, setStepField, setStepFields } from '@/lib/orderForms';
+import { getFormsForPlate, getRoleSteps, setStepField, setStepFields } from '@/lib/orderForms';
 import { getCurrentEntry, getEntries, getRole, getSession, setEntries, type Entry, type Role } from '@/lib/storage';
 
 type FieldDef = { key: string; label: string; placeholder: string };
@@ -195,7 +195,7 @@ export default function OrdenServicioPage() {
   const current = steps[stepPos] || steps[0];
   const currentKey = current?.key || '';
   const fields = useMemo(() => STEP_FIELDS[currentKey] || [], [currentKey]);
-  const editable = current ? canEditStep(role, current.key) : false;
+  const editable = role !== 'cliente';
   const stepValues = formsByStep[currentKey] || {};
   const hasStepData = fields.some((field) => String(stepValues[field.key] || '').trim().length > 0);
   const showPendingForClient = role === 'cliente' && !editable && !hasStepData;
@@ -349,7 +349,6 @@ export default function OrdenServicioPage() {
     if (currentKey === 'recepcion') {
       const reception = formsByStep.recepcion || {};
       const requiredReception: Array<{ label: string; value: unknown }> = [
-        { label: 'No. orden', value: entryForPlate?.orderNumber },
         { label: 'Fecha entrada', value: String(entryForPlate?.fecha || '').slice(0, 10) },
         { label: 'Fecha prevista entrega', value: entryForPlate?.expectedDeliveryDate },
         { label: 'Propietario', value: entryForPlate?.ownerName || entryForPlate?.cliente },
@@ -505,8 +504,7 @@ export default function OrdenServicioPage() {
                         <div className="vc-input-wrap">
                           <input
                             value={entryForPlate?.orderNumber || ''}
-                            onChange={(e) => syncEntryPatch({ orderNumber: e.target.value })}
-                            disabled={!editable}
+                            disabled
                           />
                         </div>
                       </div>
