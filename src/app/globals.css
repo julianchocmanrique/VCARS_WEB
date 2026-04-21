@@ -543,6 +543,7 @@ a { color: inherit; text-decoration: none; }
 .vc-signature-actions {
   margin-top: 8px;
   display: flex;
+  gap: 8px;
   justify-content: flex-end;
 }
 

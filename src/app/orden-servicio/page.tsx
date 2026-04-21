@@ -137,6 +137,10 @@ export default function OrdenServicioPage() {
   const [fuelLevelUi, setFuelLevelUi] = useState<FuelLevelValue>('1/2');
   const [entryRefreshTick, setEntryRefreshTick] = useState(0);
   const [entryForPlate, setEntryForPlate] = useState<Entry | null>(null);
+  const [signatureSavedAt, setSignatureSavedAt] = useState<Record<SignaturePadKey, string>>({
+    cliente: '',
+    taller: '',
+  });
   const signatureCanvasRefs = useRef<Record<SignaturePadKey, HTMLCanvasElement | null>>({
     cliente: null,
     taller: null,
@@ -348,6 +352,7 @@ export default function OrdenServicioPage() {
     if (!refs) return;
     const dataUrl = refs.canvas.toDataURL('image/png');
     syncStepPatch('recepcion', { [signatureFieldKey[key]]: dataUrl });
+    setSignatureSavedAt((prev) => ({ ...prev, [key]: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) }));
   }
 
   function handleSignaturePointerUp(key: SignaturePadKey, event: ReactPointerEvent<HTMLCanvasElement>) {
@@ -367,6 +372,7 @@ export default function OrdenServicioPage() {
 
   function clearSignature(key: SignaturePadKey) {
     syncStepPatch('recepcion', { [signatureFieldKey[key]]: '' });
+    setSignatureSavedAt((prev) => ({ ...prev, [key]: '' }));
   }
 
   function syncStepPatch(stepKey: string, patch: Record<string, string>) {
@@ -1119,10 +1125,14 @@ export default function OrdenServicioPage() {
                             onPointerLeave={(e) => handleSignaturePointerUp('cliente', e)}
                           />
                           <div className="vc-signature-actions">
+                            <button type="button" className="vc-btn" onClick={() => saveSignature('cliente')} disabled={!editable}>
+                              Guardar firma
+                            </button>
                             <button type="button" className="vc-btn" onClick={() => clearSignature('cliente')} disabled={!editable}>
                               Limpiar
                             </button>
                           </div>
+                          {signatureSavedAt.cliente ? <p className="vc-subtitle-small">Guardada: {signatureSavedAt.cliente}</p> : null}
                         </div>
                       </div>
                       <div>
@@ -1137,10 +1147,14 @@ export default function OrdenServicioPage() {
                             onPointerLeave={(e) => handleSignaturePointerUp('taller', e)}
                           />
                           <div className="vc-signature-actions">
+                            <button type="button" className="vc-btn" onClick={() => saveSignature('taller')} disabled={!editable}>
+                              Guardar firma
+                            </button>
                             <button type="button" className="vc-btn" onClick={() => clearSignature('taller')} disabled={!editable}>
                               Limpiar
                             </button>
                           </div>
+                          {signatureSavedAt.taller ? <p className="vc-subtitle-small">Guardada: {signatureSavedAt.taller}</p> : null}
                         </div>
                       </div>
                     </div>
