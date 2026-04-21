@@ -114,6 +114,12 @@ export default function OrdenServicioPage() {
   const [formsByStep, setFormsByStep] = useState<Record<string, Record<string, string>>>({});
   const [stepPos, setStepPos] = useState(0);
   const [uploadError, setUploadError] = useState('');
+  const [openReceptionBlocks, setOpenReceptionBlocks] = useState({
+    controlOrden: true,
+    facturacion: false,
+    infoVehiculo: false,
+    inventario: true,
+  });
 
   useEffect(() => {
     if (!getSession()) {
@@ -292,6 +298,10 @@ export default function OrdenServicioPage() {
     syncEntryReceptionPhotos(slot, '');
   }
 
+  function toggleReceptionBlock(key: keyof typeof openReceptionBlocks) {
+    setOpenReceptionBlocks((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
   return (
     <main className="vc-page vc-shell" suppressHydrationWarning>
       <div className="vc-bg-orb-left" />
@@ -352,8 +362,12 @@ export default function OrdenServicioPage() {
                 ))
               ) : (
                 <div className="vc-os-sections">
-                  <details className="vc-os-section" open>
-                    <summary className="vc-os-section-title">Control de orden y cliente</summary>
+                  <button type="button" className="vc-accordion-toggle" onClick={() => toggleReceptionBlock('controlOrden')} aria-expanded={openReceptionBlocks.controlOrden}>
+                    <span>Control de orden y cliente</span>
+                    <span>{openReceptionBlocks.controlOrden ? '−' : '+'}</span>
+                  </button>
+                  {openReceptionBlocks.controlOrden ? (
+                    <>
                     <div className="vc-grid-2">
                       <div>
                         <label className="vc-label">No. orden</label>
@@ -466,10 +480,15 @@ export default function OrdenServicioPage() {
                         </div>
                       </div>
                     </div>
-                  </details>
+                    </>
+                  ) : null}
 
-                  <details className="vc-os-section">
-                    <summary className="vc-os-section-title">Facturación</summary>
+                  <button type="button" className="vc-accordion-toggle" onClick={() => toggleReceptionBlock('facturacion')} aria-expanded={openReceptionBlocks.facturacion}>
+                    <span>Facturación</span>
+                    <span>{openReceptionBlocks.facturacion ? '−' : '+'}</span>
+                  </button>
+                  {openReceptionBlocks.facturacion ? (
+                    <>
                     <div className="vc-grid-2">
                       <div>
                         <label className="vc-label">Factura a nombre de</label>
@@ -520,10 +539,15 @@ export default function OrdenServicioPage() {
                         </div>
                       </div>
                     </div>
-                  </details>
+                    </>
+                  ) : null}
 
-                  <details className="vc-os-section">
-                    <summary className="vc-os-section-title">Información del vehículo y recepción</summary>
+                  <button type="button" className="vc-accordion-toggle" onClick={() => toggleReceptionBlock('infoVehiculo')} aria-expanded={openReceptionBlocks.infoVehiculo}>
+                    <span>Información del vehículo y recepción</span>
+                    <span>{openReceptionBlocks.infoVehiculo ? '−' : '+'}</span>
+                  </button>
+                  {openReceptionBlocks.infoVehiculo ? (
+                    <>
                     <div className="vc-grid-2">
                       <div>
                         <label className="vc-label">Marca</label>
@@ -686,14 +710,19 @@ export default function OrdenServicioPage() {
                         </div>
                       </div>
                     </div>
-                  </details>
+                    </>
+                  ) : null}
                 </div>
               )}
 
               {currentKey === 'recepcion' ? (
                 <div>
-                  <details className="vc-os-inventory-panel" open>
-                    <summary className="vc-os-inventory-summary">Inventario de accesorios</summary>
+                  <button type="button" className="vc-accordion-toggle" onClick={() => toggleReceptionBlock('inventario')} aria-expanded={openReceptionBlocks.inventario}>
+                    <span>Inventario de accesorios</span>
+                    <span>{openReceptionBlocks.inventario ? '−' : '+'}</span>
+                  </button>
+                  {openReceptionBlocks.inventario ? (
+                    <>
                     <p className="vc-subtitle-small" style={{ marginTop: 0, marginBottom: 8 }}>
                       S: Sí / N: No / C: Completo / I: Incompleto
                     </p>
@@ -723,7 +752,8 @@ export default function OrdenServicioPage() {
                         </button>
                       ))}
                     </div>
-                  </details>
+                    </>
+                  ) : null}
 
                   <label className="vc-label" style={{ marginTop: 12 }}>Registro fotográfico por ángulo</label>
                   <p className="vc-subtitle-small" style={{ marginTop: 4 }}>Sube o toma una foto por recuadro (superior, inferior, laterales, frontal y trasero).</p>
