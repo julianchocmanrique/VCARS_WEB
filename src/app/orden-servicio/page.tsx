@@ -195,7 +195,7 @@ export default function OrdenServicioPage() {
   const current = steps[stepPos] || steps[0];
   const currentKey = current?.key || '';
   const fields = useMemo(() => STEP_FIELDS[currentKey] || [], [currentKey]);
-  const editable = role !== 'cliente';
+  const editable = true;
   const stepValues = formsByStep[currentKey] || {};
   const hasStepData = fields.some((field) => String(stepValues[field.key] || '').trim().length > 0);
   const showPendingForClient = role === 'cliente' && !editable && !hasStepData;
