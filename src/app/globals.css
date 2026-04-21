@@ -1555,6 +1555,11 @@ a { color: inherit; text-decoration: none; }
   content: "";
 }
 
+.vc-inventory-legend {
+  margin-top: 10px !important;
+  margin-bottom: 12px !important;
+}
+
 
 .vc-photo-link {
   position: relative;

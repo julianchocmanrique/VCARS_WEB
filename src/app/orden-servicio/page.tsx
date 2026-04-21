@@ -725,7 +725,7 @@ export default function OrdenServicioPage() {
                   </button>
                   {openReceptionBlocks.inventario ? (
                     <>
-                    <p className="vc-subtitle-small" style={{ marginTop: 0, marginBottom: 8 }}>
+                    <p className="vc-subtitle-small vc-inventory-legend">
                       S: Sí / N: No / C: Completo / I: Incompleto
                     </p>
                     <div className="vc-grid-2">
