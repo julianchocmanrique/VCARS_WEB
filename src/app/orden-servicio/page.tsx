@@ -132,6 +132,7 @@ export default function OrdenServicioPage() {
   const [formsByStep, setFormsByStep] = useState<Record<string, Record<string, string>>>({});
   const [stepPos, setStepPos] = useState(0);
   const [uploadError, setUploadError] = useState('');
+  const [fuelLevelUi, setFuelLevelUi] = useState<FuelLevelValue>('1/2');
   const [openReceptionBlocks, setOpenReceptionBlocks] = useState({
     controlOrden: true,
     facturacion: false,
@@ -215,12 +216,16 @@ export default function OrdenServicioPage() {
     () => getEntries().find((item) => String(item.placa || '').toUpperCase() === plate) || null,
     [plate, formsByStep],
   );
-  const selectedFuelLevel = normalizeFuelLevel(entryForPlate?.fuelLevel || '');
+  const selectedFuelLevel = fuelLevelUi;
   const fuelNeedleAngle = useMemo(() => {
     const match = FUEL_LEVELS.find((item) => item.value === selectedFuelLevel);
     const ratio = match ? match.ratio : 0.5;
     return -78 + (ratio * 156);
   }, [selectedFuelLevel]);
+
+  useEffect(() => {
+    setFuelLevelUi(normalizeFuelLevel(entryForPlate?.fuelLevel || ''));
+  }, [entryForPlate?.fuelLevel, plate]);
 
   const receptionPhotos = useMemo(() => {
     const fromForms = formsByStep.recepcion || {};
@@ -623,7 +628,10 @@ export default function OrdenServicioPage() {
                                 key={level.value}
                                 type="button"
                                 className={`vc-fuel-chip ${selectedFuelLevel === level.value ? 'is-active' : ''}`}
-                                onClick={() => syncEntryPatch({ fuelLevel: level.value })}
+                                onClick={() => {
+                                  setFuelLevelUi(level.value);
+                                  syncEntryPatch({ fuelLevel: level.value });
+                                }}
                                 disabled={!editable}
                               >
                                 {level.label}
