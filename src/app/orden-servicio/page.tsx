@@ -140,6 +140,7 @@ export default function OrdenServicioPage() {
     facturacion: false,
     infoVehiculo: false,
     inventario: false,
+    firmas: true,
     fotos: false,
   });
 
@@ -952,32 +953,38 @@ export default function OrdenServicioPage() {
                     </>
                   ) : null}
 
-                  <div className="vc-grid-2" style={{ marginTop: 10 }}>
-                    <div>
-                      <label className="vc-label">Firma cliente / empresa</label>
-                      <div className="vc-input-wrap vc-input-wrap-emphasis">
-                        <input
-                          className="vc-input-emphasis"
-                          value={formsByStep.recepcion?.firmaClienteEmpresa || ''}
-                          onChange={(e) => syncStepPatch('recepcion', { firmaClienteEmpresa: e.target.value })}
-                          placeholder="Nombre y firma de cliente o empresa"
-                          disabled={!editable}
-                        />
+                  <button type="button" className="vc-accordion-toggle" onClick={() => toggleReceptionBlock('firmas')} aria-expanded={openReceptionBlocks.firmas}>
+                    <span>Firmas</span>
+                    <span>{openReceptionBlocks.firmas ? '−' : '+'}</span>
+                  </button>
+                  {openReceptionBlocks.firmas ? (
+                    <div className="vc-grid-2" style={{ marginTop: 10 }}>
+                      <div>
+                        <label className="vc-label">Firma cliente / empresa</label>
+                        <div className="vc-input-wrap vc-input-wrap-emphasis">
+                          <input
+                            className="vc-input-emphasis"
+                            value={formsByStep.recepcion?.firmaClienteEmpresa || ''}
+                            onChange={(e) => syncStepPatch('recepcion', { firmaClienteEmpresa: e.target.value })}
+                            placeholder="Nombre y firma de cliente o empresa"
+                            disabled={!editable}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="vc-label">Firma taller (quien recibe)</label>
+                        <div className="vc-input-wrap vc-input-wrap-emphasis">
+                          <input
+                            className="vc-input-emphasis"
+                            value={formsByStep.recepcion?.firmaTallerRecibe || ''}
+                            onChange={(e) => syncStepPatch('recepcion', { firmaTallerRecibe: e.target.value })}
+                            placeholder="Nombre y firma de quien recibe"
+                            disabled={!editable}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <label className="vc-label">Firma taller (quien recibe)</label>
-                      <div className="vc-input-wrap vc-input-wrap-emphasis">
-                        <input
-                          className="vc-input-emphasis"
-                          value={formsByStep.recepcion?.firmaTallerRecibe || ''}
-                          onChange={(e) => syncStepPatch('recepcion', { firmaTallerRecibe: e.target.value })}
-                          placeholder="Nombre y firma de quien recibe"
-                          disabled={!editable}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
               ) : null}
 
