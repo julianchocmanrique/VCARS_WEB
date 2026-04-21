@@ -127,6 +127,9 @@ export function getMissingRequiredFields(stepKey: string, formsByStep: FormsBySt
 
     PHOTO_SLOTS.forEach((slot) => {
       if (!hasValue(receptionPhotos[slot.key])) missing.push(`Foto ${slot.label}`);
+      if (String(reception['photo_verified_' + slot.key] || '') !== 'SI') {
+        missing.push(`Validación foto ${slot.label}`);
+      }
     });
 
     return missing;

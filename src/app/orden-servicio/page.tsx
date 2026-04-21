@@ -27,6 +27,17 @@ const PHOTO_SLOTS = [
 ] as const;
 
 type PhotoSlotKey = (typeof PHOTO_SLOTS)[number]['key'];
+type PhotoGuideConfig = { objectPosition: string; scale: number };
+
+const PHOTO_GUIDE_TEMPLATE = '/cars/plantilla%20para%20fotos%20carro%20.jpg';
+const PHOTO_GUIDE_BY_SLOT: Record<PhotoSlotKey, PhotoGuideConfig> = {
+  superior: { objectPosition: '10% 28%', scale: 1.9 },
+  inferior: { objectPosition: '38% 100%', scale: 2.1 },
+  lateralDerecho: { objectPosition: '87% 30%', scale: 1.55 },
+  lateralIzquierdo: { objectPosition: '63% 76%', scale: 1.55 },
+  frontal: { objectPosition: '31% 79%', scale: 1.85 },
+  trasero: { objectPosition: '41% 30%', scale: 1.85 },
+};
 
 const STEP_FIELDS: Record<string, FieldDef[]> = {
   recepcion: [
@@ -520,7 +531,7 @@ export default function OrdenServicioPage() {
 
     try {
       const encoded = await fileToDataUrl(file);
-      syncStepPatch('recepcion', { ['photo_' + slot]: encoded });
+      syncStepPatch('recepcion', { ['photo_' + slot]: encoded, ['photo_verified_' + slot]: '' });
       syncEntryReceptionPhotos(slot, encoded);
       setUploadError('');
     } catch (e) {
@@ -529,8 +540,12 @@ export default function OrdenServicioPage() {
   }
 
   function removeReceptionPhoto(slot: PhotoSlotKey) {
-    syncStepPatch('recepcion', { ['photo_' + slot]: '' });
+    syncStepPatch('recepcion', { ['photo_' + slot]: '', ['photo_verified_' + slot]: '' });
     syncEntryReceptionPhotos(slot, '');
+  }
+
+  function setPhotoVerification(slot: PhotoSlotKey, verified: boolean) {
+    syncStepPatch('recepcion', { ['photo_verified_' + slot]: verified ? 'SI' : '' });
   }
 
   function toggleReceptionBlock(key: keyof typeof openReceptionBlocks) {
@@ -1041,6 +1056,8 @@ export default function OrdenServicioPage() {
                         {PHOTO_SLOTS.map((slot) => {
                           const src = receptionPhotos[slot.key];
                           const inputId = `upload-photo-${slot.key}`;
+                          const verified = String(formsByStep.recepcion?.['photo_verified_' + slot.key] || '') === 'SI';
+                          const guide = PHOTO_GUIDE_BY_SLOT[slot.key];
                           return (
                             <div key={slot.key} className="vc-photo-item">
                               <p className="vc-photo-label">{slot.label}</p>
@@ -1066,7 +1083,27 @@ export default function OrdenServicioPage() {
 
                               {src ? (
                                 <>
-                                  <img src={src} alt={'Foto ' + slot.label} className="vc-photo-preview" />
+                                  <div className="vc-photo-guide-wrap">
+                                    <img
+                                      src={PHOTO_GUIDE_TEMPLATE}
+                                      alt={`Guía ${slot.label}`}
+                                      className="vc-photo-guide-overlay"
+                                      style={{ objectPosition: guide.objectPosition, transform: `scale(${guide.scale})` }}
+                                    />
+                                    <img src={src} alt={'Foto ' + slot.label} className="vc-photo-preview vc-photo-preview-guided" />
+                                  </div>
+                                  <div className="vc-photo-verify-row">
+                                    <button
+                                      type="button"
+                                      className={`vc-btn ${verified ? 'vc-btn-verified' : ''}`}
+                                      onClick={() => setPhotoVerification(slot.key, !verified)}
+                                    >
+                                      {verified ? 'Foto verificada' : 'Verificar ángulo'}
+                                    </button>
+                                    <span className={`vc-photo-verify-text ${verified ? 'is-ok' : 'is-warn'}`}>
+                                      {verified ? `Coincide con ${slot.label}` : `Pendiente validar ${slot.label}`}
+                                    </span>
+                                  </div>
                                   {editable ? (
                                     <button type="button" className="vc-btn" style={{ marginTop: 6 }} onClick={() => removeReceptionPhoto(slot.key)}>
                                       Quitar
@@ -1074,7 +1111,15 @@ export default function OrdenServicioPage() {
                                   ) : null}
                                 </>
                               ) : (
-                                <div className="vc-photo-empty">Sin imagen</div>
+                                <div className="vc-photo-empty vc-photo-empty-guide">
+                                  <img
+                                    src={PHOTO_GUIDE_TEMPLATE}
+                                    alt={`Guía ${slot.label}`}
+                                    className="vc-photo-guide-overlay"
+                                    style={{ objectPosition: guide.objectPosition, transform: `scale(${guide.scale})` }}
+                                  />
+                                  <span className="vc-photo-empty-guide-text">Guía: {slot.label}</span>
+                                </div>
                               )}
                             </div>
                           );

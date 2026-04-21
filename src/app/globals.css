@@ -1718,6 +1718,58 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid rgba(31, 95, 159, 0.2);
 }
 
+.vc-photo-guide-wrap {
+  position: relative;
+  margin-top: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(31, 95, 159, 0.26);
+}
+
+.vc-photo-guide-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.34;
+  pointer-events: none;
+  transform-origin: center center;
+  filter: grayscale(0.3) contrast(1.15);
+}
+
+.vc-photo-preview-guided {
+  margin-top: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.vc-photo-verify-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vc-photo-verify-text {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.vc-photo-verify-text.is-ok {
+  color: #7ce1a0;
+}
+
+.vc-photo-verify-text.is-warn {
+  color: #ffdd8a;
+}
+
+.vc-btn-verified {
+  border-color: rgba(40, 193, 106, 0.5);
+  color: #d7ffe5;
+}
+
 .vc-photo-empty {
   margin-top: 8px;
   min-height: 112px;
@@ -1727,6 +1779,22 @@ a { color: inherit; text-decoration: none; }
   place-items: center;
   color: var(--vc-muted);
   font-size: 12px;
+}
+
+.vc-photo-empty-guide {
+  position: relative;
+  overflow: hidden;
+}
+
+.vc-photo-empty-guide-text {
+  position: relative;
+  z-index: 1;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(95, 158, 220, 0.4);
+  background: rgba(7, 12, 18, 0.74);
+  color: #d6ecff;
+  font-weight: 700;
 }
 
 @media (max-width: 520px) {
