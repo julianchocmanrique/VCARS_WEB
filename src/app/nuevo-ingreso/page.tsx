@@ -12,6 +12,7 @@ import { getEntries, setCurrentEntry, setEntries, type Entry } from '@/lib/stora
 
 type HolderType = 'cliente' | 'empresa';
 type InventoryValue = 'S' | 'N' | 'C' | 'I' | '';
+type PaymentMethod = 'contado' | 'credito' | 'transferencia' | '';
 
 const MAX_IMAGE_SIZE = 3 * 1024 * 1024;
 
@@ -112,8 +113,9 @@ export default function NuevoIngresoPage() {
 
   const [invoiceName, setInvoiceName] = useState('');
   const [billingNitCc, setBillingNitCc] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'contado' | 'credito' | ''>('contado');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('contado');
   const [creditDays, setCreditDays] = useState('');
+  const [transferChannel, setTransferChannel] = useState('');
 
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
@@ -199,6 +201,14 @@ export default function NuevoIngresoPage() {
       setTimeout(() => setSubmitState('idle'), 700);
       return;
     }
+    if (paymentMethod === 'transferencia' && !transferChannel.trim()) {
+      const message = 'Si la forma de pago es transferencia, debes seleccionar el medio de transferencia.';
+      setError(message);
+      setSubmitState('error');
+      setFeedback({ type: 'error', message });
+      setTimeout(() => setSubmitState('idle'), 700);
+      return;
+    }
 
     setSaving(true);
     setSubmitState('loading');
@@ -246,6 +256,7 @@ export default function NuevoIngresoPage() {
       billingNitCc: billingNitCc.trim(),
       paymentMethod,
       creditDays: paymentMethod === 'credito' ? creditDays.trim() : '',
+      transferChannel: paymentMethod === 'transferencia' ? transferChannel.trim() : '',
       fuelLevel: fuelLevel.trim(),
       receivedBy: recibio.trim(),
       tecnicoAsignado: tecnicoAsignado.trim(),
@@ -428,17 +439,50 @@ export default function NuevoIngresoPage() {
             <div>
               <label className="vc-label">Forma de pago</label>
               <div className="vc-input-wrap">
-                <select className="vc-select" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as 'contado' | 'credito' | '')}>
+                <select
+                  className="vc-select"
+                  value={paymentMethod}
+                  onChange={(e) => {
+                    const method = e.target.value as PaymentMethod;
+                    setPaymentMethod(method);
+                    if (method !== 'credito') setCreditDays('');
+                    if (method !== 'transferencia') setTransferChannel('');
+                  }}
+                >
                   <option value="contado">Contado</option>
                   <option value="credito">Crédito</option>
+                  <option value="transferencia">Transferencia</option>
                 </select>
               </div>
             </div>
             <div>
-              <label className="vc-label">Días de crédito</label>
-              <div className="vc-input-wrap">
-                <input value={creditDays} onChange={(e) => setCreditDays(e.target.value)} placeholder="30" disabled={paymentMethod !== 'credito'} />
-              </div>
+              {paymentMethod === 'transferencia' ? (
+                <>
+                  <label className="vc-label">Medio de transferencia</label>
+                  <div className="vc-input-wrap">
+                    <select className="vc-select" value={transferChannel} onChange={(e) => setTransferChannel(e.target.value)}>
+                      <option value="">Seleccionar</option>
+                      <option value="Nequi">Nequi</option>
+                      <option value="Daviplata">Daviplata</option>
+                      <option value="Llave">Llave</option>
+                      <option value="Transferencia bancaria">Transferencia bancaria</option>
+                      <option value="PSE">PSE</option>
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <label className="vc-label">Días de crédito</label>
+                  <div className="vc-input-wrap">
+                    <input
+                      value={creditDays}
+                      onChange={(e) => setCreditDays(e.target.value)}
+                      placeholder={paymentMethod === 'credito' ? '30' : 'No aplica para contado'}
+                      disabled={paymentMethod !== 'credito'}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

@@ -101,7 +101,6 @@ export function getMissingRequiredFields(stepKey: string, formsByStep: FormsBySt
       { label: 'Factura a nombre de', value: entry?.invoiceName },
       { label: 'NIT / C.C facturación', value: entry?.billingNitCc },
       { label: 'Forma de pago', value: entry?.paymentMethod },
-      { label: 'Días crédito', value: entry?.creditDays },
       { label: 'Marca', value: entry?.marca },
       { label: 'Modelo', value: entry?.modelo },
       { label: 'Color', value: entry?.color },
@@ -120,6 +119,14 @@ export function getMissingRequiredFields(stepKey: string, formsByStep: FormsBySt
     requiredReception.forEach((item) => {
       if (!hasValue(item.value)) missing.push(item.label);
     });
+
+    if (entry?.paymentMethod === 'credito' && !hasValue(entry?.creditDays)) {
+      missing.push('Días crédito');
+    }
+
+    if (entry?.paymentMethod === 'transferencia' && !hasValue(entry?.transferChannel)) {
+      missing.push('Medio transferencia');
+    }
 
     INVENTORY_ITEMS.forEach((item) => {
       if (!hasValue(inventory[item])) missing.push(`Inventario: ${item}`);

@@ -32,8 +32,9 @@ export type Entry = {
   empresa?: string;
   invoiceName?: string;
   billingNitCc?: string;
-  paymentMethod?: 'contado' | 'credito' | '';
+  paymentMethod?: 'contado' | 'credito' | 'transferencia' | '';
   creditDays?: string;
+  transferChannel?: string;
   fuelLevel?: string;
   receivedBy?: string;
   tecnicoAsignado?: string;
@@ -113,8 +114,9 @@ function normalizeEntry(value: unknown): Entry | null {
     empresa: String(v.empresa || ''),
     invoiceName: String(v.invoiceName || ''),
     billingNitCc: String(v.billingNitCc || ''),
-    paymentMethod: (v.paymentMethod === 'contado' || v.paymentMethod === 'credito') ? v.paymentMethod : '',
+    paymentMethod: (v.paymentMethod === 'contado' || v.paymentMethod === 'credito' || v.paymentMethod === 'transferencia') ? v.paymentMethod : '',
     creditDays: String(v.creditDays || ''),
+    transferChannel: String(v.transferChannel || ''),
     fuelLevel: String(v.fuelLevel || ''),
     receivedBy: String(v.receivedBy || ''),
     tecnicoAsignado: String(v.tecnicoAsignado || ''),

@@ -798,24 +798,60 @@ export default function OrdenServicioPage() {
                           <select
                             className="vc-select"
                             value={entryForPlate?.paymentMethod || ''}
-                            onChange={(e) => syncEntryPatch({ paymentMethod: e.target.value as Entry['paymentMethod'] })}
+                            onChange={(e) => {
+                              const method = e.target.value as Entry['paymentMethod'];
+                              if (method === 'credito') {
+                                syncEntryPatch({ paymentMethod: method, transferChannel: '' });
+                                return;
+                              }
+                              if (method === 'transferencia') {
+                                syncEntryPatch({ paymentMethod: method, creditDays: '' });
+                                return;
+                              }
+                              syncEntryPatch({ paymentMethod: method, creditDays: '', transferChannel: '' });
+                            }}
                             disabled={!editable}
                           >
                             <option value="">Seleccionar</option>
                             <option value="contado">Contado</option>
                             <option value="credito">Crédito</option>
+                            <option value="transferencia">Transferencia</option>
                           </select>
                         </div>
                       </div>
                       <div>
-                        <label className="vc-label">Días crédito</label>
-                        <div className="vc-input-wrap">
-                          <input
-                            value={entryForPlate?.creditDays || ''}
-                            onChange={(e) => syncEntryPatch({ creditDays: e.target.value })}
-                            disabled={!editable}
-                          />
-                        </div>
+                        {entryForPlate?.paymentMethod === 'transferencia' ? (
+                          <>
+                            <label className="vc-label">Medio transferencia</label>
+                            <div className="vc-input-wrap">
+                              <select
+                                className="vc-select"
+                                value={entryForPlate?.transferChannel || ''}
+                                onChange={(e) => syncEntryPatch({ transferChannel: e.target.value })}
+                                disabled={!editable}
+                              >
+                                <option value="">Seleccionar</option>
+                                <option value="Nequi">Nequi</option>
+                                <option value="Daviplata">Daviplata</option>
+                                <option value="Llave">Llave</option>
+                                <option value="Transferencia bancaria">Transferencia bancaria</option>
+                                <option value="PSE">PSE</option>
+                              </select>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <label className="vc-label">Días crédito</label>
+                            <div className="vc-input-wrap">
+                              <input
+                                value={entryForPlate?.creditDays || ''}
+                                onChange={(e) => syncEntryPatch({ creditDays: e.target.value })}
+                                disabled={!editable || entryForPlate?.paymentMethod !== 'credito'}
+                                placeholder={entryForPlate?.paymentMethod === 'credito' ? '30' : 'No aplica para contado'}
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                     </>

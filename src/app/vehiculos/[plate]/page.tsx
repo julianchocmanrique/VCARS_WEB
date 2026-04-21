@@ -313,7 +313,8 @@ export default function VehiculoDetallePage() {
               <span>Factura a nombre de</span><strong>{vehicle?.invoiceName || '-'}</strong>
               <span>NIT/CC facturación</span><strong>{vehicle?.billingNitCc || '-'}</strong>
               <span>Forma de pago</span><strong>{vehicle?.paymentMethod || '-'}</strong>
-              <span>Días crédito</span><strong>{vehicle?.creditDays || '-'}</strong>
+              <span>{vehicle?.paymentMethod === 'transferencia' ? 'Medio transferencia' : 'Días crédito'}</span>
+              <strong>{vehicle?.paymentMethod === 'transferencia' ? (vehicle?.transferChannel || '-') : (vehicle?.creditDays || '-')}</strong>
             </div>
           ) : null}
 
