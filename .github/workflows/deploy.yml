@@ -26,12 +26,20 @@ jobs:
             set -e
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
+            if ! docker info >/dev/null 2>&1; then
+              systemctl restart docker || service docker restart || true
+              sleep 5
+            fi
             cd /root/.openclaw/workspace/VCARS_WEB_SRC
             git fetch --prune --depth=1 origin main
             git reset --hard origin/main
             cd /root/.openclaw/workspace/deployments/vcars-web2
-            docker compose up -d --build
+            # Primero intenta levantar rapido con la imagen actual para salir de 502.
+            if ! docker compose up -d --remove-orphans; then
+              docker compose up -d --build --remove-orphans
+            fi
             docker compose ps
+            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | sed -n '1,20p'
             EOF
 
       - name: Espera corta antes de reintento
@@ -54,10 +62,17 @@ jobs:
             set -e
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
+            if ! docker info >/dev/null 2>&1; then
+              systemctl restart docker || service docker restart || true
+              sleep 5
+            fi
             cd /root/.openclaw/workspace/VCARS_WEB_SRC
             git fetch --prune --depth=1 origin main
             git reset --hard origin/main
             cd /root/.openclaw/workspace/deployments/vcars-web2
-            docker compose up -d --build
+            if ! docker compose up -d --remove-orphans; then
+              docker compose up -d --build --remove-orphans
+            fi
             docker compose ps
+            docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | sed -n '1,20p'
             EOF
