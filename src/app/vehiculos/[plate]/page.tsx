@@ -210,36 +210,57 @@ export default function VehiculoDetallePage() {
   }
 
   function downloadServiceOrder() {
-    if (!isServiceOrderComplete) return;
     if (typeof window === 'undefined') return;
-    try {
-      const safePlate = String(vehicle?.placa || plate || 'sin-placa').replace(/[^a-z0-9_-]+/gi, '_');
-      const payload = {
-        generadoEn: new Date().toISOString(),
-        placa: plate,
-        estado: {
-          pasoActual: normalizeLegacyStepLabel(vehicle?.paso),
-          indicePaso: stepIndex,
-          status: vehicle?.status || '',
-          completada: isServiceOrderComplete,
-        },
-        vehiculo: vehicle || {},
-        formularios: formsByStep,
-      };
+    (async () => {
+      try {
+        const { jsPDF } = await import('jspdf');
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
-      const href = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = href;
-      anchor.download = `orden-servicio-${safePlate}.json`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(href);
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : 'No se pudo generar la descarga';
-      setWarning(msg);
-    }
+        const safePlate = String(vehicle?.placa || plate || 'sin-placa').replace(/[^a-z0-9_-]+/gi, '_');
+        const payload = {
+          generadoEn: new Date().toISOString(),
+          placa: plate,
+          estado: {
+            pasoActual: normalizeLegacyStepLabel(vehicle?.paso),
+            indicePaso: stepIndex,
+            status: vehicle?.status || '',
+            completada: isServiceOrderComplete,
+          },
+          vehiculo: vehicle || {},
+          formularios: formsByStep,
+        };
+
+        const jsonText = JSON.stringify(payload, null, 2);
+        const marginX = 10;
+        const maxWidth = 190;
+        const pageHeight = 297;
+        const lineHeight = 5.2;
+        let cursorY = 14;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(`Orden de servicio - ${safePlate}`, marginX, cursorY);
+        cursorY += 8;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        const lines = doc.splitTextToSize(jsonText, maxWidth);
+
+        for (const line of lines) {
+          if (cursorY > pageHeight - 12) {
+            doc.addPage();
+            cursorY = 12;
+          }
+          doc.text(line, marginX, cursorY);
+          cursorY += lineHeight;
+        }
+
+        doc.save(`orden-servicio-${safePlate}.pdf`);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : 'No se pudo generar la descarga en PDF';
+        setWarning(msg);
+      }
+    })();
   }
 
   return (
@@ -450,28 +471,15 @@ export default function VehiculoDetallePage() {
                     >
                       ✎
                     </Link>
-                    {isServiceOrderComplete ? (
-                      <button
-                        type="button"
-                        className="vc-form-icon"
-                        onClick={downloadServiceOrder}
-                        aria-label="Descargar orden de servicio"
-                        title="Descargar orden de servicio"
-                      >
-                        ↓
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="vc-form-icon is-disabled"
-                        onClick={downloadServiceOrder}
-                        aria-label="Descarga disponible al completar la orden"
-                        title="Completa la orden para habilitar la descarga"
-                        disabled
-                      >
-                        ↓
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="vc-form-icon"
+                      onClick={downloadServiceOrder}
+                      aria-label="Descargar orden de servicio en PDF"
+                      title="Descargar orden de servicio en PDF"
+                    >
+                      ↓
+                    </button>
                   </div>
                 </div>
               ))}
