@@ -692,36 +692,38 @@ export default function OrdenServicioPage() {
 
               {currentKey === 'recepcion' ? (
                 <div>
-                  <label className="vc-label vc-os-inventory-title">Inventario de accesorios</label>
-                  <p className="vc-subtitle-small" style={{ marginTop: 0, marginBottom: 8 }}>
-                    S: Sí / N: No / C: Completo / I: Incompleto
-                  </p>
-                  <div className="vc-grid-2">
-                    {INVENTORY_ITEMS.map((item) => (
-                      <button
-                        key={item}
-                        type="button"
-                        className="vc-input-wrap"
-                        style={{
-                          width: '100%',
-                          display: 'grid',
-                          gridTemplateColumns: '1fr auto',
-                          gap: 10,
-                          alignItems: 'center',
-                          textAlign: 'left',
-                          opacity: editable ? 1 : 0.72,
-                          cursor: editable ? 'pointer' : 'not-allowed',
-                        }}
-                        disabled={!editable}
-                        onClick={() => setInventoryValue(item, nextInventoryValue(inventory[item] || ''))}
-                        aria-label={`Cambiar estado de ${item}`}
-                        title="Click para cambiar entre -, S, N, C, I"
-                      >
-                        <span className="vc-os-inventory-item-label">{item}</span>
-                        <strong className="vc-os-inventory-item-value">{inventory[item] || '-'}</strong>
-                      </button>
-                    ))}
-                  </div>
+                  <details className="vc-os-inventory-panel" open>
+                    <summary className="vc-os-inventory-summary">Inventario de accesorios</summary>
+                    <p className="vc-subtitle-small" style={{ marginTop: 0, marginBottom: 8 }}>
+                      S: Sí / N: No / C: Completo / I: Incompleto
+                    </p>
+                    <div className="vc-grid-2">
+                      {INVENTORY_ITEMS.map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          className="vc-input-wrap"
+                          style={{
+                            width: '100%',
+                            display: 'grid',
+                            gridTemplateColumns: '1fr auto',
+                            gap: 10,
+                            alignItems: 'center',
+                            textAlign: 'left',
+                            opacity: editable ? 1 : 0.72,
+                            cursor: editable ? 'pointer' : 'not-allowed',
+                          }}
+                          disabled={!editable}
+                          onClick={() => setInventoryValue(item, nextInventoryValue(inventory[item] || ''))}
+                          aria-label={`Cambiar estado de ${item}`}
+                          title="Click para cambiar entre -, S, N, C, I"
+                        >
+                          <span className="vc-os-inventory-item-label">{item}</span>
+                          <strong className="vc-os-inventory-item-value">{inventory[item] || '-'}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  </details>
 
                   <label className="vc-label" style={{ marginTop: 12 }}>Registro fotográfico por ángulo</label>
                   <p className="vc-subtitle-small" style={{ marginTop: 4 }}>Sube o toma una foto por recuadro (superior, inferior, laterales, frontal y trasero).</p>
