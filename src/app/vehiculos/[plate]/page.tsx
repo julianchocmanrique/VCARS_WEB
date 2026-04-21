@@ -150,6 +150,11 @@ export default function VehiculoDetallePage() {
   const approvalData = formsByStep.aprobacion || {};
   const receptionData = formsByStep.recepcion || {};
   const entregaData = formsByStep.entrega || {};
+  const hasStepData = (stepKey: string) => {
+    const values = Object.values(formsByStep[stepKey] || {});
+    return values.some((value) => String(value ?? '').trim().length > 0);
+  };
+  const allVisibleStepsHaveData = visibleSteps.length > 0 && visibleSteps.every((step) => hasStepData(step.key));
   const normalizedStatus = String(vehicle?.status || '').toLowerCase();
   const isServiceOrderComplete = stepIndex >= finishIndex
     || normalizedStatus === 'done'
@@ -159,7 +164,8 @@ export default function VehiculoDetallePage() {
     || normalizedStatus === 'closed'
     || normalizedStatus === 'entregado'
     || Boolean(entregaData.fechaEntregaReal)
-    || Boolean(entregaData.firmaRecibe);
+    || Boolean(entregaData.firmaRecibe)
+    || allVisibleStepsHaveData;
   const intakePhotosByZone = useMemo(() => {
     const zone = vehicle?.intakePhotosByZone || {};
     const legacy = vehicle?.intakePhotos || [];
