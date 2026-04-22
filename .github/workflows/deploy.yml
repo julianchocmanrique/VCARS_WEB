@@ -17,15 +17,20 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 180s
+          timeout: 1200s
           command_timeout: 120m
           script: |
             set -e
             LOCKFILE=/tmp/vcars_web_deploy.lock
             flock -w 5400 "$LOCKFILE" bash -s <<'EOF'
-            set -e
+            set -euo pipefail
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
+            DISK_USE="$(df --output=pcent / | tail -n1 | tr -dc '0-9')"
+            if [ "${DISK_USE:-0}" -ge 85 ]; then
+              docker builder prune -af || true
+              docker image prune -af || true
+            fi
             if ! docker info >/dev/null 2>&1; then
               systemctl restart docker || service docker restart || true
               sleep 5
@@ -34,12 +39,16 @@ jobs:
             git fetch --prune --depth=1 origin main
             git reset --hard origin/main
             cd /root/.openclaw/workspace/deployments/vcars-web2
-            # Primero intenta levantar rapido con la imagen actual para salir de 502.
-            docker compose up -d --remove-orphans || true
-            # Siempre reconstruye para asegurar que los cambios de codigo queden desplegados.
-            docker compose up -d --build --remove-orphans
+            # Mantener servicio arriba con la imagen actual mientras se reconstruye.
+            docker compose up -d --no-build --remove-orphans || true
+            # Build y levantamiento del servicio principal.
+            docker compose up -d --build --remove-orphans vcars_web2 || docker compose up -d --build --remove-orphans
             docker compose ps
             docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | sed -n '1,20p'
+            curl -fsSIL --max-time 15 http://127.0.0.1:3010/vcars/login/ || true
+            curl -fsSIL --max-time 15 http://127.0.0.1/vcars/login/ || true
+            df -h /
+            docker system df
             EOF
 
       - name: Espera corta antes de reintento
@@ -53,15 +62,20 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 180s
+          timeout: 1200s
           command_timeout: 120m
           script: |
             set -e
             LOCKFILE=/tmp/vcars_web_deploy.lock
             flock -w 5400 "$LOCKFILE" bash -s <<'EOF'
-            set -e
+            set -euo pipefail
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
+            DISK_USE="$(df --output=pcent / | tail -n1 | tr -dc '0-9')"
+            if [ "${DISK_USE:-0}" -ge 85 ]; then
+              docker builder prune -af || true
+              docker image prune -af || true
+            fi
             if ! docker info >/dev/null 2>&1; then
               systemctl restart docker || service docker restart || true
               sleep 5
@@ -70,8 +84,12 @@ jobs:
             git fetch --prune --depth=1 origin main
             git reset --hard origin/main
             cd /root/.openclaw/workspace/deployments/vcars-web2
-            docker compose up -d --remove-orphans || true
-            docker compose up -d --build --remove-orphans
+            docker compose up -d --no-build --remove-orphans || true
+            docker compose up -d --build --remove-orphans vcars_web2 || docker compose up -d --build --remove-orphans
             docker compose ps
             docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | sed -n '1,20p'
+            curl -fsSIL --max-time 15 http://127.0.0.1:3010/vcars/login/ || true
+            curl -fsSIL --max-time 15 http://127.0.0.1/vcars/login/ || true
+            df -h /
+            docker system df
             EOF
