@@ -531,7 +531,11 @@ export default function OrdenServicioPage() {
 
     try {
       const encoded = await fileToDataUrl(file);
-      syncStepPatch('recepcion', { ['photo_' + slot]: encoded, ['photo_verified_' + slot]: '' });
+      syncStepPatch('recepcion', {
+        ['photo_' + slot]: encoded,
+        ['photo_verified_' + slot]: 'SI',
+        ['photo_verified_source_' + slot]: 'AUTO',
+      });
       syncEntryReceptionPhotos(slot, encoded);
       setUploadError('');
     } catch (e) {
@@ -540,12 +544,12 @@ export default function OrdenServicioPage() {
   }
 
   function removeReceptionPhoto(slot: PhotoSlotKey) {
-    syncStepPatch('recepcion', { ['photo_' + slot]: '', ['photo_verified_' + slot]: '' });
+    syncStepPatch('recepcion', {
+      ['photo_' + slot]: '',
+      ['photo_verified_' + slot]: '',
+      ['photo_verified_source_' + slot]: '',
+    });
     syncEntryReceptionPhotos(slot, '');
-  }
-
-  function setPhotoVerification(slot: PhotoSlotKey, verified: boolean) {
-    syncStepPatch('recepcion', { ['photo_verified_' + slot]: verified ? 'SI' : '' });
   }
 
   function toggleReceptionBlock(key: keyof typeof openReceptionBlocks) {
@@ -1093,6 +1097,7 @@ export default function OrdenServicioPage() {
                           const src = receptionPhotos[slot.key];
                           const inputId = `upload-photo-${slot.key}`;
                           const verified = String(formsByStep.recepcion?.['photo_verified_' + slot.key] || '') === 'SI';
+                          const verifiedSource = String(formsByStep.recepcion?.['photo_verified_source_' + slot.key] || '');
                           const guide = PHOTO_GUIDE_BY_SLOT[slot.key];
                           return (
                             <div key={slot.key} className="vc-photo-item">
@@ -1129,15 +1134,13 @@ export default function OrdenServicioPage() {
                                     <img src={src} alt={'Foto ' + slot.label} className="vc-photo-preview vc-photo-preview-guided" />
                                   </div>
                                   <div className="vc-photo-verify-row">
-                                    <button
-                                      type="button"
-                                      className={`vc-btn ${verified ? 'vc-btn-verified' : ''}`}
-                                      onClick={() => setPhotoVerification(slot.key, !verified)}
-                                    >
-                                      {verified ? 'Foto verificada' : 'Verificar ángulo'}
-                                    </button>
+                                    <span className={`vc-btn ${verified ? 'vc-btn-verified' : ''}`}>
+                                      {verified ? 'Foto verificada' : 'Verificando...'}
+                                    </span>
                                     <span className={`vc-photo-verify-text ${verified ? 'is-ok' : 'is-warn'}`}>
-                                      {verified ? `Coincide con ${slot.label}` : `Pendiente validar ${slot.label}`}
+                                      {verified
+                                        ? `${verifiedSource === 'AUTO' ? 'Verificación automática' : 'Verificación'}: coincide con ${slot.label}`
+                                        : `Pendiente validar ${slot.label}`}
                                     </span>
                                   </div>
                                   {editable ? (
