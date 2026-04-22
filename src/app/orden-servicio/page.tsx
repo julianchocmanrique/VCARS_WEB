@@ -173,6 +173,7 @@ export default function OrdenServicioPage() {
     firmas: true,
     fotos: false,
   });
+  const appliedStepSeedRef = useRef('');
 
   useEffect(() => {
     if (!getSession()) {
@@ -219,10 +220,22 @@ export default function OrdenServicioPage() {
       return;
     }
 
-    const foundPos = steps.findIndex((step) => step.index === startStepIndex);
-    const targetPos = foundPos >= 0 ? foundPos : 0;
-    queueMicrotask(() => setStepPos(targetPos));
-  }, [startStepIndex, steps]);
+    const seedKey = `${plate}:${startStepIndex}`;
+    if (appliedStepSeedRef.current !== seedKey) {
+      const foundPos = steps.findIndex((step) => step.index === startStepIndex);
+      const targetPos = foundPos >= 0 ? foundPos : 0;
+      queueMicrotask(() => setStepPos(targetPos));
+      appliedStepSeedRef.current = seedKey;
+      return;
+    }
+
+    queueMicrotask(() => {
+      setStepPos((prev) => {
+        const clamped = Math.min(Math.max(prev, 0), Math.max(steps.length - 1, 0));
+        return clamped === prev ? prev : clamped;
+      });
+    });
+  }, [plate, startStepIndex, steps]);
 
   const current = steps[stepPos] || steps[0];
   const currentKey = current?.key || '';
