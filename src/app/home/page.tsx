@@ -47,6 +47,24 @@ type ProcessRow = {
   pct: number;
 };
 
+type WorkshopSlot = {
+  key: string;
+  label: string;
+  leftPct: number;
+  topPct: number;
+};
+
+const WORKSHOP_SLOTS: WorkshopSlot[] = [
+  { key: 'lift-1', label: 'Elevador 1', leftPct: 24, topPct: 43 },
+  { key: 'lift-2', label: 'Elevador 2', leftPct: 24, topPct: 66 },
+  { key: 'diag-1', label: 'Diagnóstico', leftPct: 45, topPct: 38 },
+  { key: 'park-1', label: 'Bahía A', leftPct: 80, topPct: 26 },
+  { key: 'park-2', label: 'Bahía B', leftPct: 80, topPct: 36 },
+  { key: 'park-3', label: 'Bahía C', leftPct: 80, topPct: 46 },
+  { key: 'park-4', label: 'Bahía D', leftPct: 80, topPct: 56 },
+  { key: 'park-5', label: 'Bahía E', leftPct: 80, topPct: 66 },
+];
+
 function summarize(entries: Entry[]) {
   return {
     total: entries.length,
@@ -82,6 +100,17 @@ function kpiFilterHref(title: string): string {
   return '/ingreso-activo';
 }
 
+function elapsedLabel(fromDateRaw?: string): string {
+  const fromDate = new Date(String(fromDateRaw || ''));
+  if (Number.isNaN(fromDate.getTime())) return '-';
+  const diffMs = Math.max(0, Date.now() - fromDate.getTime());
+  const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const days = Math.floor(totalHours / 24);
+  const hours = totalHours % 24;
+  if (days > 0) return `${days}d ${hours}h`;
+  return `${Math.max(1, totalHours)}h`;
+}
+
 export default function HomePage() {
   const router = useRouter();
   const reduced = useReducedMotion();
@@ -91,6 +120,7 @@ export default function HomePage() {
   const [currentEntry, setCurrentEntryState] = useState<Entry | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [bootReady, setBootReady] = useState(false);
+  const [selectedWorkshopSlot, setSelectedWorkshopSlot] = useState<string>(WORKSHOP_SLOTS[0]?.key || '');
 
   useEffect(() => {
     if (!getSession()) {
@@ -252,6 +282,36 @@ export default function HomePage() {
     ];
   }, [processMetrics.rows, summary.active, summary.cancelled, summary.done, summary.total]);
 
+  const workshopAssignments = useMemo(() => {
+    const activeEntries = scopedEntries
+      .filter((entry) => (entry.status || 'active') === 'active')
+      .sort((a, b) => {
+        const aTime = new Date(String(a.fecha || a.updatedAt || '')).getTime();
+        const bTime = new Date(String(b.fecha || b.updatedAt || '')).getTime();
+        return (Number.isFinite(aTime) ? aTime : 0) - (Number.isFinite(bTime) ? bTime : 0);
+      });
+
+    return WORKSHOP_SLOTS.map((slot, index) => {
+      const entry = activeEntries[index] || null;
+      return {
+        ...slot,
+        entry,
+        occupied: Boolean(entry),
+      };
+    });
+  }, [scopedEntries]);
+
+  const effectiveSelectedWorkshopSlot = useMemo(() => {
+    if (!workshopAssignments.length) return '';
+    const exists = workshopAssignments.some((slot) => slot.key === selectedWorkshopSlot);
+    if (exists) return selectedWorkshopSlot;
+    return workshopAssignments.find((slot) => slot.occupied)?.key || workshopAssignments[0].key;
+  }, [selectedWorkshopSlot, workshopAssignments]);
+
+  const selectedWorkshopInfo = useMemo(() => {
+    return workshopAssignments.find((slot) => slot.key === effectiveSelectedWorkshopSlot) || workshopAssignments[0] || null;
+  }, [effectiveSelectedWorkshopSlot, workshopAssignments]);
+
   return (
     <main className="vc-page vc-shell">
       <div className="vc-bg-orb-left" />
@@ -349,6 +409,80 @@ export default function HomePage() {
               </>
             ) : (
               <DashboardKpiSkeleton cards={4} />
+            )}
+          </motion.section>
+
+          <motion.section variants={sectionItem} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.25 }} className="vc-section vc-section-tight">
+            <h2 className="vc-section-title">Mapa de taller</h2>
+            {bootReady ? (
+              <div className="vc-secondary-card" style={{ padding: 12 }}>
+                <div className="grid gap-3 md:grid-cols-[1.2fr_0.8fr]">
+                  <div
+                    className="relative overflow-hidden rounded-2xl border border-[rgba(62,129,194,0.35)] bg-[#0a0f18]"
+                    style={{
+                      minHeight: 420,
+                      backgroundImage: "linear-gradient(180deg, rgba(6,10,16,0.05), rgba(6,10,16,0.25)), url('/cars/planoTaller.jpg')",
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  >
+                    {workshopAssignments.map((slot) => (
+                      <button
+                        key={slot.key}
+                        type="button"
+                        className="absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border px-2 py-1 text-left shadow-[0_8px_20px_rgba(0,0,0,0.35)]"
+                        style={{
+                          left: `${slot.leftPct}%`,
+                          top: `${slot.topPct}%`,
+                          minWidth: 118,
+                          borderColor: slot.occupied ? 'rgba(90,197,136,0.65)' : 'rgba(107,114,128,0.65)',
+                          background: slot.key === effectiveSelectedWorkshopSlot
+                            ? 'linear-gradient(180deg, rgba(33,90,149,0.92), rgba(18,32,56,0.92))'
+                            : 'linear-gradient(180deg, rgba(16,22,33,0.92), rgba(12,16,24,0.92))',
+                          color: '#e6eef9',
+                        }}
+                        onClick={() => setSelectedWorkshopSlot(slot.key)}
+                      >
+                        <p className="text-[11px] font-semibold">{slot.label}</p>
+                        <p className="text-[10px] opacity-90">{slot.entry?.placa || 'Puesto vacío'}</p>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="rounded-2xl border border-[rgba(62,129,194,0.35)] bg-[rgba(10,15,24,0.86)] p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9fb9d8]">Detalle del puesto</p>
+                    {selectedWorkshopInfo ? (
+                      selectedWorkshopInfo.entry ? (
+                        <div className="mt-2 space-y-2 text-sm text-[#dce8f8]">
+                          <p><strong>{selectedWorkshopInfo.label}</strong></p>
+                          <p>Vehículo: <strong>{selectedWorkshopInfo.entry.vehiculo || '-'}</strong></p>
+                          <p>Placa: <strong>{selectedWorkshopInfo.entry.placa}</strong></p>
+                          <p>Cliente: <strong>{selectedWorkshopInfo.entry.cliente || '-'}</strong></p>
+                          <p>Proceso: <strong>{selectedWorkshopInfo.entry.paso || 'Orden de servicio'}</strong></p>
+                          <p>Tiempo en taller: <strong>{elapsedLabel(selectedWorkshopInfo.entry.fecha || selectedWorkshopInfo.entry.updatedAt)}</strong></p>
+                          <p>Estado: <strong>Ocupado</strong></p>
+                          <Link
+                            href={`/vehiculos/${encodeURIComponent(selectedWorkshopInfo.entry.placa)}`}
+                            className="inline-flex rounded-lg border border-[rgba(95,158,220,0.45)] bg-[rgba(18,27,40,0.52)] px-3 py-1.5 text-xs font-semibold text-[#dff1ff] hover:bg-[rgba(37,75,126,0.55)]"
+                          >
+                            Ver vehículo
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="mt-2 space-y-2 text-sm text-[#dce8f8]">
+                          <p><strong>{selectedWorkshopInfo.label}</strong></p>
+                          <p>Estado: <strong>Puesto vacío</strong></p>
+                          <p>Proceso: <strong>Disponible</strong></p>
+                        </div>
+                      )
+                    ) : (
+                      <p className="mt-2 text-sm text-[#dce8f8]">Sin información de puestos.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <TableListSkeleton rows={4} withHeader={false} />
             )}
           </motion.section>
 
