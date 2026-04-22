@@ -484,6 +484,18 @@ a { color: inherit; text-decoration: none; }
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
+  align-items: stretch;
+}
+.vc-vehicle-fuel-layout > div {
+  display: flex;
+  flex-direction: column;
+}
+.vc-vehicle-fuel-layout > div:first-child .vc-input-wrap {
+  min-height: 62px;
+  padding: 14px 14px;
+}
+.vc-vehicle-fuel-layout > div:first-child .vc-input-wrap input {
+  font-size: 18px;
 }
 .vc-fuel-chip {
   min-height: 30px;
@@ -499,6 +511,30 @@ a { color: inherit; text-decoration: none; }
   border-color: rgba(69, 164, 237, 0.65);
   color: #e6f3ff;
   background: linear-gradient(135deg, rgba(18, 18, 20, 0.9), rgba(31, 95, 159, 0.26));
+}
+.vc-vehicle-fuel-layout > div:last-child .vc-fuel-wrap {
+  min-height: 230px;
+  padding: 14px 14px 14px;
+}
+.vc-vehicle-fuel-layout > div:last-child .vc-fuel-gauge {
+  height: 132px;
+}
+.vc-vehicle-fuel-layout > div:last-child .vc-fuel-arc {
+  top: 24px;
+  height: 80px;
+}
+.vc-vehicle-fuel-layout > div:last-child .vc-fuel-needle {
+  height: 68px;
+  bottom: 24px;
+}
+.vc-vehicle-fuel-layout > div:last-child .vc-fuel-pivot {
+  bottom: 18px;
+}
+.vc-vehicle-fuel-layout > div:last-child .vc-fuel-mark {
+  bottom: 32px;
+}
+.vc-vehicle-fuel-layout > div:last-child .vc-fuel-level-row {
+  margin-top: 8px;
 }
 @media (max-width: 700px) {
   .vc-vehicle-fuel-layout {
