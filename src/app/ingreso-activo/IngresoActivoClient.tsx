@@ -21,6 +21,7 @@ import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setE
 
 type ProcessFilter = 'all' | 'active' | 'done' | 'critical';
 type ProcessStage = 'all' | 'recepcion' | 'diagnostico' | 'ejecucion' | 'entrega' | 'otros';
+type PartyFilterMode = 'all' | 'cliente' | 'empresa';
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'home', label: 'Inicio', href: '/home' },
@@ -111,6 +112,8 @@ export default function IngresoActivoClient() {
   const [warning, setWarning] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filterTab, setFilterTab] = useState<ProcessFilter>(parseFilterTab(searchParams.get('estado')));
+  const [partyFilterMode, setPartyFilterMode] = useState<PartyFilterMode>('all');
+  const [partyFilterValue, setPartyFilterValue] = useState('');
 
   useEffect(() => {
     const session = getSession();
@@ -175,6 +178,13 @@ export default function IngresoActivoClient() {
     setFilterTab(parseFilterTab(searchParams.get('estado')));
   }, [searchParams]);
 
+  useEffect(() => {
+    if (role !== 'administrativo' && (partyFilterValue || partyFilterMode !== 'all')) {
+      setPartyFilterMode('all');
+      setPartyFilterValue('');
+    }
+  }, [partyFilterMode, partyFilterValue, role]);
+
   const stageFilter = useMemo<ProcessStage>(() => {
     const raw = (searchParams.get('proceso') || '').toLowerCase();
     if (raw === 'recepcion' || raw === 'diagnostico' || raw === 'ejecucion' || raw === 'entrega' || raw === 'otros') return raw;
@@ -192,8 +202,43 @@ export default function IngresoActivoClient() {
       scoped = scoped.filter((item) => resolveProcessStage(item.paso) === stageFilter);
     }
 
+    if (role === 'administrativo' && partyFilterValue.trim()) {
+      const needle = normalizeText(partyFilterValue);
+      scoped = scoped.filter((item) => {
+        const clientName = normalizeText(item.cliente);
+        const companyName = normalizeText(item.empresa || item.companyEntity || item.invoiceName || item.email);
+        if (partyFilterMode === 'cliente') return clientName.includes(needle);
+        if (partyFilterMode === 'empresa') return companyName.includes(needle);
+        return clientName.includes(needle) || companyName.includes(needle);
+      });
+    }
+
     return scoped;
-  }, [filterTab, filtered, stageFilter]);
+  }, [filterTab, filtered, partyFilterMode, partyFilterValue, role, stageFilter]);
+
+  const availableClients = useMemo(() => {
+    const set = new Set<string>();
+    filtered.forEach((item) => {
+      const name = String(item.cliente || '').trim();
+      if (name) set.add(name);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es-CO'));
+  }, [filtered]);
+
+  const availableCompanies = useMemo(() => {
+    const set = new Set<string>();
+    filtered.forEach((item) => {
+      const name = String(item.empresa || item.companyEntity || item.invoiceName || item.email || '').trim();
+      if (name) set.add(name);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'es-CO'));
+  }, [filtered]);
+
+  const searchOptions = useMemo(() => {
+    if (partyFilterMode === 'cliente') return availableClients;
+    if (partyFilterMode === 'empresa') return availableCompanies;
+    return Array.from(new Set([...availableClients, ...availableCompanies])).sort((a, b) => a.localeCompare(b, 'es-CO'));
+  }, [availableClients, availableCompanies, partyFilterMode]);
 
   const currentEntry = getCurrentEntry();
 
@@ -235,6 +280,61 @@ export default function IngresoActivoClient() {
           <div className="mb-3">
             <PremiumTabs items={FILTER_ITEMS} active={filterTab} onChange={setFilterTab} />
           </div>
+
+          {role === 'administrativo' ? (
+            <div className="mb-3 rounded-xl border border-[rgba(31,95,159,0.35)] bg-[rgba(18,27,40,0.52)] px-3 py-3">
+              <div className="vc-grid-2">
+                <div>
+                  <label className="vc-label" htmlFor="party-filter-mode">Filtrar por</label>
+                  <div className="vc-input-wrap">
+                    <select
+                      id="party-filter-mode"
+                      className="vc-select"
+                      value={partyFilterMode}
+                      onChange={(e) => {
+                        setPartyFilterMode(e.target.value as PartyFilterMode);
+                        setPartyFilterValue('');
+                      }}
+                    >
+                      <option value="all">Cliente o empresa</option>
+                      <option value="cliente">Cliente</option>
+                      <option value="empresa">Empresa</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="vc-label" htmlFor="party-filter-search">Buscar</label>
+                  <div className="vc-input-wrap">
+                    <input
+                      id="party-filter-search"
+                      list="party-filter-options"
+                      value={partyFilterValue}
+                      onChange={(e) => setPartyFilterValue(e.target.value)}
+                      placeholder={
+                        partyFilterMode === 'cliente'
+                          ? 'Escribe o selecciona cliente'
+                          : partyFilterMode === 'empresa'
+                            ? 'Escribe o selecciona empresa'
+                            : 'Escribe o selecciona cliente/empresa'
+                      }
+                    />
+                    <datalist id="party-filter-options">
+                      {searchOptions.map((name) => (
+                        <option key={name} value={name} />
+                      ))}
+                    </datalist>
+                  </div>
+                </div>
+              </div>
+              {partyFilterValue ? (
+                <div className="mt-2 flex justify-end">
+                  <button type="button" className="vc-btn" onClick={() => setPartyFilterValue('')}>
+                    Limpiar filtro
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           {stageFilter !== 'all' ? (
             <div className="mb-3 flex items-center justify-between rounded-xl border border-[rgba(31,95,159,0.35)] bg-[rgba(18,27,40,0.52)] px-3 py-2 text-sm text-[#dff1ff]">
