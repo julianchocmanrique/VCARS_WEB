@@ -114,6 +114,8 @@ function elapsedLabel(fromDateRaw?: string): string {
 export default function HomePage() {
   const router = useRouter();
   const reduced = useReducedMotion();
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+  const workshopMapUrl = `${basePath}/cars/planoTaller.jpg`;
   const sectionItem = vcarsVariants.revealItem(Boolean(reduced));
   const [role, setRoleState] = useState<Role>('administrativo');
   const [entries, setEntriesState] = useState<Entry[]>([]);
@@ -421,7 +423,7 @@ export default function HomePage() {
                     className="relative overflow-hidden rounded-2xl border border-[rgba(62,129,194,0.35)] bg-[#0a0f18]"
                     style={{
                       minHeight: 420,
-                      backgroundImage: "linear-gradient(180deg, rgba(6,10,16,0.05), rgba(6,10,16,0.25)), url('/cars/planoTaller.jpg')",
+                      backgroundImage: `linear-gradient(180deg, rgba(6,10,16,0.05), rgba(6,10,16,0.25)), url('${workshopMapUrl}')`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                     }}
