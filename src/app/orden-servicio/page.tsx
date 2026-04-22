@@ -76,6 +76,17 @@ const STEP_FIELDS: Record<string, FieldDef[]> = {
   ],
 };
 
+const DATE_FIELD_KEYS = new Set([
+  'cotizacionFecha',
+  'fechaEntregaReal',
+  'soatExpiry',
+  'rtmExpiry',
+]);
+
+const DATETIME_FIELD_KEYS = new Set([
+  'decisionClienteAt',
+]);
+
 const INVENTORY_ITEMS = [
   'radio', 'cds', 'encendedor', 'ceniceros', 'reloj', 'cinturon', 'tapetes', 'parasoles', 'forros',
   'lucesTecho', 'espejos', 'chapas', 'kitCarretera', 'llantaRepuesto', 'herramienta', 'gatoPalanca',
@@ -126,6 +137,21 @@ function normalizeFuelLevel(raw?: string): FuelLevelValue {
   if (value === 'FULL') return 'F';
   if (value === 'EMPTY') return 'E';
   return '1/2';
+}
+
+function normalizeDateInputValue(raw?: string): string {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(value)) return value.slice(0, 10);
+  return value;
+}
+
+function normalizeDateTimeInputValue(raw?: string): string {
+  const value = String(raw || '').trim();
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) return value.slice(0, 16);
+  return value;
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -642,8 +668,19 @@ export default function OrdenServicioPage() {
                   <div key={field.key}>
                     <label className="vc-label">{field.label}</label>
                     <div className="vc-input-wrap">
+                      {(() => {
+                        const isDateField = DATE_FIELD_KEYS.has(field.key);
+                        const isDateTimeField = DATETIME_FIELD_KEYS.has(field.key);
+                        const rawValue = formsByStep[currentKey]?.[field.key] || '';
+                        const inputValue = isDateField
+                          ? normalizeDateInputValue(rawValue)
+                          : isDateTimeField
+                            ? normalizeDateTimeInputValue(rawValue)
+                            : rawValue;
+                        return (
                       <input
-                        value={formsByStep[currentKey]?.[field.key] || ''}
+                        type={isDateTimeField ? 'datetime-local' : isDateField ? 'date' : 'text'}
+                        value={inputValue}
                         onChange={(e) => {
                           const value = e.target.value;
                           updateField(field.key, value);
@@ -651,9 +688,11 @@ export default function OrdenServicioPage() {
                             updateField('decisionClienteAt', new Date().toISOString());
                           }
                         }}
-                        placeholder={field.placeholder}
+                        placeholder={isDateField || isDateTimeField ? '' : field.placeholder}
                         disabled={!editable}
                       />
+                        );
+                      })()}
                     </div>
                   </div>
                 ))
