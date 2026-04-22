@@ -222,44 +222,202 @@ export default function VehiculoDetallePage() {
         const selectedForms = stepKey
           ? { [stepKey]: formsByStep[stepKey] || {} }
           : formsByStep;
-        const payload = {
-          generadoEn: new Date().toISOString(),
-          placa: plate,
-          formulario: selectedStepTitle,
-          estado: {
-            pasoActual: normalizeLegacyStepLabel(vehicle?.paso),
-            indicePaso: stepIndex,
-            status: vehicle?.status || '',
-            completada: isServiceOrderComplete,
-          },
-          vehiculo: vehicle || {},
-          formularios: selectedForms,
+        const selectedStepKey = stepKey || '';
+        const stepData = selectedStepKey ? (selectedForms[selectedStepKey] || {}) : {};
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const marginX = 12;
+        const contentWidth = pageWidth - marginX * 2;
+        const labelWidth = 62;
+        let y = 16;
+
+        const asText = (value: unknown) => String(value ?? '').trim();
+        const formatDate = (raw?: string) => {
+          const v = String(raw || '').trim();
+          if (!v) return '-';
+          if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+          return v;
+        };
+        const paymentLabel = (() => {
+          if (vehicle?.paymentMethod === 'contado') return 'Contado';
+          if (vehicle?.paymentMethod === 'credito') return 'Crédito';
+          if (vehicle?.paymentMethod === 'transferencia') return 'Transferencia';
+          return vehicle?.paymentMethod || '-';
+        })();
+
+        const ensureSpace = (needed = 8) => {
+          if (y + needed <= pageHeight - 14) return;
+          doc.addPage();
+          y = 16;
         };
 
-        const jsonText = JSON.stringify(payload, null, 2);
-        const marginX = 10;
-        const maxWidth = 190;
-        const pageHeight = 297;
-        const lineHeight = 5.2;
-        let cursorY = 14;
+        const drawHeader = () => {
+          doc.setFillColor(13, 22, 38);
+          doc.roundedRect(marginX, y - 6, contentWidth, 21, 3, 3, 'F');
+          doc.setTextColor(235, 245, 255);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(16);
+          doc.text('ORDEN DE SERVICIO', marginX + 5, y + 3);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(10);
+          doc.text(`No. ${vehicle?.orderNumber || '-'}`, pageWidth - marginX - 5, y + 3, { align: 'right' });
+          doc.text(`Placa: ${vehicle?.placa || plate || '-'}`, pageWidth - marginX - 5, y + 9, { align: 'right' });
+          y += 20;
+          doc.setTextColor(20, 26, 32);
+        };
 
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text(`${selectedStepTitle} - ${safePlate}`, marginX, cursorY);
-        cursorY += 8;
+        const drawSectionTitle = (title: string) => {
+          ensureSpace(10);
+          doc.setFillColor(228, 238, 250);
+          doc.roundedRect(marginX, y, contentWidth, 7, 2, 2, 'F');
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.setTextColor(14, 33, 58);
+          doc.text(title.toUpperCase(), marginX + 3, y + 4.8);
+          doc.setTextColor(20, 26, 32);
+          y += 9;
+        };
 
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        const lines = doc.splitTextToSize(jsonText, maxWidth);
+        const drawField = (label: string, value: string) => {
+          const clean = asText(value) || '-';
+          const lines = doc.splitTextToSize(clean, contentWidth - labelWidth - 6);
+          const rowHeight = Math.max(6, lines.length * 4.2 + 1.3);
+          ensureSpace(rowHeight + 1);
+          doc.setDrawColor(225, 230, 236);
+          doc.line(marginX, y + rowHeight, marginX + contentWidth, y + rowHeight);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.text(label, marginX + 1, y + 4.5);
+          doc.setFont('helvetica', 'normal');
+          doc.text(lines, marginX + labelWidth, y + 4.5);
+          y += rowHeight + 1;
+        };
 
-        for (const line of lines) {
-          if (cursorY > pageHeight - 12) {
-            doc.addPage();
-            cursorY = 12;
+        const drawFields = (rows: Array<{ label: string; value: string }>) => {
+          rows.forEach((row) => drawField(row.label, row.value));
+        };
+
+        const drawQuoteItems = () => {
+          const itemsRaw = String(stepData.quoteItems || '').trim();
+          if (!itemsRaw) return;
+          let rows: Array<{ sistema: string; trabajo: string; unitPrice: string; qty: string }> = [];
+          try {
+            rows = JSON.parse(itemsRaw);
+          } catch {
+            rows = [];
           }
-          doc.text(line, marginX, cursorY);
-          cursorY += lineHeight;
+          if (!Array.isArray(rows) || !rows.length) return;
+          drawSectionTitle('Items de cotización');
+          rows.forEach((row, idx) => {
+            drawField(`Ítem ${idx + 1}`, `${row.sistema || '-'} | ${row.trabajo || '-'} | Cant: ${row.qty || '-'} | V/U: ${row.unitPrice || '-'}`);
+          });
+          drawField('Subtotal', asText(stepData.cotizacionSubtotal || '-'));
+          drawField('IVA', asText(stepData.cotizacionIva || '-'));
+          drawField('Total', asText(stepData.cotizacionTotal || '-'));
+        };
+
+        const drawExpenseItems = () => {
+          const itemsRaw = String(stepData.expenseItems || '').trim();
+          if (!itemsRaw) return;
+          let rows: Array<{ actividad: string; tercero: string; cantidad: string; operario: string; costo: string }> = [];
+          try {
+            rows = JSON.parse(itemsRaw);
+          } catch {
+            rows = [];
+          }
+          if (!Array.isArray(rows) || !rows.length) return;
+          drawSectionTitle('Gastos / ejecución');
+          rows.forEach((row, idx) => {
+            drawField(`Actividad ${idx + 1}`, `${row.actividad || '-'} | Tercero: ${row.tercero || '-'} | Cant: ${row.cantidad || '-'} | Operario: ${row.operario || '-'} | Costo: ${row.costo || '-'}`);
+          });
+        };
+
+        const drawReceptionImages = () => {
+          if (selectedStepKey !== 'recepcion') return;
+          const hasAnyImage = PHOTO_SLOTS.some((slot) => asText(intakePhotosByZone[slot.key]));
+          if (!hasAnyImage) return;
+          ensureSpace(20);
+          doc.addPage();
+          y = 16;
+          drawSectionTitle('Registro fotográfico');
+          const imgW = (contentWidth - 8) / 2;
+          const imgH = 42;
+          let col = 0;
+          for (const slot of PHOTO_SLOTS) {
+            const src = asText(intakePhotosByZone[slot.key]);
+            const x = marginX + col * (imgW + 8);
+            if (y + imgH + 8 > pageHeight - 12) {
+              doc.addPage();
+              y = 16;
+            }
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text(slot.label, x, y);
+            doc.setDrawColor(210, 220, 230);
+            doc.rect(x, y + 2, imgW, imgH);
+            if (src.startsWith('data:image/')) {
+              try {
+                doc.addImage(src, 'JPEG', x + 0.8, y + 2.8, imgW - 1.6, imgH - 1.6);
+              } catch {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.text('Imagen no disponible para impresión', x + 2, y + 18);
+              }
+            } else {
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(8);
+              doc.text('Sin imagen embebida', x + 2, y + 18);
+            }
+            col = col === 0 ? 1 : 0;
+            if (col === 0) y += imgH + 12;
+          }
+        };
+
+        drawHeader();
+        drawSectionTitle('Información general');
+        drawFields([
+          { label: 'Formulario', value: selectedStepTitle },
+          { label: 'Fecha ingreso', value: formatDate(vehicle?.fecha) },
+          { label: 'Fecha prevista', value: formatDate(vehicle?.expectedDeliveryDate) },
+          { label: 'Cliente', value: asText(vehicle?.ownerName || vehicle?.cliente) || '-' },
+          { label: 'Empresa / entidad', value: asText(vehicle?.companyEntity || vehicle?.empresa) || '-' },
+          { label: 'Vehículo', value: asText(vehicle?.vehiculo) || '-' },
+          { label: 'Marca / Modelo', value: `${asText(vehicle?.marca) || '-'} / ${asText(vehicle?.modelo) || '-'}` },
+          { label: 'Color', value: asText(vehicle?.color) || '-' },
+          { label: 'Paso actual', value: normalizeLegacyStepLabel(vehicle?.paso) || '-' },
+        ]);
+
+        if (selectedStepKey === 'recepcion') {
+          drawSectionTitle('Facturación');
+          drawFields([
+            { label: 'Factura a nombre de', value: asText(vehicle?.invoiceName) || '-' },
+            { label: 'NIT / C.C facturación', value: asText(vehicle?.billingNitCc) || '-' },
+            { label: 'Forma de pago', value: paymentLabel },
+            { label: vehicle?.paymentMethod === 'transferencia' ? 'Medio transferencia' : 'Días crédito', value: vehicle?.paymentMethod === 'transferencia' ? (asText(vehicle?.transferChannel) || '-') : (asText(vehicle?.creditDays) || '-') },
+          ]);
+          drawSectionTitle('Recepción');
+          drawFields([
+            { label: 'Kilometraje', value: asText(stepData.kilometraje || receptionData.kilometraje) || '-' },
+            { label: 'Nivel combustible', value: asText(vehicle?.fuelLevel) || '-' },
+            { label: 'Técnico asignado', value: asText(stepData.tecnicoAsignado || receptionData.tecnicoAsignado) || '-' },
+            { label: 'Falla reportada', value: asText(stepData.fallaCliente || receptionData.fallaCliente) || '-' },
+            { label: 'Observaciones', value: asText(stepData.observacionesAccesorios || receptionData.observacionesAccesorios) || '-' },
+            { label: 'SOAT', value: formatDate(stepData.soatExpiry || vehicle?.soatExpiry) },
+            { label: 'Tecnomecánica', value: formatDate(stepData.rtmExpiry || vehicle?.rtmExpiry) },
+          ]);
+        } else {
+          const fields = Object.entries(stepData)
+            .filter(([key]) => !key.includes('Items') && key !== 'quoteItems' && key !== 'expenseItems')
+            .map(([key, value]) => ({ label: key.replace(/([A-Z])/g, ' $1').trim(), value: asText(value) || '-' }));
+          if (fields.length) {
+            drawSectionTitle('Detalle del formulario');
+            drawFields(fields);
+          }
         }
+
+        drawQuoteItems();
+        drawExpenseItems();
+        drawReceptionImages();
 
         const safeStep = selectedStepTitle.replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
         doc.save(`orden-servicio-${safePlate}-${safeStep}.pdf`);
