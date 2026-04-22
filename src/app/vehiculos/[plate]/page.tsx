@@ -332,7 +332,94 @@ export default function VehiculoDetallePage() {
           });
         };
 
-        const drawReceptionImages = () => {
+        const drawInventory = () => {
+          if (selectedStepKey !== 'recepcion') return;
+          const rawInventory = String(receptionData.inventarioAccesorios || stepData.inventarioAccesorios || '').trim();
+          if (!rawInventory) return;
+          let parsed: Record<string, string> = {};
+          try {
+            parsed = JSON.parse(rawInventory) as Record<string, string>;
+          } catch {
+            parsed = {};
+          }
+          const items = Object.entries(parsed).filter(([, value]) => asText(value));
+          if (!items.length) return;
+          drawSectionTitle('Inventario de accesorios');
+          drawField('Convención', 'S: Sí | N: No | C: Completo | I: Incompleto');
+          items.forEach(([key, value]) => {
+            const prettyKey = key.replace(/([A-Z])/g, ' $1').trim();
+            drawField(prettyKey, value);
+          });
+        };
+
+        const toDataUrl = async (src: string): Promise<string> => {
+          const value = asText(src);
+          if (!value) return '';
+          if (value.startsWith('data:image/')) return value;
+          try {
+            const response = await fetch(value);
+            if (!response.ok) return '';
+            const blob = await response.blob();
+            const fileReader = new FileReader();
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              fileReader.onload = () => resolve(String(fileReader.result || ''));
+              fileReader.onerror = () => reject(new Error('No se pudo leer imagen para PDF'));
+              fileReader.readAsDataURL(blob);
+            });
+            return dataUrl;
+          } catch {
+            return '';
+          }
+        };
+
+        const drawSignatures = async () => {
+          if (selectedStepKey !== 'recepcion') return;
+          const clientSignature = asText(receptionData.firmaClienteEmpresa || stepData.firmaClienteEmpresa);
+          const workshopSignature = asText(receptionData.firmaTallerRecibe || stepData.firmaTallerRecibe);
+          if (!clientSignature && !workshopSignature) return;
+
+          ensureSpace(54);
+          drawSectionTitle('Firmas');
+
+          const boxW = (contentWidth - 8) / 2;
+          const boxH = 32;
+          const startY = y;
+          const signatures: Array<{ title: string; src: string; x: number }> = [
+            { title: 'Firma cliente / empresa', src: clientSignature, x: marginX },
+            { title: 'Firma taller (quien recibe)', src: workshopSignature, x: marginX + boxW + 8 },
+          ];
+
+          for (const signature of signatures) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text(signature.title, signature.x, startY);
+            doc.setDrawColor(210, 220, 230);
+            doc.rect(signature.x, startY + 2, boxW, boxH);
+            if (signature.src) {
+              const dataUrl = await toDataUrl(signature.src);
+              if (dataUrl) {
+                try {
+                  doc.addImage(dataUrl, 'PNG', signature.x + 1.2, startY + 3.2, boxW - 2.4, boxH - 2.4);
+                } catch {
+                  doc.setFont('helvetica', 'normal');
+                  doc.setFontSize(8);
+                  doc.text('Firma no disponible para impresión', signature.x + 2, startY + 18);
+                }
+              } else {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.text('Firma no disponible para impresión', signature.x + 2, startY + 18);
+              }
+            } else {
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(8);
+              doc.text('Sin firma registrada', signature.x + 2, startY + 18);
+            }
+          }
+          y = startY + boxH + 8;
+        };
+
+        const drawReceptionImages = async () => {
           if (selectedStepKey !== 'recepcion') return;
           const hasAnyImage = PHOTO_SLOTS.some((slot) => asText(intakePhotosByZone[slot.key]));
           if (!hasAnyImage) return;
@@ -355,9 +442,10 @@ export default function VehiculoDetallePage() {
             doc.text(slot.label, x, y);
             doc.setDrawColor(210, 220, 230);
             doc.rect(x, y + 2, imgW, imgH);
-            if (src.startsWith('data:image/')) {
+            const dataUrl = await toDataUrl(src);
+            if (dataUrl) {
               try {
-                doc.addImage(src, 'JPEG', x + 0.8, y + 2.8, imgW - 1.6, imgH - 1.6);
+                doc.addImage(dataUrl, 'JPEG', x + 0.8, y + 2.8, imgW - 1.6, imgH - 1.6);
               } catch {
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8);
@@ -405,6 +493,7 @@ export default function VehiculoDetallePage() {
             { label: 'SOAT', value: formatDate(stepData.soatExpiry || vehicle?.soatExpiry) },
             { label: 'Tecnomecánica', value: formatDate(stepData.rtmExpiry || vehicle?.rtmExpiry) },
           ]);
+          drawInventory();
         } else {
           const fields = Object.entries(stepData)
             .filter(([key]) => !key.includes('Items') && key !== 'quoteItems' && key !== 'expenseItems')
@@ -417,7 +506,8 @@ export default function VehiculoDetallePage() {
 
         drawQuoteItems();
         drawExpenseItems();
-        drawReceptionImages();
+        await drawSignatures();
+        await drawReceptionImages();
 
         const safeStep = selectedStepTitle.replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
         doc.save(`orden-servicio-${safePlate}-${safeStep}.pdf`);
