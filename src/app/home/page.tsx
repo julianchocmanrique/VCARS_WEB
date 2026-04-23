@@ -114,8 +114,6 @@ function elapsedLabel(fromDateRaw?: string): string {
 export default function HomePage() {
   const router = useRouter();
   const reduced = useReducedMotion();
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-  const workshopMapUrl = `${basePath}/cars/planoTaller.jpg`;
   const sectionItem = vcarsVariants.revealItem(Boolean(reduced));
   const [role, setRoleState] = useState<Role>('administrativo');
   const [entries, setEntriesState] = useState<Entry[]>([]);
@@ -423,11 +421,30 @@ export default function HomePage() {
                     className="relative overflow-hidden rounded-2xl border border-[rgba(62,129,194,0.35)] bg-[#0a0f18]"
                     style={{
                       minHeight: 420,
-                      backgroundImage: `linear-gradient(180deg, rgba(6,10,16,0.05), rgba(6,10,16,0.25)), url('${workshopMapUrl}')`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
+                      backgroundImage: [
+                        'linear-gradient(180deg, rgba(8,14,24,0.92), rgba(6,11,18,0.96))',
+                        'linear-gradient(90deg, rgba(37,99,167,0.09) 1px, transparent 1px)',
+                        'linear-gradient(0deg, rgba(37,99,167,0.09) 1px, transparent 1px)',
+                      ].join(','),
+                      backgroundSize: '100% 100%, 28px 28px, 28px 28px',
                     }}
                   >
+                    <div className="absolute left-[3%] top-[6%] h-[22%] w-[34%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.44)] p-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Almacén de repuestos</p>
+                    </div>
+                    <div className="absolute left-[42%] top-[8%] h-[14%] w-[18%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.44)] p-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Servicios</p>
+                    </div>
+                    <div className="absolute left-[69%] top-[8%] h-[78%] w-[28%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.28)] p-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Parqueo interno</p>
+                    </div>
+                    <div className="absolute left-[7%] top-[33%] h-[44%] w-[52%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.22)] p-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Zona de taller</p>
+                    </div>
+                    <div className="absolute left-[34%] top-[80%] h-[12%] w-[30%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.35)] p-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Recepción / Entrega</p>
+                    </div>
+
                     {workshopAssignments.map((slot) => (
                       <button
                         key={slot.key}
@@ -439,9 +456,10 @@ export default function HomePage() {
                           minWidth: 118,
                           borderColor: slot.occupied ? 'rgba(90,197,136,0.65)' : 'rgba(107,114,128,0.65)',
                           background: slot.key === effectiveSelectedWorkshopSlot
-                            ? 'linear-gradient(180deg, rgba(33,90,149,0.92), rgba(18,32,56,0.92))'
-                            : 'linear-gradient(180deg, rgba(16,22,33,0.92), rgba(12,16,24,0.92))',
+                            ? 'linear-gradient(180deg, rgba(43,112,184,0.95), rgba(17,44,79,0.95))'
+                            : 'linear-gradient(180deg, rgba(15,29,48,0.96), rgba(11,20,33,0.96))',
                           color: '#e6eef9',
+                          backdropFilter: 'blur(2px)',
                         }}
                         onClick={() => setSelectedWorkshopSlot(slot.key)}
                       >
