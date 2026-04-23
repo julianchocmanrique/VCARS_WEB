@@ -426,6 +426,16 @@ export default function VehiculoDetallePage() {
             doc.text(fitText(value, w - 2), x + 1, valueY);
           };
 
+          const fuelRatio = (() => {
+            const raw = asText(vehicle?.fuelLevel).toUpperCase();
+            if (raw === 'E') return 0;
+            if (raw === '1/4') return 0.25;
+            if (raw === '1/2') return 0.5;
+            if (raw === '3/4') return 0.75;
+            if (raw === 'F') return 1;
+            return 0.5;
+          })();
+
           const drawPageHeader = () => {
             doc.setFillColor(12, 28, 52);
             doc.roundedRect(14, 10, pageWidth - 28, 17, 2.8, 2.8, 'F');
@@ -478,21 +488,59 @@ export default function VehiculoDetallePage() {
           drawInputLine(76, 86, 34, 'Pago', paymentLabel);
           drawInputLine(114, 86, 78, vehicle?.paymentMethod === 'transferencia' ? 'Medio transferencia' : 'Días crédito', vehicle?.paymentMethod === 'transferencia' ? asText(vehicle?.transferChannel) : asText(vehicle?.creditDays));
 
-          sectionBar('Falla reportada por el cliente', 90);
-          doc.setDrawColor(196, 206, 220);
-          doc.rect(14, 97.5, pageWidth - 28, 13.5);
-          doc.setFont('helvetica', 'normal');
+          // Nivel de combustible (gráfico)
+          doc.setFont('helvetica', 'bold');
           doc.setFontSize(9);
-          doc.text(doc.splitTextToSize(asText(stepData.fallaCliente || receptionData.fallaCliente) || '-', pageWidth - 34), 16, 102);
-
-          sectionBar('Observaciones / Accesorios adicionales', 113);
-          doc.rect(14, 120.5, pageWidth - 28, 13.5);
-          doc.text(doc.splitTextToSize(asText(stepData.observacionesAccesorios || receptionData.observacionesAccesorios) || '-', pageWidth - 34), 16, 125);
-
-          sectionBar('Inventario de accesorios (S/N/C/I)', 136);
+          doc.text('NIVEL DE COMBUSTIBLE', pageWidth / 2, 95, { align: 'center' });
+          const gaugeCx = pageWidth / 2;
+          const gaugeCy = 108;
+          const gaugeR = 19;
+          doc.setDrawColor(90, 104, 124);
+          doc.setLineWidth(1.1);
+          for (let i = 0; i < 18; i += 1) {
+            const a1 = Math.PI - (Math.PI * (i / 18));
+            const a2 = Math.PI - (Math.PI * ((i + 0.55) / 18));
+            const x1 = gaugeCx + Math.cos(a1) * gaugeR;
+            const y1 = gaugeCy - Math.sin(a1) * gaugeR;
+            const x2 = gaugeCx + Math.cos(a2) * gaugeR;
+            const y2 = gaugeCy - Math.sin(a2) * gaugeR;
+            doc.line(x1, y1, x2, y2);
+          }
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(12);
+          doc.text('E', gaugeCx - gaugeR - 6, gaugeCy + 1.8);
+          doc.text('F', gaugeCx + gaugeR + 4, gaugeCy + 1.8);
+          const needleAngle = Math.PI - Math.PI * fuelRatio;
+          const needleLen = gaugeR - 5;
+          doc.setDrawColor(210, 58, 70);
+          doc.setLineWidth(1);
+          doc.line(
+            gaugeCx,
+            gaugeCy,
+            gaugeCx + Math.cos(needleAngle) * needleLen,
+            gaugeCy - Math.sin(needleAngle) * needleLen,
+          );
+          doc.setFillColor(20, 26, 32);
+          doc.circle(gaugeCx, gaugeCy, 1.4, 'F');
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(8.2);
-          doc.text('S: Sí / N: No / C: Completo / I: Incompleto', 16, 146.2);
+          doc.text(`Nivel: ${asText(vehicle?.fuelLevel) || '-'}`, gaugeCx, gaugeCy + 10, { align: 'center' });
+
+          sectionBar('Falla reportada por el cliente', 112);
+          doc.setDrawColor(196, 206, 220);
+          doc.rect(14, 119.5, pageWidth - 28, 13.5);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.text(doc.splitTextToSize(asText(stepData.fallaCliente || receptionData.fallaCliente) || '-', pageWidth - 34), 16, 124);
+
+          sectionBar('Observaciones / Accesorios adicionales', 135);
+          doc.rect(14, 142.5, pageWidth - 28, 13.5);
+          doc.text(doc.splitTextToSize(asText(stepData.observacionesAccesorios || receptionData.observacionesAccesorios) || '-', pageWidth - 34), 16, 147);
+
+          sectionBar('Inventario de accesorios (S/N/C/I)', 158);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.2);
+          doc.text('S: Sí / N: No / C: Completo / I: Incompleto', 16, 168.2);
 
           const invItems = [
             'radio', 'cds', 'encendedor', 'ceniceros', 'reloj', 'cinturon', 'tapetes', 'parasoles',
@@ -500,7 +548,7 @@ export default function VehiculoDetallePage() {
             'llaveros', 'pernos', 'senales', 'antena', 'plumillas', 'exploradoras', 'tercerStop', 'tapaGasolina',
             'copasRuedas', 'manijas', 'elevavidrios', 'controlRemoto', 'lavaVidrio', 'tapaPanel', 'controlAA', 'tarjetaPropiedad',
           ];
-          const invStartY = 151;
+          const invStartY = 173;
           const colW = (pageWidth - 34) / 4;
           invItems.forEach((key, idx) => {
             const col = idx % 4;
@@ -519,10 +567,10 @@ export default function VehiculoDetallePage() {
             doc.text(value, x + colW - 5.6, yy + 0.2, { align: 'center' });
           });
 
-          sectionBar('Firmas', 207);
+          sectionBar('Firmas', 229);
           const signatureClient = asText(receptionData.firmaClienteEmpresa || stepData.firmaClienteEmpresa);
           const signatureTaller = asText(receptionData.firmaTallerRecibe || stepData.firmaTallerRecibe);
-          const signBoxY = 214.5;
+          const signBoxY = 239.5;
           const signBoxW = (pageWidth - 38) / 2;
           const signBoxH = 34;
 
