@@ -270,13 +270,14 @@ export default function VehiculoDetallePage() {
           y = 16;
         };
 
-        const drawHeader = () => {
+        const drawHeader = (titleOverride?: string) => {
+          const headerTitle = (titleOverride || exportTitle || 'Orden de servicio').toUpperCase();
           doc.setFillColor(13, 22, 38);
           doc.roundedRect(marginX, y - 6, contentWidth, 21, 3, 3, 'F');
           doc.setTextColor(235, 245, 255);
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(16);
-          doc.text('ORDEN DE SERVICIO', marginX + 5, y + 3);
+          doc.setFontSize(15);
+          doc.text(headerTitle, marginX + 5, y + 3);
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(10);
           doc.text(`No. ${vehicle?.orderNumber || '-'}`, pageWidth - marginX - 5, y + 3, { align: 'right' });
@@ -719,7 +720,7 @@ export default function VehiculoDetallePage() {
           return;
         }
 
-        drawHeader();
+        drawHeader(exportTitle);
         drawSectionTitle('Información general');
         drawFields([
           { label: 'Formulario', value: exportTitle },
