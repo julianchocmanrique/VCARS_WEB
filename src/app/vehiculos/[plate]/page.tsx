@@ -223,6 +223,20 @@ export default function VehiculoDetallePage() {
           ? { [stepKey]: formsByStep[stepKey] || {} }
           : formsByStep;
         const selectedStepKey = stepKey || '';
+        const exportByStepKey: Record<string, { title: string; fileSuffix: string }> = {
+          recepcion: { title: 'Orden de servicio', fileSuffix: 'orden_de_servicio' },
+          cotizacion_interna: { title: 'Diagnóstico / Cotización interna', fileSuffix: 'diagnostico_cotizacion_interna' },
+          cotizacion_formal: { title: 'Cotización al cliente', fileSuffix: 'cotizacion_cliente' },
+          aprobacion: { title: 'Autorización del cliente', fileSuffix: 'autorizacion_cliente' },
+          trabajo: { title: 'Ejecución (Taller)', fileSuffix: 'ejecucion_taller' },
+          entrega: { title: 'Entrega / Cierre (Admin)', fileSuffix: 'entrega_cierre_admin' },
+        };
+        const exportMeta = exportByStepKey[selectedStepKey] || {
+          title: selectedStepTitle,
+          fileSuffix: selectedStepTitle.replace(/[^a-z0-9_-]+/gi, '_').toLowerCase(),
+        };
+        const exportTitle = exportMeta.title;
+        const exportFileSuffix = exportMeta.fileSuffix;
         const stepData = selectedStepKey ? (selectedForms[selectedStepKey] || {}) : {};
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
@@ -230,6 +244,11 @@ export default function VehiculoDetallePage() {
         const contentWidth = pageWidth - marginX * 2;
         const labelWidth = 62;
         let y = 16;
+        doc.setProperties({
+          title: `${exportTitle} - ${safePlate}`,
+          subject: exportTitle,
+          creator: 'VCARS',
+        });
 
         const asText = (value: unknown) => String(value ?? '').trim();
         const formatDate = (raw?: string) => {
@@ -648,15 +667,14 @@ export default function VehiculoDetallePage() {
 
         const usedReceptionTemplate = await drawReceptionTemplate();
         if (usedReceptionTemplate) {
-          const safeStepTemplate = selectedStepTitle.replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
-          doc.save(`orden-servicio-${safePlate}-${safeStepTemplate}.pdf`);
+          doc.save(`${exportFileSuffix}-${safePlate}.pdf`);
           return;
         }
 
         drawHeader();
         drawSectionTitle('Información general');
         drawFields([
-          { label: 'Formulario', value: selectedStepTitle },
+          { label: 'Formulario', value: exportTitle },
           { label: 'Fecha ingreso', value: formatDate(vehicle?.fecha) },
           { label: 'Fecha prevista', value: formatDate(vehicle?.expectedDeliveryDate) },
           { label: 'Cliente', value: asText(vehicle?.ownerName || vehicle?.cliente) || '-' },
@@ -701,8 +719,7 @@ export default function VehiculoDetallePage() {
         await drawSignatures();
         await drawReceptionImages();
 
-        const safeStep = selectedStepTitle.replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
-        doc.save(`orden-servicio-${safePlate}-${safeStep}.pdf`);
+        doc.save(`${exportFileSuffix}-${safePlate}.pdf`);
       } catch (error) {
         const msg = error instanceof Error ? error.message : 'No se pudo generar la descarga en PDF';
         setWarning(msg);
