@@ -55,14 +55,18 @@ type WorkshopSlot = {
 };
 
 const WORKSHOP_SLOTS: WorkshopSlot[] = [
-  { key: 'lift-1', label: 'Elevador 1', leftPct: 24, topPct: 43 },
-  { key: 'lift-2', label: 'Elevador 2', leftPct: 24, topPct: 66 },
-  { key: 'diag-1', label: 'Diagnóstico', leftPct: 45, topPct: 38 },
-  { key: 'park-1', label: 'Bahía A', leftPct: 80, topPct: 26 },
-  { key: 'park-2', label: 'Bahía B', leftPct: 80, topPct: 36 },
-  { key: 'park-3', label: 'Bahía C', leftPct: 80, topPct: 46 },
-  { key: 'park-4', label: 'Bahía D', leftPct: 80, topPct: 56 },
-  { key: 'park-5', label: 'Bahía E', leftPct: 80, topPct: 66 },
+  { key: 'slot-1', label: 'Puesto 1', leftPct: 18, topPct: 76 },
+  { key: 'slot-2', label: 'Puesto 2', leftPct: 30, topPct: 76 },
+  { key: 'slot-3', label: 'Puesto 3', leftPct: 18, topPct: 62 },
+  { key: 'slot-4', label: 'Puesto 4', leftPct: 30, topPct: 62 },
+  { key: 'slot-5', label: 'Puesto 5', leftPct: 18, topPct: 48 },
+  { key: 'slot-6', label: 'Puesto 6', leftPct: 30, topPct: 48 },
+  { key: 'slot-7', label: 'Puesto 7', leftPct: 18, topPct: 34 },
+  { key: 'slot-8', label: 'Puesto 8', leftPct: 30, topPct: 34 },
+  { key: 'slot-9', label: 'Puesto 9', leftPct: 82, topPct: 66 },
+  { key: 'slot-10', label: 'Puesto 10', leftPct: 82, topPct: 54 },
+  { key: 'slot-11', label: 'Puesto 11', leftPct: 82, topPct: 42 },
+  { key: 'slot-12', label: 'Puesto 12', leftPct: 82, topPct: 30 },
 ];
 
 function summarize(entries: Entry[]) {
@@ -429,20 +433,34 @@ export default function HomePage() {
                       backgroundSize: '100% 100%, 28px 28px, 28px 28px',
                     }}
                   >
-                    <div className="absolute left-[3%] top-[6%] h-[22%] w-[34%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.44)] p-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Almacén de repuestos</p>
+                    <div className="absolute inset-[3%] rounded-2xl border border-[rgba(185,220,255,0.2)]" />
+
+                    <div className="absolute left-[6%] top-[10%] h-[72%] w-[44%] rounded-xl border border-[rgba(125,211,252,0.28)]">
+                      <div className="absolute left-1/2 top-0 h-full w-[1px] -translate-x-1/2 bg-[rgba(125,211,252,0.25)]" />
+                      <div className="absolute left-0 top-1/4 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
+                      <div className="absolute left-0 top-2/4 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
+                      <div className="absolute left-0 top-3/4 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
                     </div>
-                    <div className="absolute left-[42%] top-[8%] h-[14%] w-[18%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.44)] p-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Servicios</p>
+
+                    <div className="absolute left-[56%] top-[10%] h-[72%] w-[12%] rounded-xl border border-[rgba(125,211,252,0.28)] bg-[rgba(19,34,53,0.2)]">
+                      <div className="absolute left-1/2 top-[8%] h-[84%] w-[1px] -translate-x-1/2 border-l border-dashed border-[rgba(125,211,252,0.28)]" />
+                      <p className="absolute left-1/2 top-[18%] -translate-x-1/2 text-xs text-[#d7ecff]">↑</p>
+                      <p className="absolute left-1/2 bottom-[18%] -translate-x-1/2 text-xs text-[#d7ecff]">↓</p>
                     </div>
-                    <div className="absolute left-[69%] top-[8%] h-[78%] w-[28%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.28)] p-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Parqueo interno</p>
+
+                    <div className="absolute left-[70%] top-[10%] h-[72%] w-[22%] rounded-xl border border-[rgba(125,211,252,0.28)]">
+                      <div className="absolute left-0 top-1/5 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
+                      <div className="absolute left-0 top-2/5 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
+                      <div className="absolute left-0 top-3/5 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
+                      <div className="absolute left-0 top-4/5 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
                     </div>
-                    <div className="absolute left-[7%] top-[33%] h-[44%] w-[52%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.22)] p-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Zona de taller</p>
+
+                    <div className="absolute left-[70%] top-[82%] h-[10%] w-[22%] rounded-xl border border-[rgba(125,211,252,0.28)] bg-[rgba(19,34,53,0.35)] p-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Oficina</p>
                     </div>
-                    <div className="absolute left-[34%] top-[80%] h-[12%] w-[30%] rounded-xl border border-[rgba(125,211,252,0.22)] bg-[rgba(19,34,53,0.35)] p-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Recepción / Entrega</p>
+
+                    <div className="absolute left-[6%] bottom-[5%] h-[10%] w-[62%] rounded-xl border border-[rgba(125,211,252,0.28)] bg-[rgba(19,34,53,0.35)] p-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Ingreso y recepción</p>
                     </div>
 
                     {workshopAssignments.map((slot) => (
@@ -453,7 +471,7 @@ export default function HomePage() {
                         style={{
                           left: `${slot.leftPct}%`,
                           top: `${slot.topPct}%`,
-                          minWidth: 118,
+                          minWidth: 108,
                           borderColor: slot.occupied ? 'rgba(90,197,136,0.65)' : 'rgba(107,114,128,0.65)',
                           background: slot.key === effectiveSelectedWorkshopSlot
                             ? 'linear-gradient(180deg, rgba(43,112,184,0.95), rgba(17,44,79,0.95))'
