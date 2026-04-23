@@ -16,7 +16,7 @@ type DemoFormsByStep = Record<string, Record<string, string>>;
 export type DemoFormsByPlate = Record<string, DemoFormsByStep>;
 
 const DEMO_VEHICLES: DemoVehicle[] = [
-  { placa: 'BCD246', vehiculo: 'Volkswagen Gol 2014', cliente: 'Juli', telefono: '3001112233', empresa: 'juli@gm.com', stepIndex: 2, status: 'active' },
+  { placa: 'BCD246', vehiculo: 'Volkswagen Gol 2014', cliente: 'Juli', telefono: '3001112233', empresa: 'juli@gm.com', stepIndex: 5, status: 'active' },
 
   { placa: 'TLL006', vehiculo: 'Suzuki Swift', cliente: 'Valentina Ruiz', telefono: '3012223344', empresa: 'congreso@gobierno.com', stepIndex: 0, status: 'active' },
   { placa: 'TLL005', vehiculo: 'Ford Fiesta', cliente: 'Santiago Castro', telefono: '3023334455', empresa: 'congreso@gobierno.com', stepIndex: 1, status: 'active' },
@@ -56,6 +56,48 @@ function quoteItemsFor(v: DemoVehicle): Array<{ sistema: string; trabajo: string
   ];
 }
 
+function quoteDraftItemsFor(v: DemoVehicle): Array<{
+  item: string;
+  sistema: string;
+  trabajo: string;
+  precioSinIva: string;
+  unidad: string;
+  valorCliente: string;
+  repuesto: string;
+  moTaller: string;
+  tempario: string;
+  utilidad: string;
+  precioClienteUnd: string;
+  unidadCliente: string;
+  totalCliente: string;
+}> {
+  const rows = quoteItemsFor(v);
+  return rows.map((row, idx) => {
+    const precioSinIva = Number(row.unitPrice);
+    const unidad = Number(row.qty);
+    const repuesto = Math.round(precioSinIva * 0.42);
+    const moTaller = Math.round(precioSinIva * 0.18);
+    const utilidad = Math.max(precioSinIva - repuesto - moTaller, 0);
+    const precioClienteUnd = precioSinIva + utilidad;
+    const totalCliente = precioClienteUnd * unidad;
+    return {
+      item: String(idx + 1),
+      sistema: row.sistema,
+      trabajo: row.trabajo,
+      precioSinIva: String(precioSinIva),
+      unidad: String(unidad),
+      valorCliente: String(precioSinIva * unidad),
+      repuesto: String(repuesto),
+      moTaller: String(moTaller),
+      tempario: '0',
+      utilidad: String(utilidad),
+      precioClienteUnd: String(precioClienteUnd),
+      unidadCliente: String(unidad),
+      totalCliente: String(totalCliente),
+    };
+  });
+}
+
 function expenseItemsFor(v: DemoVehicle): Array<{ actividad: string; tercero: string; cantidad: string; operario: string; costo: string }> {
   const base = 70000 + (v.placa.charCodeAt(2) % 5) * 10000;
   return [
@@ -75,6 +117,17 @@ function buildInventory(): Record<string, 'S' | 'N' | 'C' | 'I'> {
     lucesTecho: 'N',
     antena: 'N',
   };
+}
+
+function demoSignatureDataUrl(label: string): string {
+  const safe = String(label || '').trim() || 'Firma';
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220">
+  <rect width="100%" height="100%" fill="#0b1220"/>
+  <path d="M16 196 H704" stroke="#6aaef5" stroke-opacity="0.45" stroke-width="2" />
+  <text x="34" y="142" fill="#e6f3ff" font-size="52" font-family="cursive">${safe}</text>
+</svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 export function getDemoEntries(): Entry[] {
@@ -155,11 +208,26 @@ export function getDemoFormsByPlate(): DemoFormsByPlate {
         fallaCliente: `Ruido reportado en ${item.vehiculo} (${item.placa})`,
         kilometraje: String(82000 + index * 1100),
         tecnicoAsignado: index % 2 === 0 ? 'Julian' : 'Carlos',
+        observacionesAccesorios: 'Ingreso con accesorios básicos, sin novedades críticas.',
         wantsOldParts: index % 2 === 0 ? 'SI' : 'NO',
         soatExpiry: `2026-${String((index % 9) + 1).padStart(2, '0')}-28`,
         rtmExpiry: `2026-${String((index % 9) + 1).padStart(2, '0')}-15`,
         condicionFisica: 'Sin golpes estructurales, marcas leves de uso.',
         inventarioAccesorios: JSON.stringify(buildInventory()),
+        firmaClienteEmpresa: demoSignatureDataUrl(item.cliente || 'Cliente'),
+        firmaTallerRecibe: demoSignatureDataUrl(index % 2 === 0 ? 'Julian Técnico' : 'David Recepción'),
+        photo_verified_superior: 'SI',
+        photo_verified_inferior: 'SI',
+        photo_verified_lateralDerecho: 'SI',
+        photo_verified_lateralIzquierdo: 'SI',
+        photo_verified_frontal: 'SI',
+        photo_verified_trasero: 'SI',
+        photo_verified_source_superior: 'AUTO',
+        photo_verified_source_inferior: 'AUTO',
+        photo_verified_source_lateralDerecho: 'AUTO',
+        photo_verified_source_lateralIzquierdo: 'AUTO',
+        photo_verified_source_frontal: 'AUTO',
+        photo_verified_source_trasero: 'AUTO',
       },
     };
 
@@ -171,12 +239,35 @@ export function getDemoFormsByPlate(): DemoFormsByPlate {
     }
 
     if (item.stepIndex >= 2) {
+      const draftRows = quoteDraftItemsFor(item);
+      const draftTotalValorCliente = draftRows.reduce((acc, row) => acc + Number(row.valorCliente || 0), 0);
+      const draftTotalRepuesto = draftRows.reduce((acc, row) => acc + Number(row.repuesto || 0), 0);
+      const draftTotalMoTaller = draftRows.reduce((acc, row) => acc + Number(row.moTaller || 0), 0);
+      const draftTotalTempario = draftRows.reduce((acc, row) => acc + Number(row.tempario || 0), 0);
+      const draftCostoTotal = draftTotalRepuesto + draftTotalMoTaller + draftTotalTempario;
+      const draftGananciaNeta = sub - draftCostoTotal;
+      const draftMargenPct = sub > 0 ? (draftGananciaNeta / sub) * 100 : 0;
       byStep.cotizacion_formal = {
         cotizacionNumero: `COT-2026-${String(index + 1).padStart(3, '0')}`,
         cotizacionFecha: `2026-03-${String((index % 20) + 1).padStart(2, '0')}`,
         alcance: 'Mantenimiento preventivo y correctivo según diagnóstico.',
         condicionesPago: '50% anticipo - 50% contra entrega',
+        quoteDraftItems: JSON.stringify(draftRows),
+        quoteClientItems: JSON.stringify(draftRows.map((row) => ({
+          sistema: row.sistema,
+          trabajo: row.trabajo,
+          precioClienteUnd: row.precioClienteUnd,
+          unidad: row.unidadCliente,
+          total: row.totalCliente,
+        }))),
         quoteItems: JSON.stringify(rows),
+        draftTotalValorCliente: String(draftTotalValorCliente),
+        draftTotalRepuesto: String(draftTotalRepuesto),
+        draftTotalMoTaller: String(draftTotalMoTaller),
+        draftTotalTempario: String(draftTotalTempario),
+        draftCostoTotal: String(draftCostoTotal),
+        draftGananciaNeta: String(draftGananciaNeta),
+        draftMargenPct: String(Math.round(draftMargenPct * 100) / 100),
         cotizacionSubtotal: String(sub),
         cotizacionIva: String(iva),
         cotizacionTotal: String(total),
@@ -227,7 +318,29 @@ export function applyDemoEntries(existing: Entry[]): Entry[] {
     const key = String(demoEntry.placa || '').toUpperCase();
     const existingEntry = existingByPlate.get(key);
     if (!existingEntry) return demoEntry;
-    return { ...demoEntry, ...existingEntry };
+    const merged = { ...demoEntry, ...existingEntry } as Entry;
+    for (const [fieldKey, demoValue] of Object.entries(demoEntry) as Array<[keyof Entry, unknown]>) {
+      const existingValue = (existingEntry as Record<string, unknown>)[fieldKey as string];
+      if (existingValue == null) {
+        (merged as Record<string, unknown>)[fieldKey as string] = demoValue;
+        continue;
+      }
+      if (typeof existingValue === 'string' && existingValue.trim().length === 0) {
+        (merged as Record<string, unknown>)[fieldKey as string] = demoValue;
+        continue;
+      }
+      if (Array.isArray(existingValue) && existingValue.length === 0) {
+        (merged as Record<string, unknown>)[fieldKey as string] = demoValue;
+        continue;
+      }
+      if (typeof existingValue === 'object' && !Array.isArray(existingValue)) {
+        const keys = Object.keys(existingValue as Record<string, unknown>);
+        if (keys.length === 0) {
+          (merged as Record<string, unknown>)[fieldKey as string] = demoValue;
+        }
+      }
+    }
+    return merged;
   });
 
   const demoPlates = new Set(demo.map((d) => d.placa));

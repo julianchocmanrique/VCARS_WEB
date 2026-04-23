@@ -5,6 +5,12 @@ type FormsByStep = Record<string, Record<string, string>>;
 type InventoryValue = 'S' | 'N' | 'C' | 'I' | '';
 
 type QuoteRow = { sistema: string; trabajo: string; unitPrice: string; qty: string };
+type QuoteDraftRow = {
+  sistema: string;
+  trabajo: string;
+  precioSinIva: string;
+  unidad: string;
+};
 type ExpenseRow = { actividad: string; tercero: string; cantidad: string; operario: string; costo: string };
 
 const INVENTORY_ITEMS = [
@@ -149,10 +155,18 @@ export function getMissingRequiredFields(stepKey: string, formsByStep: FormsBySt
   });
 
   if (stepKey === 'cotizacion_formal') {
-    const quoteRows = parseJsonRows<QuoteRow[]>(stepValues.quoteItems, []);
-    const hasRows = quoteRows.length > 0;
-    const hasIncomplete = quoteRows.some((row) => !hasValue(row.sistema) || !hasValue(row.trabajo) || !hasValue(row.unitPrice) || !hasValue(row.qty));
-    if (!hasRows || hasIncomplete) missing.push('Items de cotización');
+    const quoteDraftRows = parseJsonRows<QuoteDraftRow[]>(stepValues.quoteDraftItems, []);
+    if (quoteDraftRows.length) {
+      const hasIncompleteDraft = quoteDraftRows.some(
+        (row) => !hasValue(row.sistema) || !hasValue(row.trabajo) || !hasValue(row.precioSinIva) || !hasValue(row.unidad),
+      );
+      if (hasIncompleteDraft) missing.push('Items de borrador');
+    } else {
+      const quoteRows = parseJsonRows<QuoteRow[]>(stepValues.quoteItems, []);
+      const hasRows = quoteRows.length > 0;
+      const hasIncomplete = quoteRows.some((row) => !hasValue(row.sistema) || !hasValue(row.trabajo) || !hasValue(row.unitPrice) || !hasValue(row.qty));
+      if (!hasRows || hasIncomplete) missing.push('Items de cotización');
+    }
   }
 
   if (stepKey === 'trabajo') {

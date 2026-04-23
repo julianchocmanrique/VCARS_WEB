@@ -11,6 +11,22 @@ import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setE
 
 type FieldDef = { key: string; label: string; placeholder: string };
 type QuoteRow = { sistema: string; trabajo: string; unitPrice: string; qty: string };
+type QuoteDraftRow = {
+  item: string;
+  sistema: string;
+  trabajo: string;
+  precioSinIva: string;
+  unidad: string;
+  valorCliente: string;
+  repuesto: string;
+  moTaller: string;
+  tempario: string;
+  utilidad: string;
+  precioClienteUnd: string;
+  unidadCliente: string;
+  totalCliente: string;
+};
+type QuoteClientRow = { sistema: string; trabajo: string; precioClienteUnd: string; unidad: string; total: string };
 type ExpenseRow = { actividad: string; tercero: string; cantidad: string; operario: string; costo: string };
 
 type InventoryValue = 'S' | 'N' | 'C' | 'I' | '';
@@ -103,6 +119,23 @@ const FUEL_LEVELS = [
 ] as const;
 
 type FuelLevelValue = (typeof FUEL_LEVELS)[number]['value'];
+type QuoteViewMode = 'borrador' | 'cotizacion';
+
+const DEFAULT_QUOTE_ROW: QuoteDraftRow = {
+  item: '1',
+  sistema: '',
+  trabajo: '',
+  precioSinIva: '',
+  unidad: '1',
+  valorCliente: '0',
+  repuesto: '',
+  moTaller: '',
+  tempario: '',
+  utilidad: '',
+  precioClienteUnd: '',
+  unidadCliente: '1',
+  totalCliente: '0',
+};
 
 function parseJsonRows<T>(raw: string | undefined, fallback: T): T {
   if (!raw) return fallback;
@@ -122,6 +155,44 @@ function asMoney(n: number): string {
 function toNumberSafe(value: string): number {
   const v = Number(String(value || '').replace(/[^0-9.-]/g, ''));
   return Number.isFinite(v) ? v : 0;
+}
+
+function calculateQuoteDraftRow(row: QuoteDraftRow, idx: number): QuoteDraftRow {
+  const precioSinIva = toNumberSafe(row.precioSinIva);
+  const unidad = Math.max(0, toNumberSafe(row.unidad || '0'));
+  const repuesto = toNumberSafe(row.repuesto);
+  const moTaller = toNumberSafe(row.moTaller);
+  const tempario = toNumberSafe(row.tempario);
+  const utilidadManual = String(row.utilidad || '').trim();
+  const utilidad = utilidadManual ? toNumberSafe(utilidadManual) : Math.max(precioSinIva - repuesto - moTaller - tempario, 0);
+  const valorCliente = precioSinIva * unidad;
+  const precioClienteUndManual = String(row.precioClienteUnd || '').trim();
+  const precioClienteUnd = precioClienteUndManual
+    ? toNumberSafe(precioClienteUndManual)
+    : (precioSinIva > 0 ? precioSinIva + utilidad : tempario > 0 ? tempario : 0);
+  const unidadCliente = Math.max(0, toNumberSafe(row.unidadCliente || row.unidad || '0'));
+  const totalCliente = precioClienteUnd * unidadCliente;
+  return {
+    ...DEFAULT_QUOTE_ROW,
+    ...row,
+    item: String(idx + 1),
+    unidad: String(unidad || ''),
+    valorCliente: String(valorCliente),
+    utilidad: String(utilidad),
+    precioClienteUnd: String(precioClienteUnd),
+    unidadCliente: String(unidadCliente || ''),
+    totalCliente: String(totalCliente),
+  };
+}
+
+function toClientQuoteRow(row: QuoteDraftRow): QuoteClientRow {
+  return {
+    sistema: String(row.sistema || ''),
+    trabajo: String(row.trabajo || ''),
+    precioClienteUnd: String(row.precioClienteUnd || '0'),
+    unidad: String(row.unidadCliente || row.unidad || '0'),
+    total: String(row.totalCliente || '0'),
+  };
 }
 
 function nextInventoryValue(current: InventoryValue): InventoryValue {
@@ -163,6 +234,37 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+function loadImageFromDataUrl(dataUrl: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('No se pudo procesar la imagen.'));
+    img.src = dataUrl;
+  });
+}
+
+async function fileToOptimizedDataUrl(file: File): Promise<string> {
+  const original = await fileToDataUrl(file);
+  if (typeof window === 'undefined') return original;
+
+  try {
+    const image = await loadImageFromDataUrl(original);
+    const maxSide = 1280;
+    const ratio = Math.min(1, maxSide / Math.max(image.width || 1, image.height || 1));
+    const width = Math.max(1, Math.round((image.width || 1) * ratio));
+    const height = Math.max(1, Math.round((image.height || 1) * ratio));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return original;
+    ctx.drawImage(image, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', 0.72);
+  } catch {
+    return original;
+  }
+}
+
 export default function OrdenServicioPage() {
   const router = useRouter();
   const [role, setRole] = useState<Role>('administrativo');
@@ -173,6 +275,7 @@ export default function OrdenServicioPage() {
   const [uploadError, setUploadError] = useState('');
   const [validationError, setValidationError] = useState('');
   const [fuelLevelUi, setFuelLevelUi] = useState<FuelLevelValue>('1/2');
+  const [quoteViewMode, setQuoteViewMode] = useState<QuoteViewMode>('borrador');
   const [entryRefreshTick, setEntryRefreshTick] = useState(0);
   const [entryForPlate, setEntryForPlate] = useState<Entry | null>(null);
   const [signatureSavedAt, setSignatureSavedAt] = useState<Record<SignaturePadKey, string>>({
@@ -191,6 +294,7 @@ export default function OrdenServicioPage() {
     cliente: null,
     taller: null,
   });
+  const dateInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [openReceptionBlocks, setOpenReceptionBlocks] = useState({
     controlOrden: true,
     facturacion: false,
@@ -200,6 +304,7 @@ export default function OrdenServicioPage() {
     fotos: false,
   });
   const appliedStepSeedRef = useRef('');
+  const photoFieldsCleanupRef = useRef('');
 
   useEffect(() => {
     if (!getSession()) {
@@ -238,6 +343,32 @@ export default function OrdenServicioPage() {
     });
   }, [router]);
 
+  useEffect(() => {
+    if (!plate) return;
+    const cleanupSeed = `${plate}:${formsByStep.recepcion?.photo_superior ? '1' : '0'}:${formsByStep.recepcion?.photo_inferior ? '1' : '0'}:${formsByStep.recepcion?.photo_lateralDerecho ? '1' : '0'}:${formsByStep.recepcion?.photo_lateralIzquierdo ? '1' : '0'}:${formsByStep.recepcion?.photo_frontal ? '1' : '0'}:${formsByStep.recepcion?.photo_trasero ? '1' : '0'}`;
+    if (photoFieldsCleanupRef.current === cleanupSeed) return;
+    photoFieldsCleanupRef.current = cleanupSeed;
+
+    const recepcion = formsByStep.recepcion || {};
+    const photoFieldKeys = [
+      'photo_superior',
+      'photo_inferior',
+      'photo_lateralDerecho',
+      'photo_lateralIzquierdo',
+      'photo_frontal',
+      'photo_trasero',
+    ] as const;
+    const hasLegacyPhotoInForms = photoFieldKeys.some((key) => String(recepcion[key] || '').startsWith('data:image/'));
+    if (!hasLegacyPhotoInForms) return;
+
+    const cleanupPatch: Record<string, string> = {};
+    photoFieldKeys.forEach((key) => {
+      cleanupPatch[key] = '';
+    });
+    const next = setStepFields(plate, 'recepcion', cleanupPatch);
+    queueMicrotask(() => setFormsByStep(next));
+  }, [formsByStep.recepcion, plate]);
+
   const steps = useMemo(() => getRoleSteps(role, formsByStep), [role, formsByStep]);
 
   useEffect(() => {
@@ -271,10 +402,28 @@ export default function OrdenServicioPage() {
   const hasStepData = fields.some((field) => String(stepValues[field.key] || '').trim().length > 0);
   const showPendingForClient = role === 'cliente' && !editable && !hasStepData;
 
-  const quoteRows = useMemo(() => {
-    const rows = parseJsonRows<QuoteRow[]>(formsByStep.cotizacion_formal?.quoteItems, []);
-    return rows.length ? rows : [{ sistema: '', trabajo: '', unitPrice: '', qty: '1' }];
-  }, [formsByStep.cotizacion_formal?.quoteItems]);
+  const quoteDraftRows = useMemo(() => {
+    const draft = parseJsonRows<QuoteDraftRow[]>(formsByStep.cotizacion_formal?.quoteDraftItems, []);
+    if (draft.length) return draft.map((row, idx) => calculateQuoteDraftRow(row, idx));
+    const legacyRows = parseJsonRows<QuoteRow[]>(formsByStep.cotizacion_formal?.quoteItems, []);
+    if (!legacyRows.length) return [{ ...DEFAULT_QUOTE_ROW }];
+    return legacyRows.map((row, idx) => calculateQuoteDraftRow({
+      ...DEFAULT_QUOTE_ROW,
+      item: String(idx + 1),
+      sistema: row.sistema,
+      trabajo: row.trabajo,
+      precioSinIva: row.unitPrice,
+      unidad: row.qty || '1',
+      unidadCliente: row.qty || '1',
+      precioClienteUnd: row.unitPrice,
+    }, idx));
+  }, [formsByStep.cotizacion_formal?.quoteDraftItems, formsByStep.cotizacion_formal?.quoteItems]);
+
+  const quoteClientRows = useMemo(() => {
+    const cached = parseJsonRows<QuoteClientRow[]>(formsByStep.cotizacion_formal?.quoteClientItems, []);
+    if (cached.length) return cached;
+    return quoteDraftRows.map((row) => toClientQuoteRow(row));
+  }, [formsByStep.cotizacion_formal?.quoteClientItems, quoteDraftRows]);
 
   const expenseRows = useMemo(() => {
     const rows = parseJsonRows<ExpenseRow[]>(formsByStep.trabajo?.expenseItems, []);
@@ -301,6 +450,15 @@ export default function OrdenServicioPage() {
   useEffect(() => {
     setFuelLevelUi(normalizeFuelLevel(entryForPlate?.fuelLevel || ''));
   }, [entryForPlate?.fuelLevel, plate]);
+
+  useEffect(() => {
+    if (currentKey !== 'cotizacion_formal') return;
+    if (role === 'cliente') {
+      setQuoteViewMode('cotizacion');
+      return;
+    }
+    setQuoteViewMode((prev) => prev || 'borrador');
+  }, [currentKey, role]);
 
   const receptionPhotos = useMemo(() => {
     const fromForms = formsByStep.recepcion || {};
@@ -394,6 +552,22 @@ export default function OrdenServicioPage() {
     syncSignatureCanvasFromValue(key, getSignatureValue(key));
   }
 
+  function registerDateInputRef(refKey: string, node: HTMLInputElement | null) {
+    dateInputRefs.current[refKey] = node;
+  }
+
+  function openDatePicker(refKey: string) {
+    const input = dateInputRefs.current[refKey];
+    if (!input || input.disabled) return;
+    input.focus();
+    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
+    if (typeof pickerInput.showPicker === 'function') {
+      pickerInput.showPicker();
+      return;
+    }
+    input.click();
+  }
+
   function getSignatureContext(key: SignaturePadKey) {
     const canvas = signatureCanvasRefs.current[key];
     if (!canvas) return null;
@@ -484,15 +658,44 @@ export default function OrdenServicioPage() {
     setFormsByStep(nextByStep);
   }
 
-  function setQuoteRows(rows: QuoteRow[]) {
-    const sub = rows.reduce((acc, row) => acc + toNumberSafe(row.unitPrice) * toNumberSafe(row.qty || '1'), 0);
-    const iva = Math.round(sub * 0.19);
-    const total = sub + iva;
+  function setQuoteDraftRows(rows: QuoteDraftRow[]) {
+    const calculated = rows.map((row, idx) => calculateQuoteDraftRow(row, idx));
+    const clientRows = calculated.map((row) => toClientQuoteRow(row));
+    const quoteRowsLegacy = calculated.map((row) => ({
+      sistema: row.sistema,
+      trabajo: row.trabajo,
+      unitPrice: String(row.precioClienteUnd || '0'),
+      qty: String(row.unidadCliente || row.unidad || '0'),
+    }));
+
+    const subtotalCliente = calculated.reduce((acc, row) => acc + toNumberSafe(row.totalCliente), 0);
+    const ivaCliente = Math.round(subtotalCliente * 0.19);
+    const totalCliente = subtotalCliente + ivaCliente;
+
+    const totalValorCliente = calculated.reduce((acc, row) => acc + toNumberSafe(row.valorCliente), 0);
+    const totalRepuesto = calculated.reduce((acc, row) => acc + toNumberSafe(row.repuesto), 0);
+    const totalMoTaller = calculated.reduce((acc, row) => acc + toNumberSafe(row.moTaller), 0);
+    const totalTempario = calculated.reduce((acc, row) => acc + toNumberSafe(row.tempario), 0);
+    const totalUtilidad = calculated.reduce((acc, row) => acc + toNumberSafe(row.utilidad), 0);
+    const costoTotal = totalRepuesto + totalMoTaller + totalTempario;
+    const gananciaNeta = subtotalCliente - costoTotal;
+    const margen = subtotalCliente > 0 ? Math.round((gananciaNeta / subtotalCliente) * 10000) / 100 : 0;
+
     syncStepPatch('cotizacion_formal', {
-      quoteItems: JSON.stringify(rows),
-      cotizacionSubtotal: String(sub),
-      cotizacionIva: String(iva),
-      cotizacionTotal: String(total),
+      quoteDraftItems: JSON.stringify(calculated),
+      quoteClientItems: JSON.stringify(clientRows),
+      quoteItems: JSON.stringify(quoteRowsLegacy),
+      draftTotalValorCliente: String(totalValorCliente),
+      draftTotalRepuesto: String(totalRepuesto),
+      draftTotalMoTaller: String(totalMoTaller),
+      draftTotalTempario: String(totalTempario),
+      draftTotalUtilidad: String(totalUtilidad),
+      draftCostoTotal: String(costoTotal),
+      draftGananciaNeta: String(gananciaNeta),
+      draftMargenPct: String(margen),
+      cotizacionSubtotal: String(subtotalCliente),
+      cotizacionIva: String(ivaCliente),
+      cotizacionTotal: String(totalCliente),
     });
   }
 
@@ -510,6 +713,14 @@ export default function OrdenServicioPage() {
     const next = { ...inventory, [item]: value };
     syncStepPatch('recepcion', { inventarioAccesorios: JSON.stringify(next) });
   }
+
+  useEffect(() => {
+    if (currentKey !== 'cotizacion_formal') return;
+    const hasDraft = String(formsByStep.cotizacion_formal?.quoteDraftItems || '').trim().length > 0;
+    const hasLegacy = String(formsByStep.cotizacion_formal?.quoteItems || '').trim().length > 0;
+    if (hasDraft || !hasLegacy) return;
+    setQuoteDraftRows(quoteDraftRows);
+  }, [currentKey, formsByStep.cotizacion_formal?.quoteDraftItems, formsByStep.cotizacion_formal?.quoteItems, quoteDraftRows]);
 
   function syncEntryPatch(patch: Partial<Entry>) {
     const all = getEntries();
@@ -569,9 +780,9 @@ export default function OrdenServicioPage() {
     }
 
     try {
-      const encoded = await fileToDataUrl(file);
+      const encoded = await fileToOptimizedDataUrl(file);
       syncStepPatch('recepcion', {
-        ['photo_' + slot]: encoded,
+        ['photo_' + slot]: '',
         ['photo_verified_' + slot]: 'SI',
         ['photo_verified_source_' + slot]: 'AUTO',
       });
@@ -600,10 +811,19 @@ export default function OrdenServicioPage() {
     return getMissingRequiredFields(currentKey, formsByStep, entryForPlate);
   }
 
+  function buildMissingFieldsMessage(missing: string[]): string {
+    if (!missing.length) return '';
+    const maxVisible = 8;
+    const visible = missing.slice(0, maxVisible);
+    const hiddenCount = Math.max(0, missing.length - visible.length);
+    const hiddenText = hiddenCount > 0 ? `, y ${hiddenCount} más` : '';
+    return `Completa los campos obligatorios para continuar. Faltan: ${visible.join(', ')}${hiddenText}.`;
+  }
+
   function handleNextStep() {
     const missing = validateCurrentStep();
     if (missing.length) {
-      setValidationError(`Completa los campos obligatorios para continuar. Faltan ${missing.length}.`);
+      setValidationError(buildMissingFieldsMessage(missing));
       return;
     }
     setValidationError('');
@@ -618,7 +838,7 @@ export default function OrdenServicioPage() {
     }
     const missing = validateCurrentStep();
     if (missing.length) {
-      setValidationError(`Completa los campos obligatorios para continuar. Faltan ${missing.length}.`);
+      setValidationError(buildMissingFieldsMessage(missing));
       return;
     }
     setValidationError('');
@@ -664,38 +884,65 @@ export default function OrdenServicioPage() {
           ) : (
             <div className="vc-step-fields">
               {currentKey !== 'recepcion' ? (
-                fields.map((field) => (
-                  <div key={field.key}>
-                    <label className="vc-label">{field.label}</label>
-                    <div className="vc-input-wrap">
-                      {(() => {
-                        const isDateField = DATE_FIELD_KEYS.has(field.key);
-                        const isDateTimeField = DATETIME_FIELD_KEYS.has(field.key);
-                        const rawValue = formsByStep[currentKey]?.[field.key] || '';
-                        const inputValue = isDateField
-                          ? normalizeDateInputValue(rawValue)
-                          : isDateTimeField
-                            ? normalizeDateTimeInputValue(rawValue)
-                            : rawValue;
-                        return (
-                      <input
-                        type={isDateTimeField ? 'datetime-local' : isDateField ? 'date' : 'text'}
-                        value={inputValue}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          updateField(field.key, value);
-                          if (currentKey === 'aprobacion' && field.key === 'decisionCliente' && value.trim()) {
-                            updateField('decisionClienteAt', new Date().toISOString());
-                          }
-                        }}
-                        placeholder={isDateField || isDateTimeField ? '' : field.placeholder}
-                        disabled={!editable}
-                      />
-                        );
-                      })()}
+                fields.map((field) => {
+                  const isDateField = DATE_FIELD_KEYS.has(field.key);
+                  const isDateTimeField = DATETIME_FIELD_KEYS.has(field.key);
+                  const isCalendarField = isDateField || isDateTimeField;
+                  const isDecisionField = currentKey === 'aprobacion' && field.key === 'decisionCliente';
+                  const rawValue = formsByStep[currentKey]?.[field.key] || '';
+                  const inputValue = isDateField
+                    ? normalizeDateInputValue(rawValue)
+                    : isDateTimeField
+                      ? normalizeDateTimeInputValue(rawValue)
+                      : rawValue;
+                  const refKey = `${currentKey}:${field.key}`;
+
+                  return (
+                    <div key={field.key}>
+                      <label className="vc-label">{field.label}</label>
+                      <div
+                        className="vc-input-wrap"
+                        onClick={isCalendarField ? () => openDatePicker(refKey) : undefined}
+                        style={isCalendarField ? { cursor: editable ? 'pointer' : 'not-allowed' } : undefined}
+                      >
+                        {isDecisionField ? (
+                          <select
+                            className="vc-select"
+                            value={String(inputValue || '')}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              updateField(field.key, value);
+                              if (value.trim()) {
+                                updateField('decisionClienteAt', new Date().toISOString());
+                              }
+                            }}
+                            disabled={!editable}
+                          >
+                            <option value="">Seleccionar</option>
+                            <option value="Aprobado">Aprobado</option>
+                            <option value="No aprobado">No aprobado</option>
+                          </select>
+                        ) : (
+                          <input
+                            ref={isCalendarField ? (node) => registerDateInputRef(refKey, node) : undefined}
+                            type={isDateTimeField ? 'datetime-local' : isDateField ? 'date' : 'text'}
+                            value={inputValue}
+                            onClick={isCalendarField ? () => openDatePicker(refKey) : undefined}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              updateField(field.key, value);
+                              if (currentKey === 'aprobacion' && field.key === 'decisionCliente' && value.trim()) {
+                                updateField('decisionClienteAt', new Date().toISOString());
+                              }
+                            }}
+                            placeholder={isCalendarField ? '' : field.placeholder}
+                            disabled={!editable}
+                          />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="vc-os-sections">
                   <button type="button" className="vc-accordion-toggle" onClick={() => toggleReceptionBlock('controlOrden')} aria-expanded={openReceptionBlocks.controlOrden}>
@@ -716,10 +963,12 @@ export default function OrdenServicioPage() {
                       </div>
                       <div>
                         <label className="vc-label">Fecha entrada</label>
-                        <div className="vc-input-wrap">
+                        <div className="vc-input-wrap" onClick={() => openDatePicker('recepcion:fecha')} style={{ cursor: editable ? 'pointer' : 'not-allowed' }}>
                           <input
+                            ref={(node) => registerDateInputRef('recepcion:fecha', node)}
                             type="date"
                             value={String(entryForPlate?.fecha || '').slice(0, 10)}
+                            onClick={() => openDatePicker('recepcion:fecha')}
                             onChange={(e) => syncEntryPatch({ fecha: e.target.value })}
                             disabled={!editable}
                           />
@@ -730,10 +979,12 @@ export default function OrdenServicioPage() {
                     <div className="vc-grid-2">
                       <div>
                         <label className="vc-label">Fecha prevista entrega</label>
-                        <div className="vc-input-wrap">
+                        <div className="vc-input-wrap" onClick={() => openDatePicker('recepcion:expectedDeliveryDate')} style={{ cursor: editable ? 'pointer' : 'not-allowed' }}>
                           <input
+                            ref={(node) => registerDateInputRef('recepcion:expectedDeliveryDate', node)}
                             type="date"
                             value={entryForPlate?.expectedDeliveryDate || ''}
+                            onClick={() => openDatePicker('recepcion:expectedDeliveryDate')}
                             onChange={(e) => syncEntryPatch({ expectedDeliveryDate: e.target.value })}
                             disabled={!editable}
                           />
@@ -1064,10 +1315,12 @@ export default function OrdenServicioPage() {
                     <div className="vc-grid-2">
                       <div>
                         <label className="vc-label">SOAT (vencimiento)</label>
-                        <div className="vc-input-wrap">
+                        <div className="vc-input-wrap" onClick={() => openDatePicker('recepcion:soatExpiry')} style={{ cursor: editable ? 'pointer' : 'not-allowed' }}>
                           <input
+                            ref={(node) => registerDateInputRef('recepcion:soatExpiry', node)}
                             type="date"
                             value={formsByStep.recepcion?.soatExpiry || entryForPlate?.soatExpiry || ''}
+                            onClick={() => openDatePicker('recepcion:soatExpiry')}
                             onChange={(e) => {
                               syncStepPatch('recepcion', { soatExpiry: e.target.value });
                               syncEntryPatch({ soatExpiry: e.target.value });
@@ -1078,10 +1331,12 @@ export default function OrdenServicioPage() {
                       </div>
                       <div>
                         <label className="vc-label">Tecnomecánica (vencimiento)</label>
-                        <div className="vc-input-wrap">
+                        <div className="vc-input-wrap" onClick={() => openDatePicker('recepcion:rtmExpiry')} style={{ cursor: editable ? 'pointer' : 'not-allowed' }}>
                           <input
+                            ref={(node) => registerDateInputRef('recepcion:rtmExpiry', node)}
                             type="date"
                             value={formsByStep.recepcion?.rtmExpiry || entryForPlate?.rtmExpiry || ''}
+                            onClick={() => openDatePicker('recepcion:rtmExpiry')}
                             onChange={(e) => {
                               syncStepPatch('recepcion', { rtmExpiry: e.target.value });
                               syncEntryPatch({ rtmExpiry: e.target.value });
@@ -1278,132 +1533,161 @@ export default function OrdenServicioPage() {
 
               {currentKey === 'cotizacion_formal' ? (
                 <div className="vc-card" style={{ padding: 12 }}>
-                  <h3 style={{ marginBottom: 8 }}>Items de cotización</h3>
-                  <div className="vc-table-wrap vc-table-wrap--desktop">
-                    <table className="vc-table">
-                      <thead>
-                        <tr>
-                          <th>Sistema</th>
-                          <th>Trabajo o repuesto</th>
-                          <th>Valor unitario</th>
-                          <th>Cantidad</th>
-                          <th>Total línea</th>
-                          {editable ? <th /> : null}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {quoteRows.map((row, idx) => {
-                          const line = toNumberSafe(row.unitPrice) * toNumberSafe(row.qty || '1');
-                          return (
-                            <tr key={`q-${idx}`}>
-                              <td><input disabled={!editable} value={row.sistema} onChange={(e) => {
-                                const next = [...quoteRows];
-                                next[idx] = { ...next[idx], sistema: e.target.value };
-                                setQuoteRows(next);
-                              }} /></td>
-                              <td><input disabled={!editable} value={row.trabajo} onChange={(e) => {
-                                const next = [...quoteRows];
-                                next[idx] = { ...next[idx], trabajo: e.target.value };
-                                setQuoteRows(next);
-                              }} /></td>
-                              <td><input disabled={!editable} value={row.unitPrice} onChange={(e) => {
-                                const next = [...quoteRows];
-                                next[idx] = { ...next[idx], unitPrice: e.target.value };
-                                setQuoteRows(next);
-                              }} /></td>
-                              <td><input disabled={!editable} value={row.qty} onChange={(e) => {
-                                const next = [...quoteRows];
-                                next[idx] = { ...next[idx], qty: e.target.value };
-                                setQuoteRows(next);
-                              }} /></td>
-                              <td>${asMoney(line)}</td>
-                              {editable ? (
-                                <td>
-                                  <button type="button" className="vc-btn" onClick={() => {
-                                    const next = quoteRows.filter((_, i) => i !== idx);
-                                    setQuoteRows(next.length ? next : [{ sistema: '', trabajo: '', unitPrice: '', qty: '1' }]);
-                                  }}>-</button>
-                                </td>
-                              ) : null}
+                  <h3 style={{ marginBottom: 8 }}>Formato de cotización</h3>
+                  <div className="vc-chip-row" style={{ marginBottom: 10 }}>
+                    <button
+                      type="button"
+                      className={`vc-chip ${quoteViewMode === 'borrador' ? 'is-active' : ''}`}
+                      onClick={() => setQuoteViewMode('borrador')}
+                    >
+                      Borrador (Admin)
+                    </button>
+                    <button
+                      type="button"
+                      className={`vc-chip ${quoteViewMode === 'cotizacion' ? 'is-active' : ''}`}
+                      onClick={() => setQuoteViewMode('cotizacion')}
+                    >
+                      Cotización (Cliente)
+                    </button>
+                  </div>
+
+                  {quoteViewMode === 'borrador' ? (
+                    <>
+                      <div className="vc-table-wrap vc-table-wrap--desktop">
+                        <table className="vc-table">
+                          <thead>
+                            <tr>
+                              <th>Sistema</th>
+                              <th>Trabajo o repuesto</th>
+                              <th>Precio x und sin IVA</th>
+                              <th>Unidad</th>
+                              <th>Valor cliente</th>
+                              <th>Repuesto</th>
+                              <th>MO taller</th>
+                              <th>Tempario</th>
+                              <th>Utilidad</th>
+                              <th>% x und (cliente)</th>
+                              <th>Unidad cliente</th>
+                              <th>Total</th>
+                              {editable ? <th /> : null}
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                          </thead>
+                          <tbody>
+                            {quoteDraftRows.map((row, idx) => (
+                              <tr key={`qd-${idx}`}>
+                                <td><input disabled={!editable} value={row.sistema} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], sistema: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td><input disabled={!editable} value={row.trabajo} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], trabajo: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td><input disabled={!editable} value={row.precioSinIva} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], precioSinIva: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td><input disabled={!editable} value={row.unidad} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], unidad: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td>${asMoney(toNumberSafe(row.valorCliente))}</td>
+                                <td><input disabled={!editable} value={row.repuesto} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], repuesto: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td><input disabled={!editable} value={row.moTaller} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], moTaller: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td><input disabled={!editable} value={row.tempario} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], tempario: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td><input disabled={!editable} value={row.utilidad} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], utilidad: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td><input disabled={!editable} value={row.precioClienteUnd} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], precioClienteUnd: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td><input disabled={!editable} value={row.unidadCliente} onChange={(e) => {
+                                  const next = [...quoteDraftRows];
+                                  next[idx] = { ...next[idx], unidadCliente: e.target.value };
+                                  setQuoteDraftRows(next);
+                                }} /></td>
+                                <td>${asMoney(toNumberSafe(row.totalCliente))}</td>
+                                {editable ? (
+                                  <td>
+                                    <button type="button" className="vc-btn" onClick={() => {
+                                      const next = quoteDraftRows.filter((_, i) => i !== idx);
+                                      setQuoteDraftRows(next.length ? next : [{ ...DEFAULT_QUOTE_ROW }]);
+                                    }}>-</button>
+                                  </td>
+                                ) : null}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
 
-                  <div className="vc-quote-mobile-list">
-                    {quoteRows.map((row, idx) => {
-                      const line = toNumberSafe(row.unitPrice) * toNumberSafe(row.qty || '1');
-                      return (
-                        <article key={`qm-${idx}`} className="vc-quote-mobile-card">
-                          <div>
-                            <label className="vc-label">Sistema</label>
-                            <div className="vc-input-wrap">
-                              <input disabled={!editable} value={row.sistema} onChange={(e) => {
-                                const next = [...quoteRows];
-                                next[idx] = { ...next[idx], sistema: e.target.value };
-                                setQuoteRows(next);
-                              }} />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="vc-label">Trabajo o repuesto</label>
-                            <div className="vc-input-wrap">
-                              <input disabled={!editable} value={row.trabajo} onChange={(e) => {
-                                const next = [...quoteRows];
-                                next[idx] = { ...next[idx], trabajo: e.target.value };
-                                setQuoteRows(next);
-                              }} />
-                            </div>
-                          </div>
-                          <div className="vc-grid-2 vc-grid-2--mobile">
-                            <div>
-                              <label className="vc-label">Valor unitario</label>
-                              <div className="vc-input-wrap">
-                                <input disabled={!editable} value={row.unitPrice} onChange={(e) => {
-                                  const next = [...quoteRows];
-                                  next[idx] = { ...next[idx], unitPrice: e.target.value };
-                                  setQuoteRows(next);
-                                }} />
-                              </div>
-                            </div>
-                            <div>
-                              <label className="vc-label">Cantidad</label>
-                              <div className="vc-input-wrap">
-                                <input disabled={!editable} value={row.qty} onChange={(e) => {
-                                  const next = [...quoteRows];
-                                  next[idx] = { ...next[idx], qty: e.target.value };
-                                  setQuoteRows(next);
-                                }} />
-                              </div>
-                            </div>
-                          </div>
+                      {editable ? (
+                        <button type="button" className="vc-btn" onClick={() => setQuoteDraftRows([...quoteDraftRows, { ...DEFAULT_QUOTE_ROW }])}>+ Agregar ítem borrador</button>
+                      ) : null}
 
-                          <div className="vc-summary-grid" style={{ marginTop: 6 }}>
-                            <span>Total línea</span><strong>${asMoney(line)}</strong>
-                          </div>
+                      <div className="vc-summary-grid" style={{ marginTop: 8 }}>
+                        <span>Total valor cliente</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.draftTotalValorCliente || '0'))}</strong>
+                        <span>Total repuesto</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.draftTotalRepuesto || '0'))}</strong>
+                        <span>Total MO taller</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.draftTotalMoTaller || '0'))}</strong>
+                        <span>Total tempario</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.draftTotalTempario || '0'))}</strong>
+                        <span>Ganancia neta</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.draftGananciaNeta || '0'))}</strong>
+                        <span>Margen %</span><strong>{toNumberSafe(formsByStep.cotizacion_formal?.draftMargenPct || '0')}%</strong>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="vc-table-wrap">
+                        <table className="vc-table">
+                          <thead>
+                            <tr>
+                              <th>Sistema</th>
+                              <th>Trabajo o repuesto</th>
+                              <th>% x UND</th>
+                              <th>Unidad</th>
+                              <th>Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {quoteClientRows.map((row, idx) => (
+                              <tr key={`qc-${idx}`}>
+                                <td>{row.sistema || '-'}</td>
+                                <td>{row.trabajo || '-'}</td>
+                                <td>${asMoney(toNumberSafe(row.precioClienteUnd))}</td>
+                                <td>{row.unidad || '-'}</td>
+                                <td>${asMoney(toNumberSafe(row.total))}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
 
-                          {editable ? (
-                            <button type="button" className="vc-btn" onClick={() => {
-                              const next = quoteRows.filter((_, i) => i !== idx);
-                              setQuoteRows(next.length ? next : [{ sistema: '', trabajo: '', unitPrice: '', qty: '1' }]);
-                            }}>Quitar ítem</button>
-                          ) : null}
-                        </article>
-                      );
-                    })}
-                  </div>
-
-                  {editable ? (
-                    <button type="button" className="vc-btn" onClick={() => setQuoteRows([...quoteRows, { sistema: '', trabajo: '', unitPrice: '', qty: '1' }])}>+ Agregar ítem</button>
-                  ) : null}
-
-                  <div className="vc-summary-grid" style={{ marginTop: 8 }}>
-                    <span>Subtotal</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionSubtotal || '0'))}</strong>
-                    <span>IVA 19%</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionIva || '0'))}</strong>
-                    <span>Total</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionTotal || '0'))}</strong>
-                  </div>
+                      <div className="vc-summary-grid" style={{ marginTop: 8 }}>
+                        <span>Subtotal</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionSubtotal || '0'))}</strong>
+                        <span>IVA 19%</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionIva || '0'))}</strong>
+                        <span>Total</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionTotal || '0'))}</strong>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : null}
 

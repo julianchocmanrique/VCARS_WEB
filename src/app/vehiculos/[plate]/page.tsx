@@ -318,22 +318,79 @@ export default function VehiculoDetallePage() {
         };
 
         const drawQuoteItems = () => {
-          const itemsRaw = String(stepData.quoteItems || '').trim();
-          if (!itemsRaw) return;
-          let rows: Array<{ sistema: string; trabajo: string; unitPrice: string; qty: string }> = [];
-          try {
-            rows = JSON.parse(itemsRaw);
-          } catch {
-            rows = [];
+          const draftRaw = String(stepData.quoteDraftItems || '').trim();
+          const clientRaw = String(stepData.quoteClientItems || '').trim();
+          const legacyRaw = String(stepData.quoteItems || '').trim();
+
+          let draftRows: Array<{
+            sistema: string;
+            trabajo: string;
+            precioSinIva: string;
+            unidad: string;
+            repuesto: string;
+            moTaller: string;
+            tempario: string;
+            utilidad: string;
+            precioClienteUnd: string;
+            unidadCliente: string;
+            totalCliente: string;
+          }> = [];
+          let clientRows: Array<{ sistema: string; trabajo: string; precioClienteUnd: string; unidad: string; total: string }> = [];
+          let legacyRows: Array<{ sistema: string; trabajo: string; unitPrice: string; qty: string }> = [];
+
+          try { draftRows = draftRaw ? JSON.parse(draftRaw) : []; } catch { draftRows = []; }
+          try { clientRows = clientRaw ? JSON.parse(clientRaw) : []; } catch { clientRows = []; }
+          try { legacyRows = legacyRaw ? JSON.parse(legacyRaw) : []; } catch { legacyRows = []; }
+
+          if (!clientRows.length && draftRows.length) {
+            clientRows = draftRows.map((row) => ({
+              sistema: row.sistema,
+              trabajo: row.trabajo,
+              precioClienteUnd: row.precioClienteUnd || '0',
+              unidad: row.unidadCliente || row.unidad || '0',
+              total: row.totalCliente || '0',
+            }));
           }
-          if (!Array.isArray(rows) || !rows.length) return;
-          drawSectionTitle('Items de cotización');
-          rows.forEach((row, idx) => {
-            drawField(`Ítem ${idx + 1}`, `${row.sistema || '-'} | ${row.trabajo || '-'} | Cant: ${row.qty || '-'} | V/U: ${row.unitPrice || '-'}`);
-          });
-          drawField('Subtotal', asText(stepData.cotizacionSubtotal || '-'));
-          drawField('IVA', asText(stepData.cotizacionIva || '-'));
-          drawField('Total', asText(stepData.cotizacionTotal || '-'));
+
+          if (selectedStepKey === 'cotizacion_formal') {
+            if (clientRows.length) {
+              drawSectionTitle('Cotización cliente');
+              clientRows.forEach((row, idx) => {
+                drawField(
+                  `Ítem ${idx + 1}`,
+                  `${row.sistema || '-'} | ${row.trabajo || '-'} | Und: ${row.unidad || '-'} | Valor: ${row.precioClienteUnd || '-'} | Total: ${row.total || '-'}`,
+                );
+              });
+              drawField('Subtotal', asText(stepData.cotizacionSubtotal || '-'));
+              drawField('IVA', asText(stepData.cotizacionIva || '-'));
+              drawField('Total', asText(stepData.cotizacionTotal || '-'));
+            }
+
+            if (draftRows.length) {
+              drawSectionTitle('Borrador administrativo');
+              draftRows.forEach((row, idx) => {
+                drawField(
+                  `Ítem ${idx + 1}`,
+                  `${row.sistema || '-'} | ${row.trabajo || '-'} | P. sin IVA: ${row.precioSinIva || '-'} | Repuesto: ${row.repuesto || '-'} | MO: ${row.moTaller || '-'} | Temp: ${row.tempario || '-'} | Utilidad: ${row.utilidad || '-'}`,
+                );
+              });
+              drawField('Total valor cliente', asText(stepData.draftTotalValorCliente || '-'));
+              drawField('Total repuesto', asText(stepData.draftTotalRepuesto || '-'));
+              drawField('Total MO taller', asText(stepData.draftTotalMoTaller || '-'));
+              drawField('Total tempario', asText(stepData.draftTotalTempario || '-'));
+              drawField('Costo total', asText(stepData.draftCostoTotal || '-'));
+              drawField('Ganancia neta', asText(stepData.draftGananciaNeta || '-'));
+              drawField('Margen %', asText(stepData.draftMargenPct || '-'));
+            }
+            return;
+          }
+
+          if (legacyRows.length) {
+            drawSectionTitle('Items de cotización');
+            legacyRows.forEach((row, idx) => {
+              drawField(`Ítem ${idx + 1}`, `${row.sistema || '-'} | ${row.trabajo || '-'} | Cant: ${row.qty || '-'} | V/U: ${row.unitPrice || '-'}`);
+            });
+          }
         };
 
         const drawExpenseItems = () => {
@@ -755,7 +812,13 @@ export default function VehiculoDetallePage() {
           drawInventory();
         } else {
           const fields = Object.entries(stepData)
-            .filter(([key]) => !key.includes('Items') && key !== 'quoteItems' && key !== 'expenseItems')
+            .filter(([key]) => {
+              if (key.includes('Items') || key === 'quoteItems' || key === 'expenseItems') return false;
+              if (selectedStepKey !== 'cotizacion_formal') return true;
+              if (key.startsWith('draft')) return false;
+              if (key === 'cotizacionSubtotal' || key === 'cotizacionIva' || key === 'cotizacionTotal') return false;
+              return true;
+            })
             .map(([key, value]) => ({ label: key.replace(/([A-Z])/g, ' $1').trim(), value: asText(value) || '-' }));
           if (fields.length) {
             drawSectionTitle('Detalle del formulario');
