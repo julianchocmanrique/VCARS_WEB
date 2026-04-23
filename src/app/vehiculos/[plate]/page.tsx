@@ -372,6 +372,178 @@ export default function VehiculoDetallePage() {
           }
         };
 
+        const drawReceptionTemplate = async (): Promise<boolean> => {
+          if (selectedStepKey !== 'recepcion') return false;
+
+          const receptionInventoryRaw = String(receptionData.inventarioAccesorios || stepData.inventarioAccesorios || '').trim();
+          let inventory: Record<string, string> = {};
+          try {
+            inventory = receptionInventoryRaw ? JSON.parse(receptionInventoryRaw) as Record<string, string> : {};
+          } catch {
+            inventory = {};
+          }
+
+          const drawInputLine = (x: number, yLine: number, w: number, label: string, value: string) => {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.7);
+            doc.text(label, x, yLine - 1.2);
+            doc.setDrawColor(160, 170, 182);
+            doc.line(x, yLine, x + w, yLine);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text(asText(value) || '-', x + 1, yLine - 1.8);
+          };
+
+          const drawPageHeader = () => {
+            doc.setFillColor(12, 28, 52);
+            doc.roundedRect(14, 10, pageWidth - 28, 17, 2.8, 2.8, 'F');
+            doc.setTextColor(242, 247, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14.5);
+            doc.text('ORDEN DE SERVICIO', 19, 20);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text(`No. ${vehicle?.orderNumber || '-'}`, pageWidth - 18, 18, { align: 'right' });
+            doc.text(`Placa: ${vehicle?.placa || plate || '-'}`, pageWidth - 18, 23.2, { align: 'right' });
+            doc.setTextColor(20, 26, 32);
+          };
+
+          const sectionBar = (title: string, yPos: number) => {
+            doc.setFillColor(228, 236, 246);
+            doc.roundedRect(14, yPos, pageWidth - 28, 6.6, 2.2, 2.2, 'F');
+            doc.setTextColor(27, 48, 73);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.text(title.toUpperCase(), 16, yPos + 4.5);
+            doc.setTextColor(20, 26, 32);
+          };
+
+          // Page 1: datos generales + inventario + firmas
+          doc.setFillColor(255, 255, 255);
+          doc.rect(0, 0, pageWidth, pageHeight, 'F');
+          drawPageHeader();
+          sectionBar('Información general', 32);
+
+          drawInputLine(16, 46, 40, 'Fecha entrada', formatDate(vehicle?.fecha));
+          drawInputLine(60, 46, 44, 'Fecha prevista', formatDate(vehicle?.expectedDeliveryDate));
+          drawInputLine(108, 46, 42, 'NIT / C.C', asText(vehicle?.nitCc));
+          drawInputLine(154, 46, 38, 'Teléfono', asText(vehicle?.telefono));
+
+          drawInputLine(16, 56, 84, 'Cliente / propietario', asText(vehicle?.ownerName || vehicle?.cliente));
+          drawInputLine(104, 56, 88, 'Empresa / entidad', asText(vehicle?.companyEntity || vehicle?.empresa));
+
+          drawInputLine(16, 66, 60, 'Vehículo', asText(vehicle?.vehiculo));
+          drawInputLine(80, 66, 36, 'Marca', asText(vehicle?.marca));
+          drawInputLine(120, 66, 34, 'Modelo', asText(vehicle?.modelo));
+          drawInputLine(158, 66, 34, 'Color', asText(vehicle?.color));
+
+          drawInputLine(16, 76, 44, 'Kilometraje', asText(stepData.kilometraje || receptionData.kilometraje));
+          drawInputLine(64, 76, 36, 'Combustible', asText(vehicle?.fuelLevel));
+          drawInputLine(104, 76, 42, 'SOAT', formatDate(stepData.soatExpiry || vehicle?.soatExpiry));
+          drawInputLine(150, 76, 42, 'Tecnomecánica', formatDate(stepData.rtmExpiry || vehicle?.rtmExpiry));
+
+          drawInputLine(16, 86, 56, 'Factura a nombre de', asText(vehicle?.invoiceName));
+          drawInputLine(76, 86, 34, 'Pago', paymentLabel);
+          drawInputLine(114, 86, 78, vehicle?.paymentMethod === 'transferencia' ? 'Medio transferencia' : 'Días crédito', vehicle?.paymentMethod === 'transferencia' ? asText(vehicle?.transferChannel) : asText(vehicle?.creditDays));
+
+          sectionBar('Falla reportada por el cliente', 90);
+          doc.setDrawColor(196, 206, 220);
+          doc.rect(14, 97.5, pageWidth - 28, 13.5);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.text(doc.splitTextToSize(asText(stepData.fallaCliente || receptionData.fallaCliente) || '-', pageWidth - 34), 16, 102);
+
+          sectionBar('Observaciones / Accesorios adicionales', 113);
+          doc.rect(14, 120.5, pageWidth - 28, 13.5);
+          doc.text(doc.splitTextToSize(asText(stepData.observacionesAccesorios || receptionData.observacionesAccesorios) || '-', pageWidth - 34), 16, 125);
+
+          sectionBar('Inventario de accesorios (S/N/C/I)', 136);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.2);
+          doc.text('S: Sí / N: No / C: Completo / I: Incompleto', 16, 146.2);
+
+          const invItems = [
+            'radio', 'cds', 'encendedor', 'ceniceros', 'reloj', 'cinturon', 'tapetes', 'parasoles',
+            'forros', 'lucesTecho', 'espejos', 'chapas', 'kitCarretera', 'llantaRepuesto', 'herramienta', 'gatoPalanca',
+            'llaveros', 'pernos', 'senales', 'antena', 'plumillas', 'exploradoras', 'tercerStop', 'tapaGasolina',
+            'copasRuedas', 'manijas', 'elevavidrios', 'controlRemoto', 'lavaVidrio', 'tapaPanel', 'controlAA', 'tarjetaPropiedad',
+          ];
+          const invStartY = 151;
+          const colW = (pageWidth - 34) / 4;
+          invItems.forEach((key, idx) => {
+            const col = idx % 4;
+            const row = Math.floor(idx / 4);
+            const x = 16 + col * colW;
+            const yy = invStartY + row * 6.3;
+            const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+            const value = asText(inventory[key]) || '-';
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.text(label, x, yy);
+            doc.setDrawColor(120, 130, 142);
+            doc.rect(x + colW - 9, yy - 3.2, 7, 4.6);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.text(value, x + colW - 5.6, yy + 0.2, { align: 'center' });
+          });
+
+          sectionBar('Firmas', 207);
+          const signatureClient = asText(receptionData.firmaClienteEmpresa || stepData.firmaClienteEmpresa);
+          const signatureTaller = asText(receptionData.firmaTallerRecibe || stepData.firmaTallerRecibe);
+          const signBoxY = 214.5;
+          const signBoxW = (pageWidth - 38) / 2;
+          const signBoxH = 34;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.5);
+          doc.text('Firma cliente / empresa', 16, signBoxY - 2.5);
+          doc.text('Firma taller (quien recibe)', 20 + signBoxW, signBoxY - 2.5);
+          doc.setDrawColor(196, 206, 220);
+          doc.rect(16, signBoxY, signBoxW, signBoxH);
+          doc.rect(20 + signBoxW, signBoxY, signBoxW, signBoxH);
+
+          const signClientDataUrl = await toDataUrl(signatureClient);
+          const signTallerDataUrl = await toDataUrl(signatureTaller);
+          if (signClientDataUrl) {
+            try { doc.addImage(signClientDataUrl, 'PNG', 17, signBoxY + 1, signBoxW - 2, signBoxH - 2); } catch { /* noop */ }
+          }
+          if (signTallerDataUrl) {
+            try { doc.addImage(signTallerDataUrl, 'PNG', 21 + signBoxW, signBoxY + 1, signBoxW - 2, signBoxH - 2); } catch { /* noop */ }
+          }
+
+          // Page 2: registro fotográfico
+          doc.addPage();
+          doc.setFillColor(255, 255, 255);
+          doc.rect(0, 0, pageWidth, pageHeight, 'F');
+          drawPageHeader();
+          sectionBar('Registro fotográfico por ángulo', 32);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.5);
+          doc.text('Superior, inferior, laterales, frontal y trasero', 16, 42.5);
+
+          const photoW = (pageWidth - 38) / 2;
+          const photoH = 58;
+          let col = 0;
+          let py = 47;
+          for (const slot of PHOTO_SLOTS) {
+            const x = 16 + col * (photoW + 6);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.text(slot.label, x, py);
+            doc.setDrawColor(196, 206, 220);
+            doc.rect(x, py + 2, photoW, photoH);
+            const src = asText(intakePhotosByZone[slot.key]);
+            const photoDataUrl = await toDataUrl(src);
+            if (photoDataUrl) {
+              try { doc.addImage(photoDataUrl, 'JPEG', x + 1, py + 3, photoW - 2, photoH - 2); } catch { /* noop */ }
+            }
+            col = col === 0 ? 1 : 0;
+            if (col === 0) py += photoH + 12;
+          }
+
+          return true;
+        };
+
         const drawSignatures = async () => {
           if (selectedStepKey !== 'recepcion') return;
           const clientSignature = asText(receptionData.firmaClienteEmpresa || stepData.firmaClienteEmpresa);
@@ -460,6 +632,13 @@ export default function VehiculoDetallePage() {
             if (col === 0) y += imgH + 12;
           }
         };
+
+        const usedReceptionTemplate = await drawReceptionTemplate();
+        if (usedReceptionTemplate) {
+          const safeStepTemplate = selectedStepTitle.replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
+          doc.save(`orden-servicio-${safePlate}-${safeStepTemplate}.pdf`);
+          return;
+        }
 
         drawHeader();
         drawSectionTitle('Información general');
