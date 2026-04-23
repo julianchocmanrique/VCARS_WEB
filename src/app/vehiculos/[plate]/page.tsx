@@ -384,14 +384,27 @@ export default function VehiculoDetallePage() {
           }
 
           const drawInputLine = (x: number, yLine: number, w: number, label: string, value: string) => {
+            const fitText = (raw: string, maxWidth: number, suffix = '...') => {
+              const clean = asText(raw) || '-';
+              if (doc.getTextWidth(clean) <= maxWidth) return clean;
+              let out = clean;
+              while (out.length > 1 && doc.getTextWidth(out + suffix) > maxWidth) {
+                out = out.slice(0, -1);
+              }
+              return out + suffix;
+            };
+
+            const labelY = yLine - 4.2;
+            const valueY = yLine - 1.2;
+
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(8.7);
-            doc.text(label, x, yLine - 1.2);
+            doc.text(fitText(label, w - 2), x, labelY);
             doc.setDrawColor(160, 170, 182);
             doc.line(x, yLine, x + w, yLine);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
-            doc.text(asText(value) || '-', x + 1, yLine - 1.8);
+            doc.text(fitText(value, w - 2), x + 1, valueY);
           };
 
           const drawPageHeader = () => {
