@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { getFormsForPlate, getRoleSteps, hydrateFormsForPlate, setStepField, setStepFields } from '@/lib/orderForms';
+import { uploadServiceOrderAsset } from '@/lib/orderFormsBackend';
 import { getMissingRequiredFields } from '@/lib/orderStepValidation';
 import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 
@@ -501,12 +502,16 @@ export default function OrdenServicioPage() {
     ctx.fillStyle = 'rgba(10, 12, 17, 0.86)';
     ctx.fillRect(0, 0, rect.width, rect.height);
 
-    if (String(value || '').startsWith('data:image/')) {
+    const source = String(value || '').trim();
+    if (source) {
       const img = new Image();
+      if (!source.startsWith('data:image/')) {
+        img.crossOrigin = 'anonymous';
+      }
       img.onload = () => {
         ctx.drawImage(img, 0, 0, rect.width, rect.height);
       };
-      img.src = value;
+      img.src = source;
     }
   }
 
@@ -622,11 +627,18 @@ export default function OrdenServicioPage() {
     signatureLastPointRef.current[key] = point;
   }
 
-  function saveSignature(key: SignaturePadKey) {
+  async function saveSignature(key: SignaturePadKey) {
     const refs = getSignatureContext(key);
-    if (!refs) return;
+    if (!refs || !plate) return;
     const dataUrl = refs.canvas.toDataURL('image/png');
-    syncStepPatch('recepcion', { [signatureFieldKey[key]]: dataUrl });
+    try {
+      const uploaded = await uploadServiceOrderAsset(plate, 'recepcion', signatureFieldKey[key], dataUrl);
+      syncStepPatch('recepcion', { [signatureFieldKey[key]]: uploaded.url });
+      setUploadError('');
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'No se pudo guardar la firma en servidor.');
+      return;
+    }
     setSignatureSavedAt((prev) => ({ ...prev, [key]: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) }));
   }
 
@@ -642,7 +654,7 @@ export default function OrdenServicioPage() {
     if (!signatureDrawingRef.current[key]) return;
     signatureDrawingRef.current[key] = false;
     signatureLastPointRef.current[key] = null;
-    saveSignature(key);
+    void saveSignature(key);
   }
 
   function clearSignature(key: SignaturePadKey) {
@@ -778,6 +790,10 @@ export default function OrdenServicioPage() {
 
   async function onPickReceptionPhoto(slot: PhotoSlotKey, file?: File) {
     if (!file) return;
+    if (!plate) {
+      setUploadError('No se detectó placa para subir la imagen.');
+      return;
+    }
     if (file.size > MAX_IMAGE_SIZE) {
       setUploadError('La imagen ' + file.name + ' supera 4MB. Súbela más liviana.');
       return;
@@ -785,12 +801,13 @@ export default function OrdenServicioPage() {
 
     try {
       const encoded = await fileToOptimizedDataUrl(file);
+      const uploaded = await uploadServiceOrderAsset(plate, 'recepcion', `photo_${slot}`, encoded);
       syncStepPatch('recepcion', {
-        ['photo_' + slot]: '',
+        ['photo_' + slot]: uploaded.url,
         ['photo_verified_' + slot]: 'SI',
         ['photo_verified_source_' + slot]: 'AUTO',
       });
-      syncEntryReceptionPhotos(slot, encoded);
+      syncEntryReceptionPhotos(slot, uploaded.url);
       setUploadError('');
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : 'No se pudo cargar la imagen.');
@@ -1498,7 +1515,7 @@ export default function OrdenServicioPage() {
                             onPointerLeave={(e) => handleSignaturePointerUp('cliente', e)}
                           />
                           <div className="vc-signature-actions">
-                            <button type="button" className="vc-btn" onClick={() => saveSignature('cliente')} disabled={!editable}>
+                            <button type="button" className="vc-btn" onClick={() => void saveSignature('cliente')} disabled={!editable}>
                               Guardar firma
                             </button>
                             <button type="button" className="vc-btn" onClick={() => clearSignature('cliente')} disabled={!editable}>
@@ -1520,7 +1537,7 @@ export default function OrdenServicioPage() {
                             onPointerLeave={(e) => handleSignaturePointerUp('taller', e)}
                           />
                           <div className="vc-signature-actions">
-                            <button type="button" className="vc-btn" onClick={() => saveSignature('taller')} disabled={!editable}>
+                            <button type="button" className="vc-btn" onClick={() => void saveSignature('taller')} disabled={!editable}>
                               Guardar firma
                             </button>
                             <button type="button" className="vc-btn" onClick={() => clearSignature('taller')} disabled={!editable}>

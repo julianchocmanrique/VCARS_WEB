@@ -65,3 +65,30 @@ export async function putStepDataToBackend(plate: string, stepKey: string, stepD
   });
   await parseJsonOrThrow(res);
 }
+
+export async function uploadServiceOrderAsset(
+  plate: string,
+  stepKey: string,
+  fieldKey: string,
+  dataUrl: string,
+): Promise<{ assetId: string; url: string; mimeType: string; byteSize: number }> {
+  const p = String(plate || '').trim().toUpperCase();
+  if (!p || !stepKey || !fieldKey || !dataUrl) {
+    throw new Error('Parámetros de carga inválidos');
+  }
+
+  const res = await fetch(joinUrl(API_URL, `service-orders/${encodeURIComponent(p)}/assets`), {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ stepKey, fieldKey, dataUrl }),
+    cache: 'no-store',
+  });
+
+  const json = await parseJsonOrThrow<{ ok: true; assetId: string; url: string; mimeType: string; byteSize: number }>(res);
+  return {
+    assetId: String(json.assetId || ''),
+    url: joinUrl(API_URL, String(json.url || '')),
+    mimeType: String(json.mimeType || ''),
+    byteSize: Number(json.byteSize || 0),
+  };
+}
