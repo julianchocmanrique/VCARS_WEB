@@ -1,3 +1,5 @@
+import { readJsonStorage, removeStorageKey, writeJsonStorage } from '@/lib/persistence/jsonStore';
+
 export const SESSION_KEY = '@vcars_session';
 export const PROFILE_KEY = '@vcars_profile';
 export const ENTRIES_KEY = '@vcars_entries';
@@ -143,64 +145,60 @@ function normalizeEntry(value: unknown): Entry | null {
   };
 }
 
-function readJson<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeJson<T>(key: string, value: T): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(key, JSON.stringify(value));
-}
-
 export function getSession(): Session | null {
-  return readJson<Session | null>(SESSION_KEY, null);
+  return readJsonStorage<Session | null>(SESSION_KEY, null);
 }
 
 export function setSession(session: Session): void {
-  writeJson(SESSION_KEY, session);
-  writeJson(PROFILE_KEY, session.role);
+  writeJsonStorage(SESSION_KEY, session);
+  writeJsonStorage(PROFILE_KEY, session.role);
 }
 
 export function clearSession(): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(SESSION_KEY);
-  window.localStorage.removeItem(PROFILE_KEY);
-  window.localStorage.removeItem(CLIENT_IDENTITY_KEY);
+  removeStorageKey(SESSION_KEY);
+  removeStorageKey(PROFILE_KEY);
+  removeStorageKey(CLIENT_IDENTITY_KEY);
 }
 
 export function getRole(): Role {
-  const role = readJson<Role | null>(PROFILE_KEY, null);
+  const role = readJsonStorage<Role | null>(PROFILE_KEY, null);
   if (role === 'tecnico' || role === 'cliente') return role;
   return 'administrativo';
 }
 
 export function getEntries(): Entry[] {
-  const raw = readJson<unknown>(ENTRIES_KEY, []);
+  const raw = readJsonStorage<unknown>(ENTRIES_KEY, []);
   if (!Array.isArray(raw)) return [];
   const clean = raw.map(normalizeEntry).filter(Boolean) as Entry[];
   return clean;
 }
 
 export function setEntries(entries: Entry[]): void {
-  writeJson(ENTRIES_KEY, entries);
+  writeJsonStorage(ENTRIES_KEY, entries);
 }
 
 export function getCurrentEntry(): Entry | null {
-  const raw = readJson<unknown>(CURRENT_ENTRY_KEY, null);
+  const raw = readJsonStorage<unknown>(CURRENT_ENTRY_KEY, null);
   return normalizeEntry(raw);
 }
 
 export function setCurrentEntry(entry: Entry | null): void {
-  if (typeof window === 'undefined') return;
   if (!entry) {
-    window.localStorage.removeItem(CURRENT_ENTRY_KEY);
+    removeStorageKey(CURRENT_ENTRY_KEY);
     return;
   }
-  writeJson(CURRENT_ENTRY_KEY, entry);
+  // Keep current entry lightweight to avoid localStorage quota errors.
+  const lightweight: Entry = {
+    ...entry,
+    intakePhotos: [],
+    intakePhotosByZone: {
+      superior: '',
+      inferior: '',
+      lateralDerecho: '',
+      lateralIzquierdo: '',
+      frontal: '',
+      trasero: '',
+    },
+  };
+  writeJsonStorage(CURRENT_ENTRY_KEY, lightweight);
 }

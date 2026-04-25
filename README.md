@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## VCARS Architecture Notes
+
+- Frontend repository: `VCARS_WEB` (UI + local cache)
+- Backend repository: `vcars-api` (business logic + API)
+- Database: PostgreSQL managed by `vcars-api`
+
+Detailed data ownership and migration map:
+- `docs/ARCHITECTURE_DATA_MAP.md`
+
 ## Getting Started
 
 First, run the development server:
