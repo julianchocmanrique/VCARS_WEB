@@ -10,7 +10,7 @@ import { getClientIdentity } from '@/lib/clientIdentity';
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
-import { ensureDemoFormsSeed, getFormsForPlate, getRoleSteps, isClientQuoteReady, setStepFields } from '@/lib/orderForms';
+import { ensureDemoFormsSeed, getFormsForPlate, getRoleSteps, hydrateFormsForPlate, isClientQuoteReady, setStepFields } from '@/lib/orderForms';
 import { isStepComplete } from '@/lib/orderStepValidation';
 import { normalizeStepTitle, stepIndexFromTitle } from '@/lib/process';
 import { getVehicleEvidencePhoto } from '@/lib/carPhoto';
@@ -95,6 +95,7 @@ export default function VehiculoDetallePage() {
       setVehicle(next);
       setStepIndex(typeof found.stepIndex === 'number' ? found.stepIndex : stepIndexFromTitle(normalizedStep));
     });
+    void hydrateFormsForPlate(plate).then((fresh) => setFormsByStep(fresh));
 
     (async () => {
       try {
@@ -115,6 +116,7 @@ export default function VehiculoDetallePage() {
         setEntries(updated);
         setCurrentEntry(next);
         setFormsByStep(getFormsForPlate(plate));
+        void hydrateFormsForPlate(plate).then((fresh) => setFormsByStep(fresh));
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'No se pudo cargar el vehículo';
         const lowered = msg.toLowerCase();

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
-import { getFormsForPlate, getRoleSteps, setStepField, setStepFields } from '@/lib/orderForms';
+import { getFormsForPlate, getRoleSteps, hydrateFormsForPlate, setStepField, setStepFields } from '@/lib/orderForms';
 import { getMissingRequiredFields } from '@/lib/orderStepValidation';
 import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 
@@ -340,6 +340,10 @@ export default function OrdenServicioPage() {
       setPlate(resolvedPlate);
       setStartStepIndex(queryStartStep);
       setFormsByStep(getFormsForPlate(resolvedPlate));
+    });
+
+    void hydrateFormsForPlate(resolvedPlate).then((fresh) => {
+      setFormsByStep(fresh);
     });
   }, [router]);
 
