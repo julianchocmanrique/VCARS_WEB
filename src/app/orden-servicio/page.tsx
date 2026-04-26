@@ -32,6 +32,28 @@ type ExpenseRow = { actividad: string; tercero: string; cantidad: string; operar
 
 type InventoryValue = 'S' | 'N' | 'C' | 'I' | '';
 type SignaturePadKey = 'cliente' | 'taller';
+type EntrySyncField =
+  | 'orderNumber'
+  | 'fecha'
+  | 'expectedDeliveryDate'
+  | 'placa'
+  | 'ownerName'
+  | 'cliente'
+  | 'nitCc'
+  | 'companyEntity'
+  | 'empresa'
+  | 'direccion'
+  | 'telefono'
+  | 'email'
+  | 'invoiceName'
+  | 'billingNitCc'
+  | 'paymentMethod'
+  | 'transferChannel'
+  | 'creditDays'
+  | 'color'
+  | 'marca'
+  | 'modelo'
+  | 'fuelLevel';
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024;
 const PHOTO_SLOTS = [
@@ -42,6 +64,30 @@ const PHOTO_SLOTS = [
   { key: 'frontal', label: 'Frontal' },
   { key: 'trasero', label: 'Trasero' },
 ] as const;
+
+const ENTRY_SYNC_FIELDS: EntrySyncField[] = [
+  'orderNumber',
+  'fecha',
+  'expectedDeliveryDate',
+  'placa',
+  'ownerName',
+  'cliente',
+  'nitCc',
+  'companyEntity',
+  'empresa',
+  'direccion',
+  'telefono',
+  'email',
+  'invoiceName',
+  'billingNitCc',
+  'paymentMethod',
+  'transferChannel',
+  'creditDays',
+  'color',
+  'marca',
+  'modelo',
+  'fuelLevel',
+];
 
 type PhotoSlotKey = (typeof PHOTO_SLOTS)[number]['key'];
 type PhotoGuideConfig = { objectPosition: string; scale: number };
@@ -738,7 +784,16 @@ export default function OrdenServicioPage() {
     setQuoteDraftRows(quoteDraftRows);
   }, [currentKey, formsByStep.cotizacion_formal?.quoteDraftItems, formsByStep.cotizacion_formal?.quoteItems, quoteDraftRows]);
 
-  function syncEntryPatch(patch: Partial<Entry>) {
+  function toEntryReceptionPatch(patch: Partial<Entry>): Record<string, string> {
+    const out: Record<string, string> = {};
+    ENTRY_SYNC_FIELDS.forEach((field) => {
+      if (!(field in patch)) return;
+      out[`entry_${field}`] = String((patch as Record<string, unknown>)[field] ?? '');
+    });
+    return out;
+  }
+
+  function applyEntryPatchLocal(patch: Partial<Entry>) {
     const all = getEntries();
     const resolvedPlate = String(patch.placa || plate || entryForPlate?.placa || getCurrentEntry()?.placa || '').toUpperCase();
     let idx = all.findIndex((item) => String(item.placa || '').toUpperCase() === resolvedPlate);
@@ -759,7 +814,7 @@ export default function OrdenServicioPage() {
       setEntries(nextAll);
       setEntryForPlate(nextEntry);
       setEntryRefreshTick((t) => t + 1);
-      return;
+      return nextEntry;
     }
 
     const currentEntry = all[idx] as Entry;
@@ -775,6 +830,16 @@ export default function OrdenServicioPage() {
     setCurrentEntry(nextEntry);
     setEntryForPlate(nextEntry);
     setEntryRefreshTick((t) => t + 1);
+    return nextEntry;
+  }
+
+  function syncEntryPatch(patch: Partial<Entry>) {
+    const nextEntry = applyEntryPatchLocal(patch);
+    if (!nextEntry || !plate) return;
+    const entryReceptionPatch = toEntryReceptionPatch(patch);
+    if (!Object.keys(entryReceptionPatch).length) return;
+    const next = setStepFields(plate, 'recepcion', entryReceptionPatch);
+    setFormsByStep(next);
   }
 
   function syncEntryReceptionPhotos(slot: PhotoSlotKey, src: string) {
@@ -787,6 +852,26 @@ export default function OrdenServicioPage() {
       intakePhotos: nextPhotos,
     });
   }
+
+  useEffect(() => {
+    if (!plate) return;
+    const recepcion = formsByStep.recepcion || {};
+    const recoveredPatch: Partial<Entry> = {};
+
+    ENTRY_SYNC_FIELDS.forEach((field) => {
+      const fieldKey = `entry_${field}`;
+      const raw = String(recepcion[fieldKey] || '');
+      if (!raw) return;
+      (recoveredPatch as Record<string, string>)[field] = field === 'placa' ? raw.toUpperCase() : raw;
+    });
+
+    if (!Object.keys(recoveredPatch).length) return;
+
+    const current = entryForPlate || getCurrentEntry();
+    const hasDiff = Object.entries(recoveredPatch).some(([key, value]) => String((current as any)?.[key] || '') !== String(value || ''));
+    if (!hasDiff) return;
+    applyEntryPatchLocal(recoveredPatch);
+  }, [formsByStep.recepcion, plate]);
 
   async function onPickReceptionPhoto(slot: PhotoSlotKey, file?: File) {
     if (!file) return;

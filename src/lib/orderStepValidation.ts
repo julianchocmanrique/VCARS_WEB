@@ -70,6 +70,12 @@ function hasValue(value: unknown): boolean {
   return String(value ?? '').trim().length > 0;
 }
 
+function readEntryLikeValue(entry: Entry | null | undefined, reception: Record<string, string>, key: string): string {
+  const fromEntry = String((entry as Record<string, unknown> | null | undefined)?.[key] || '');
+  if (fromEntry) return fromEntry;
+  return String(reception[`entry_${key}`] || '');
+}
+
 function isOptionalObservacion(value: string): boolean {
   return /observ/i.test(String(value || ''));
 }
@@ -96,21 +102,21 @@ export function getMissingRequiredFields(stepKey: string, formsByStep: FormsBySt
     const inventory = parseJsonRows<Record<string, InventoryValue>>(reception.inventarioAccesorios, {});
     const receptionPhotos = getReceptionPhotos(formsByStep, entry);
     const requiredReception: Array<{ label: string; value: unknown }> = [
-      { label: 'Fecha entrada', value: String(entry?.fecha || '').slice(0, 10) },
-      { label: 'Fecha prevista entrega', value: entry?.expectedDeliveryDate },
-      { label: 'Propietario', value: entry?.ownerName || entry?.cliente },
-      { label: 'NIT / C.C', value: entry?.nitCc },
-      { label: 'Empresa / Entidad', value: entry?.companyEntity || entry?.empresa },
-      { label: 'Dirección', value: entry?.direccion },
-      { label: 'Teléfono de contacto', value: entry?.telefono },
-      { label: 'E-mail', value: entry?.email },
-      { label: 'Factura a nombre de', value: entry?.invoiceName },
-      { label: 'NIT / C.C facturación', value: entry?.billingNitCc },
-      { label: 'Forma de pago', value: entry?.paymentMethod },
-      { label: 'Marca', value: entry?.marca },
-      { label: 'Modelo', value: entry?.modelo },
-      { label: 'Color', value: entry?.color },
-      { label: 'Nivel combustible', value: entry?.fuelLevel },
+      { label: 'Fecha entrada', value: readEntryLikeValue(entry, reception, 'fecha') },
+      { label: 'Fecha prevista entrega', value: readEntryLikeValue(entry, reception, 'expectedDeliveryDate') },
+      { label: 'Propietario', value: readEntryLikeValue(entry, reception, 'ownerName') || readEntryLikeValue(entry, reception, 'cliente') },
+      { label: 'NIT / C.C', value: readEntryLikeValue(entry, reception, 'nitCc') },
+      { label: 'Empresa / Entidad', value: readEntryLikeValue(entry, reception, 'companyEntity') || readEntryLikeValue(entry, reception, 'empresa') },
+      { label: 'Dirección', value: readEntryLikeValue(entry, reception, 'direccion') },
+      { label: 'Teléfono de contacto', value: readEntryLikeValue(entry, reception, 'telefono') },
+      { label: 'E-mail', value: readEntryLikeValue(entry, reception, 'email') },
+      { label: 'Factura a nombre de', value: readEntryLikeValue(entry, reception, 'invoiceName') },
+      { label: 'NIT / C.C facturación', value: readEntryLikeValue(entry, reception, 'billingNitCc') },
+      { label: 'Forma de pago', value: readEntryLikeValue(entry, reception, 'paymentMethod') },
+      { label: 'Marca', value: readEntryLikeValue(entry, reception, 'marca') },
+      { label: 'Modelo', value: readEntryLikeValue(entry, reception, 'modelo') },
+      { label: 'Color', value: readEntryLikeValue(entry, reception, 'color') },
+      { label: 'Nivel combustible', value: readEntryLikeValue(entry, reception, 'fuelLevel') },
       { label: 'Kilometraje', value: reception.kilometraje },
       { label: 'Técnico asignado', value: reception.tecnicoAsignado },
       { label: 'Falla reportada por el cliente', value: reception.fallaCliente },
@@ -126,11 +132,15 @@ export function getMissingRequiredFields(stepKey: string, formsByStep: FormsBySt
       if (!hasValue(item.value)) missing.push(item.label);
     });
 
-    if (entry?.paymentMethod === 'credito' && !hasValue(entry?.creditDays)) {
+    const paymentMethod = readEntryLikeValue(entry, reception, 'paymentMethod');
+    const creditDays = readEntryLikeValue(entry, reception, 'creditDays');
+    const transferChannel = readEntryLikeValue(entry, reception, 'transferChannel');
+
+    if (paymentMethod === 'credito' && !hasValue(creditDays)) {
       missing.push('Días crédito');
     }
 
-    if (entry?.paymentMethod === 'transferencia' && !hasValue(entry?.transferChannel)) {
+    if (paymentMethod === 'transferencia' && !hasValue(transferChannel)) {
       missing.push('Medio transferencia');
     }
 
