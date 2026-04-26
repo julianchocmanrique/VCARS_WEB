@@ -1,7 +1,8 @@
 import { getSession } from '@/lib/storage';
 import type { FormsByStep } from '@/lib/repositories/orderForms.repository';
+import { getApiBaseUrl } from '@/lib/env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://187.124.65.93:4000';
+const API_URL = getApiBaseUrl();
 
 function joinUrl(base: string, path: string): string {
   return `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;

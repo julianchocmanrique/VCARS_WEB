@@ -1,6 +1,7 @@
 import { getSession } from './storage';
+import { getApiBaseUrl } from './env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://187.124.65.93:4000';
+const API_URL = getApiBaseUrl();
 
 function joinUrl(base: string, path: string): string {
   return `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;

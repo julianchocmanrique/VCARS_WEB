@@ -2,8 +2,9 @@ import { applyDemoEntries } from './demoData';
 import { ensureDemoFormsSeed } from './orderForms';
 import { clearSession, getEntries, setCurrentEntry, setEntries, setSession, type Role, type Session } from './storage';
 import { setClientIdentity } from './clientIdentity';
+import { getApiBaseUrl } from './env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://187.124.65.93:4000';
+const API_URL = getApiBaseUrl();
 const PERSONAL_CLIENT_PLATE = 'BCD246';
 
 export const DEMO_USERS = [

@@ -1,0 +1,9 @@
+services:
+  vcars_web:
+    build: .
+    container_name: vcars-web2
+    env_file:
+      - .env
+    ports:
+      - "0.0.0.0:3010:3000"
+    restart: unless-stopped
