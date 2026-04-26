@@ -36,4 +36,4 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 Puertos:
 - LAB: `3010 -> 3000`
-- PROD: `3020 -> 3000`
+- PROD: `3030 -> 3000`

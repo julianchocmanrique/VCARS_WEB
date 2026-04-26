@@ -61,6 +61,7 @@ cd /Users/admi/Documents/Proyectos_2026/vcars_web
 cp .env.lab.example .env.lab
 docker compose -f docker-compose.lab.yml up -d --build
 ```
+Puerto esperado: `3010`
 
 ### 4) WEB PROD (repo VCARS_WEB)
 ```bash
@@ -68,3 +69,4 @@ cd /Users/admi/Documents/Proyectos_2026/vcars_web
 cp .env.prod.example .env.prod
 docker compose -f docker-compose.prod.yml up -d --build
 ```
+Puerto esperado: `3030`

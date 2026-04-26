@@ -32,7 +32,10 @@ jobs:
 
             test -f .env.lab || cp .env.lab.example .env.lab
 
-            docker compose -f docker-compose.lab.yml up -d --build --remove-orphans
-            docker compose -f docker-compose.lab.yml ps
+            # Limpieza de contenedor legado que ocupaba el puerto 3010.
+            docker rm -f vcars-web2 >/dev/null 2>&1 || true
+
+            docker compose -p vcars_web_lab -f docker-compose.lab.yml up -d --build
+            docker compose -p vcars_web_lab -f docker-compose.lab.yml ps
             curl -fsSIL --max-time 20 http://127.0.0.1:3010/vcars/login/ || true
             INNER
