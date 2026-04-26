@@ -7,6 +7,7 @@ import { FlowHeader } from '@/components/FlowHeader';
 import { ActionButton, type ActionButtonState } from '@/components/ui/ActionButton';
 import { ActionFeedback, type ActionFeedbackType } from '@/components/ui/ActionFeedback';
 import { createIngreso } from '@/lib/api';
+import { uploadServiceOrderAsset } from '@/lib/orderFormsBackend';
 import { setStepFields } from '@/lib/orderForms';
 import { getEntries, setCurrentEntry, setEntries, type Entry } from '@/lib/storage';
 
@@ -93,6 +94,24 @@ function fileToDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(new Error(`No se pudo leer ${file.name}`));
     reader.readAsDataURL(file);
   });
+}
+
+async function uploadReceptionPhotos(
+  plate: string,
+  photosByZone: Record<PhotoSlotKey, string>,
+): Promise<Record<PhotoSlotKey, string>> {
+  const uploaded: Record<PhotoSlotKey, string> = { ...photosByZone };
+  for (const slot of PHOTO_SLOTS) {
+    const source = String(photosByZone[slot.key] || '');
+    if (!source.startsWith('data:image/')) continue;
+    try {
+      const asset = await uploadServiceOrderAsset(plate, 'recepcion', `photo_${slot.key}`, source);
+      uploaded[slot.key] = asset.url;
+    } catch {
+      // Keep fallback value if upload fails.
+    }
+  }
+  return uploaded;
 }
 
 export default function NuevoIngresoPage() {
@@ -233,13 +252,18 @@ export default function NuevoIngresoPage() {
       backend = null;
     }
 
+    const normalizedPlate = placa.trim().toUpperCase();
+    const persistedPhotos = backend
+      ? await uploadReceptionPhotos(normalizedPlate, intakePhotosByZone)
+      : intakePhotosByZone;
+
     const nowISO = new Date().toISOString();
     const inventarioSerialized = JSON.stringify(inventarioAccesorios);
 
     const payload: Entry = {
       id: `entry-${Date.now()}`,
       orderNumber: orderNumber.trim(),
-      placa: placa.trim().toUpperCase(),
+      placa: normalizedPlate,
       cliente: holderName.trim(),
       ownerName: holderName.trim(),
       companyEntity: companyEntity.trim(),
@@ -267,8 +291,8 @@ export default function NuevoIngresoPage() {
       soatExpiry: soatExpiry.trim(),
       rtmExpiry: rtmExpiry.trim(),
       wantsOldParts,
-      intakePhotosByZone,
-      intakePhotos: PHOTO_SLOTS.map((slot) => intakePhotosByZone[slot.key]).filter(Boolean),
+      intakePhotosByZone: persistedPhotos,
+      intakePhotos: PHOTO_SLOTS.map((slot) => persistedPhotos[slot.key]).filter(Boolean),
       paso: 'Orden de servicio',
       stepIndex: 0,
       status: 'active',
@@ -292,12 +316,24 @@ export default function NuevoIngresoPage() {
       condicionFisica: condicionFisica.trim(),
       observacionesAccesorios: additionalAccessoriesNotes.trim(),
       inventarioAccesorios: inventarioSerialized,
-      photo_superior: intakePhotosByZone.superior || '',
-      photo_inferior: intakePhotosByZone.inferior || '',
-      photo_lateralDerecho: intakePhotosByZone.lateralDerecho || '',
-      photo_lateralIzquierdo: intakePhotosByZone.lateralIzquierdo || '',
-      photo_frontal: intakePhotosByZone.frontal || '',
-      photo_trasero: intakePhotosByZone.trasero || '',
+      photo_superior: persistedPhotos.superior || '',
+      photo_inferior: persistedPhotos.inferior || '',
+      photo_lateralDerecho: persistedPhotos.lateralDerecho || '',
+      photo_lateralIzquierdo: persistedPhotos.lateralIzquierdo || '',
+      photo_frontal: persistedPhotos.frontal || '',
+      photo_trasero: persistedPhotos.trasero || '',
+      photo_verified_superior: persistedPhotos.superior ? 'SI' : '',
+      photo_verified_inferior: persistedPhotos.inferior ? 'SI' : '',
+      photo_verified_lateralDerecho: persistedPhotos.lateralDerecho ? 'SI' : '',
+      photo_verified_lateralIzquierdo: persistedPhotos.lateralIzquierdo ? 'SI' : '',
+      photo_verified_frontal: persistedPhotos.frontal ? 'SI' : '',
+      photo_verified_trasero: persistedPhotos.trasero ? 'SI' : '',
+      photo_verified_source_superior: persistedPhotos.superior ? 'AUTO' : '',
+      photo_verified_source_inferior: persistedPhotos.inferior ? 'AUTO' : '',
+      photo_verified_source_lateralDerecho: persistedPhotos.lateralDerecho ? 'AUTO' : '',
+      photo_verified_source_lateralIzquierdo: persistedPhotos.lateralIzquierdo ? 'AUTO' : '',
+      photo_verified_source_frontal: persistedPhotos.frontal ? 'AUTO' : '',
+      photo_verified_source_trasero: persistedPhotos.trasero ? 'AUTO' : '',
     });
 
     const list = getEntries();
