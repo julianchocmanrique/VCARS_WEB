@@ -1,7 +1,5 @@
 import { getSession } from './storage';
-import { getApiBaseUrl } from './env';
-
-const API_URL = getApiBaseUrl();
+import { getApiBaseUrlCandidates } from './env';
 
 function joinUrl(base: string, path: string): string {
   return `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
@@ -18,16 +16,32 @@ function buildQuery(params: Record<string, string | number | undefined | null>):
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const session = getSession();
-  const res = await fetch(joinUrl(API_URL, path), {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
-      ...(init?.headers || {}),
-    },
-    cache: 'no-store',
-  });
+  const bases = getApiBaseUrlCandidates();
+  let lastNetworkError: unknown = null;
+  let res: Response | null = null;
+
+  for (const base of bases) {
+    try {
+      res = await fetch(joinUrl(base, path), {
+        ...init,
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
+          ...(init?.headers || {}),
+        },
+        cache: 'no-store',
+      });
+      break;
+    } catch (err) {
+      lastNetworkError = err;
+    }
+  }
+
+  if (!res) {
+    const suffix = lastNetworkError instanceof Error ? `: ${lastNetworkError.message}` : '';
+    throw new Error(`No se pudo conectar al backend${suffix}`);
+  }
 
   const text = await res.text();
   let json: Record<string, unknown> | null = null;

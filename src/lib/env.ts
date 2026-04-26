@@ -8,3 +8,29 @@ export function getApiBaseUrl(): string {
   const raw = process.env.NEXT_PUBLIC_API_URL || DEFAULT_API_URL;
   return normalizeBaseUrl(raw);
 }
+
+export function getApiBaseUrlCandidates(): string[] {
+  const list: string[] = [];
+  const explicit = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL || '');
+  if (explicit) list.push(explicit);
+
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol || 'http:';
+    const hostname = window.location.hostname || 'localhost';
+    if (hostname) {
+      list.push(`${protocol}//${hostname}:4010`);
+      list.push(`${protocol}//${hostname}:4000`);
+    }
+  }
+
+  list.push(DEFAULT_API_URL);
+
+  const seen = new Set<string>();
+  return list
+    .map((item) => normalizeBaseUrl(item))
+    .filter((item) => {
+      if (!item || seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
+}

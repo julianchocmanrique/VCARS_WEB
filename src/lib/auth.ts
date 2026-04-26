@@ -2,9 +2,7 @@ import { applyDemoEntries } from './demoData';
 import { ensureDemoFormsSeed } from './orderForms';
 import { clearSession, getEntries, setCurrentEntry, setEntries, setSession, type Role, type Session } from './storage';
 import { setClientIdentity } from './clientIdentity';
-import { getApiBaseUrl } from './env';
-
-const API_URL = getApiBaseUrl();
+import { getApiBaseUrlCandidates } from './env';
 const PERSONAL_CLIENT_PLATE = 'BCD246';
 
 export const DEMO_USERS = [
@@ -90,14 +88,24 @@ export async function signIn(username: string, password: string): Promise<{ ok: 
   const demo = DEMO_USERS.find((item) => item.username === u);
 
   try {
-    const res = await fetch(`${String(API_URL).replace(/\/+$/, '')}/auth/login`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username: u, password: p }),
-    });
+    const bases = getApiBaseUrlCandidates();
+    let res: Response | null = null;
+    for (const base of bases) {
+      try {
+        res = await fetch(`${String(base).replace(/\/+$/, '')}/auth/login`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username: u, password: p }),
+        });
+        break;
+      } catch {
+        // Try next base URL candidate.
+      }
+    }
+    if (!res) throw new Error('No se pudo conectar al servidor');
 
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.ok) {
