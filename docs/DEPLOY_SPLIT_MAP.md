@@ -41,23 +41,30 @@
 
 ## Levante recomendado por capas
 
-### 1) DB (repo vcars-api)
+### 1) DB + API LAB (repo vcars-api)
 ```bash
 cd /Users/admi/Documents/Proyectos_2026/vcars-api
-docker compose -f docker-compose.db.yml up -d
+cp .env.lab.example .env.lab
+docker compose -f docker-compose.lab.yml up -d --build
 ```
 
-### 2) API (repo vcars-api)
+### 2) DB + API PROD (repo vcars-api)
 ```bash
 cd /Users/admi/Documents/Proyectos_2026/vcars-api
-docker compose -f docker-compose.api.yml up -d --build
+cp .env.prod.example .env.prod
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-### 3) WEB (repo VCARS_WEB)
+### 3) WEB LAB (repo VCARS_WEB)
 ```bash
 cd /Users/admi/Documents/Proyectos_2026/vcars_web
-cp .env.example .env
-# editar NEXT_PUBLIC_API_URL
-# por ejemplo: http://187.124.65.93:4000
-docker compose up -d --build
+cp .env.lab.example .env.lab
+docker compose -f docker-compose.lab.yml up -d --build
+```
+
+### 4) WEB PROD (repo VCARS_WEB)
+```bash
+cd /Users/admi/Documents/Proyectos_2026/vcars_web
+cp .env.prod.example .env.prod
+docker compose -f docker-compose.prod.yml up -d --build
 ```

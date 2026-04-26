@@ -12,9 +12,10 @@ Documentación:
 - `docs/DEPLOY_SPLIT_MAP.md`
 
 ## Variables de entorno
-1. Copia `.env.example` a `.env`
-2. Ajusta:
-- `NEXT_PUBLIC_API_URL` (ejemplo: `http://187.124.65.93:4000`)
+- LAB: `.env.lab` (base: `.env.lab.example`)
+- PROD: `.env.prod` (base: `.env.prod.example`)
+- Variable principal:
+  - `NEXT_PUBLIC_API_URL`
 
 ## Desarrollo local
 ```bash
@@ -22,10 +23,17 @@ npm install
 npm run dev
 ```
 
-## Despliegue frontend (contenedor independiente)
+## Despliegue frontend por ambiente
+LAB:
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.lab.yml up -d --build
 ```
 
-Puerta por defecto:
-- `3010 -> 3000` (contenedor)
+PROD:
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Puertos:
+- LAB: `3010 -> 3000`
+- PROD: `3020 -> 3000`
