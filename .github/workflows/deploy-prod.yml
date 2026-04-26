@@ -32,6 +32,9 @@ jobs:
 
             test -f .env.prod || cp .env.prod.example .env.prod
 
+            # Limpieza de contenedor previo (si existe fuera del proyecto compose actual).
+            docker rm -f vcars-web-prod >/dev/null 2>&1 || true
+
             docker compose -p vcars_web_prod -f docker-compose.prod.yml up -d --build
             docker compose -p vcars_web_prod -f docker-compose.prod.yml ps
             curl -fsSIL --max-time 20 http://127.0.0.1:3030/vcars/login/ || true
