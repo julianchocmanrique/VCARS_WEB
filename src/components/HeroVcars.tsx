@@ -40,7 +40,7 @@ export function HeroVcars({
   const hasCopy = Boolean((headline || '').trim() || (subheadline || '').trim());
 
   return (
-    <section className="relative z-[1] w-full overflow-hidden border-b border-[rgba(58,61,66,0.5)] bg-[#0b0b0c]">
+    <section className="relative z-[1] w-full overflow-hidden border-b border-[rgba(46,50,64,0.6)] bg-[#060810]">
       <motion.div
         className="pointer-events-none absolute inset-0"
         animate={reduced ? undefined : { backgroundPosition: ['0% 0%', '100% 0%'] }}
@@ -48,7 +48,7 @@ export function HeroVcars({
           reduced
             ? undefined
             : {
-                duration: 9,
+                duration: 10,
                 repeat: Infinity,
                 repeatType: 'mirror',
                 ease: vcarsMotion.ease.smoothInOut,
@@ -56,7 +56,7 @@ export function HeroVcars({
         }
         style={{
           backgroundImage:
-            'radial-gradient(circle at 18% 20%, rgba(69,164,237,0.14), transparent 42%), radial-gradient(circle at 82% 10%, rgba(69,164,237,0.10), transparent 40%), linear-gradient(120deg, rgba(11,11,12,1) 0%, rgba(18,18,20,1) 48%, rgba(11,11,12,1) 100%)',
+            'radial-gradient(circle at 18% 22%, rgba(47,126,232,0.18), transparent 44%), radial-gradient(circle at 82% 12%, rgba(47,126,232,0.12), transparent 42%), radial-gradient(circle at 55% 80%, rgba(26,109,212,0.08), transparent 38%), linear-gradient(135deg, rgba(6,8,16,1) 0%, rgba(15,17,24,1) 52%, rgba(6,8,16,1) 100%)',
           backgroundSize: '120% 120%',
         }}
       />
@@ -87,9 +87,9 @@ export function HeroVcars({
 
       <div className={`relative z-[2] mx-auto w-full max-w-[1240px] px-4 sm:px-5 md:px-8 ${hasCopy ? 'pb-10 pt-5 md:pb-16 md:pt-8' : 'pb-6 pt-4 md:pb-8 md:pt-5'}`}>
         <div className={`flex items-center justify-between ${hasCopy ? 'mb-6 md:mb-10' : 'mb-4 md:mb-5'}`}>
-          <div className="inline-flex items-center gap-3 rounded-full border border-[rgba(31,95,159,0.45)] bg-[rgba(26,27,30,0.76)] px-4 py-2">
+          <div className="inline-flex items-center gap-3 rounded-full border border-[rgba(47,126,232,0.5)] bg-[rgba(15,17,24,0.82)] px-4 py-2 shadow-[0_4px_16px_rgba(47,126,232,0.18),0_0_0_1px_rgba(93,175,255,0.1)_inset] backdrop-blur-sm">
             <Image src={`${BASE_PATH}/vcars-v.png`} alt="Vcars" width={22} height={22} className="h-[22px] w-[22px]" />
-            <span className="text-sm font-semibold tracking-[0.18em] text-[#f5f5f5]">VCARS</span>
+            <span className="text-sm font-black tracking-[0.22em] text-[#f0f4ff]">VCARS</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export function HeroVcars({
             ) : null}
             <motion.button
               onClick={onSignOut}
-              className="rounded-full border border-[rgba(31,95,159,0.45)] bg-[rgba(31,95,159,0.14)] px-4 py-2 text-xs font-semibold text-[#f5f5f5] transition"
+              className="rounded-full border border-[rgba(46,50,64,0.8)] bg-[rgba(23,25,33,0.72)] px-4 py-2 text-xs font-semibold text-[#c4cad8] backdrop-blur-sm transition hover:border-[rgba(47,126,232,0.5)] hover:text-[#f0f4ff]"
               whileHover={vcarsMicroMotion.whileHover}
               whileTap={vcarsMicroMotion.whileTap}
               transition={vcarsMicroMotion.transition}
@@ -153,28 +153,28 @@ export function HeroVcars({
               </motion.div>
             ) : (
               <motion.div variants={item} className="space-y-3">
-                <div className="rounded-2xl border border-[rgba(31,95,159,0.35)] bg-[linear-gradient(130deg,rgba(18,27,40,0.72),rgba(11,11,12,0.72))] px-4 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.26)]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#9fb9d8]">Panel operativo</p>
-                  <h2 className="mt-1 text-[26px] font-bold leading-[1.08] text-[#f5f5f5] md:text-[34px]">Bienvenido a VCARS</h2>
-                  <p className="mt-2 text-sm leading-[1.55] text-[#d7e4f3]">Monitorea el estado del taller, revisa métricas clave y entra al proceso que necesites en segundos.</p>
+                <div className="rounded-2xl border border-[rgba(47,126,232,0.38)] bg-[linear-gradient(135deg,rgba(15,19,30,0.86),rgba(10,12,20,0.78))] px-5 py-4 shadow-[0_12px_32px_rgba(0,0,0,0.36),0_0_0_1px_rgba(93,175,255,0.08)_inset] backdrop-blur-md">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#62b5f7]">Panel operativo</p>
+                  <h2 className="mt-1.5 text-[26px] font-black leading-[1.06] tracking-[-0.02em] text-[#f0f4ff] md:text-[32px]">Bienvenido a VCARS</h2>
+                  <p className="mt-2 text-[13px] leading-[1.6] text-[#9fb9d8]">Monitorea el estado del taller, revisa métricas clave y entra al proceso que necesites en segundos.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:max-w-[320px]">
-                  <div className="rounded-xl border border-[rgba(31,95,159,0.45)] bg-[rgba(18,27,40,0.58)] px-3 py-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9fb9d8]">Activos</p>
-                    <p className="mt-1 text-xl font-bold text-[#e8f3ff]">{activeCount}</p>
+                  <div className="rounded-2xl border border-[rgba(47,126,232,0.45)] bg-[rgba(15,19,30,0.64)] px-4 py-3 shadow-[0_8px_20px_rgba(0,0,0,0.28)] backdrop-blur-sm">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#62b5f7]">Activos</p>
+                    <p className="mt-1.5 text-[22px] font-black leading-none tracking-[-0.02em] text-[#f0f4ff]">{activeCount}</p>
                   </div>
-                  <div className="rounded-xl border border-[rgba(58,61,66,0.9)] bg-[rgba(18,18,20,0.84)] px-3 py-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9ca3af]">Total</p>
-                    <p className="mt-1 text-xl font-bold text-[#f5f5f5]">{totalCount}</p>
+                  <div className="rounded-2xl border border-[rgba(46,50,64,0.7)] bg-[rgba(23,25,33,0.6)] px-4 py-3 shadow-[0_8px_20px_rgba(0,0,0,0.24)] backdrop-blur-sm">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#8b92a6]">Total</p>
+                    <p className="mt-1.5 text-[22px] font-black leading-none tracking-[-0.02em] text-[#f0f4ff]">{totalCount}</p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Link href={secondaryCtaHref} className="inline-flex min-h-10 items-center justify-center rounded-full border border-[rgba(58,61,66,0.92)] bg-[rgba(26,27,30,0.72)] px-4 text-xs font-semibold text-[#f5f5f5] transition hover:bg-[rgba(42,44,48,0.85)]">
+                  <Link href={secondaryCtaHref} className="inline-flex min-h-10 items-center justify-center rounded-full border border-[rgba(46,50,64,0.8)] bg-[rgba(23,25,33,0.72)] px-4 text-xs font-semibold text-[#c4cad8] backdrop-blur-sm transition hover:border-[rgba(47,126,232,0.5)] hover:text-[#f0f4ff]">
                     Ir a Proceso
                   </Link>
-                  <Link href={primaryCtaHref} className="inline-flex min-h-10 items-center justify-center rounded-full border border-[rgba(31,95,159,0.55)] bg-[rgba(31,95,159,0.18)] px-4 text-xs font-semibold text-[#dff1ff] transition hover:bg-[rgba(31,95,159,0.28)]">
+                  <Link href={primaryCtaHref} className="inline-flex min-h-10 items-center justify-center rounded-full border border-[rgba(47,126,232,0.55)] bg-[rgba(47,126,232,0.18)] px-4 text-xs font-semibold text-[#93ccff] backdrop-blur-sm transition hover:bg-[rgba(47,126,232,0.28)] hover:text-[#f0f4ff]">
                     Ver orden activa
                   </Link>
                 </div>
@@ -204,10 +204,10 @@ export function HeroVcars({
                 variants={item}
                 initial="hidden"
                 animate="show"
-                className="absolute -bottom-3 left-3 rounded-2xl border border-[rgba(58,61,66,0.8)] bg-[rgba(11,11,12,0.9)] px-3 py-2.5 shadow-[0_10px_28px_rgba(0,0,0,0.36)] md:-bottom-5 md:left-4 md:px-4 md:py-3"
+                className="absolute -bottom-3 left-3 rounded-2xl border border-[rgba(46,50,64,0.7)] bg-[rgba(10,12,20,0.9)] px-3 py-2.5 shadow-[0_12px_32px_rgba(0,0,0,0.5)] backdrop-blur-md md:-bottom-5 md:left-4 md:px-4 md:py-3"
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#9ca3af]">Vehículos activos</p>
-                <p className="mt-1 text-xl font-bold text-[#f5f5f5] md:text-2xl">{activeCount}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#62b5f7]">Activos</p>
+                <p className="mt-1 text-xl font-black tracking-[-0.02em] text-[#f0f4ff] md:text-2xl">{activeCount}</p>
               </motion.div>
             ) : null}
 
@@ -216,10 +216,10 @@ export function HeroVcars({
                 variants={item}
                 initial="hidden"
                 animate="show"
-                className="absolute right-3 top-3 rounded-2xl border border-[rgba(31,95,159,0.45)] bg-[rgba(23,79,134,0.22)] px-3 py-2.5 shadow-[0_10px_24px_rgba(0,0,0,0.34)] md:-right-2 md:top-4 md:px-4 md:py-3"
+                className="absolute right-3 top-3 rounded-2xl border border-[rgba(47,126,232,0.45)] bg-[rgba(15,22,38,0.88)] px-3 py-2.5 shadow-[0_12px_28px_rgba(0,0,0,0.42),0_0_0_1px_rgba(93,175,255,0.1)_inset] backdrop-blur-md md:-right-2 md:top-4 md:px-4 md:py-3"
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#d1d5db]">Total en plataforma</p>
-                <p className="mt-1 text-2xl font-bold text-[#f5f5f5]">{totalCount}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#8b92a6]">Total</p>
+                <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-[#f0f4ff]">{totalCount}</p>
               </motion.div>
             ) : null}
           </motion.div>

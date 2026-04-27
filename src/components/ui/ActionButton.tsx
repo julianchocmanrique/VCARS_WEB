@@ -24,11 +24,11 @@ function cx(...values: Array<string | false | null | undefined>) {
 
 const variantClasses: Record<ActionButtonVariant, string> = {
   primary:
-    'border-[rgba(31,95,159,0.58)] bg-[linear-gradient(180deg,#2a6fb7,#174f86)] text-[#f5f5f5] shadow-[0_10px_22px_rgba(31,95,159,0.30)]',
+    'border-[rgba(47,126,232,0.55)] bg-[linear-gradient(145deg,#1a6dd4,#2f7ee8,#3ba8f0)] text-[#f0f4ff] shadow-[0_10px_28px_rgba(47,126,232,0.38),0_0_0_1px_rgba(93,175,255,0.2)_inset] hover:shadow-[0_14px_36px_rgba(47,126,232,0.48)]',
   secondary:
-    'border-[rgba(58,61,66,0.92)] bg-[linear-gradient(180deg,rgba(26,27,30,0.95),rgba(18,18,20,0.95))] text-[#f5f5f5]',
+    'border-[rgba(46,50,64,0.8)] bg-[linear-gradient(160deg,rgba(23,25,33,0.96),rgba(15,17,24,0.98))] text-[#c4cad8] hover:border-[rgba(47,126,232,0.45)] hover:text-[#f0f4ff]',
   ghost:
-    'border-[rgba(58,61,66,0.86)] bg-[rgba(18,18,20,0.55)] text-[#d1d5db]',
+    'border-[rgba(46,50,64,0.7)] bg-[rgba(23,25,33,0.6)] text-[#8b92a6] hover:border-[rgba(47,126,232,0.4)] hover:text-[#c4cad8]',
 };
 
 const sizeClasses: Record<ActionButtonSize, string> = {
@@ -105,7 +105,7 @@ export function ActionButton({
       animate={state === 'error' ? { x: [0, -3, 3, -2, 2, 0] } : { x: 0 }}
       className={cx(
         'inline-flex w-full items-center justify-center gap-2 border font-semibold tracking-[0.01em]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#45a4ed]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0b0c]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3ba8f0]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#060810]',
         'transition-[border-color,background-color,color,opacity,box-shadow] duration-150',
         variantClasses[variant],
         sizeClasses[size],

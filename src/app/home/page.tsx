@@ -326,7 +326,7 @@ export default function HomePage() {
           items={NAV_ITEMS}
           activeKey="home"
           onMenuClick={() => setDrawerOpen(true)}
-          rightSlot={<span className="hidden rounded-full border border-[rgba(58,61,66,0.9)] bg-[rgba(18,18,20,0.8)] px-3 py-1.5 text-[11px] font-semibold text-[#d1d5db] md:inline-flex">{PROFILE_LABEL[role]}</span>}
+          rightSlot={<span className="hidden rounded-full border border-[rgba(46,50,64,0.8)] bg-[rgba(23,25,33,0.72)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b92a6] backdrop-blur-sm md:inline-flex">{PROFILE_LABEL[role]}</span>}
         />
       </div>
 

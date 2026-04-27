@@ -22,34 +22,38 @@ type KPIStatCardProps = {
   ariaLabel?: string;
 };
 
-const variantClass: Record<KPIStatVariant, { accent: string; badge: string; bar: string; glow: string; value: string }> = {
+const variantClass: Record<KPIStatVariant, { accent: string; badge: string; bar: string; glow: string; value: string; border: string }> = {
   success: {
-    accent: 'border-[rgba(34,197,94,0.38)]',
-    badge: 'border-[rgba(34,197,94,0.40)] bg-[rgba(34,197,94,0.12)] text-[#86efac]',
+    accent: 'bg-gradient-to-b from-[#22c55e] to-[#15803d]',
+    badge: 'border-[rgba(34,197,94,0.40)] bg-[rgba(34,197,94,0.1)] text-[#86efac]',
     bar: 'from-[#22c55e] to-[#15803d]',
-    glow: 'group-hover:shadow-[0_0_22px_rgba(34,197,94,0.12)]',
-    value: 'text-[#f5f5f5]',
+    glow: 'group-hover:shadow-[0_20px_48px_rgba(0,0,0,0.45),0_0_28px_rgba(34,197,94,0.12)]',
+    value: 'text-[#f0f4ff]',
+    border: 'hover:border-[rgba(34,197,94,0.42)]',
   },
   warning: {
-    accent: 'border-[rgba(245,158,11,0.40)]',
-    badge: 'border-[rgba(245,158,11,0.40)] bg-[rgba(245,158,11,0.12)] text-[#fcd34d]',
+    accent: 'bg-gradient-to-b from-[#f59e0b] to-[#b45309]',
+    badge: 'border-[rgba(245,158,11,0.40)] bg-[rgba(245,158,11,0.1)] text-[#fcd34d]',
     bar: 'from-[#f59e0b] to-[#b45309]',
-    glow: 'group-hover:shadow-[0_0_22px_rgba(245,158,11,0.12)]',
-    value: 'text-[#f5f5f5]',
+    glow: 'group-hover:shadow-[0_20px_48px_rgba(0,0,0,0.45),0_0_28px_rgba(245,158,11,0.12)]',
+    value: 'text-[#f0f4ff]',
+    border: 'hover:border-[rgba(245,158,11,0.42)]',
   },
   critical: {
-    accent: 'border-[rgba(239,68,68,0.40)]',
-    badge: 'border-[rgba(239,68,68,0.40)] bg-[rgba(239,68,68,0.12)] text-[#fca5a5]',
+    accent: 'bg-gradient-to-b from-[#ef4444] to-[#b91c1c]',
+    badge: 'border-[rgba(239,68,68,0.40)] bg-[rgba(239,68,68,0.1)] text-[#fca5a5]',
     bar: 'from-[#ef4444] to-[#b91c1c]',
-    glow: 'group-hover:shadow-[0_0_22px_rgba(239,68,68,0.12)]',
-    value: 'text-[#f5f5f5]',
+    glow: 'group-hover:shadow-[0_20px_48px_rgba(0,0,0,0.45),0_0_28px_rgba(239,68,68,0.14)]',
+    value: 'text-[#f0f4ff]',
+    border: 'hover:border-[rgba(239,68,68,0.44)]',
   },
   neutral: {
-    accent: 'border-[rgba(69,164,237,0.38)]',
-    badge: 'border-[rgba(69,164,237,0.38)] bg-[rgba(69,164,237,0.12)] text-[#bfe4ff]',
-    bar: 'from-[#69b7f5] to-[#2a6fb7]',
-    glow: 'group-hover:shadow-[0_0_22px_rgba(69,164,237,0.12)]',
-    value: 'text-[#f5f5f5]',
+    accent: 'bg-gradient-to-b from-[#3ba8f0] to-[#1a6dd4]',
+    badge: 'border-[rgba(59,168,240,0.40)] bg-[rgba(47,126,232,0.1)] text-[#93ccff]',
+    bar: 'from-[#3ba8f0] to-[#1a6dd4]',
+    glow: 'group-hover:shadow-[0_20px_48px_rgba(0,0,0,0.45),0_0_28px_rgba(47,126,232,0.14)]',
+    value: 'text-[#f0f4ff]',
+    border: 'hover:border-[rgba(47,126,232,0.46)]',
   },
 };
 
@@ -113,16 +117,19 @@ export function KPIStatCard({
       transition={{ ...vcarsTransitions.component.base, delay: reduced ? 0 : index * 0.06 }}
       whileHover={vcarsMicroPresets.button.whileHover}
       whileTap={vcarsMicroPresets.button.whileTap}
-      className={`group relative min-w-0 max-w-full overflow-hidden rounded-2xl border border-[rgba(58,61,66,0.82)] p-4 md:p-5 ${classes.glow} ${featured ? 'md:col-span-2' : ''}`}
+      className={`group relative min-w-0 max-w-full overflow-hidden rounded-2xl border border-[rgba(46,50,64,0.7)] p-4 transition-[border-color,box-shadow] duration-200 md:p-5 ${classes.glow} ${classes.border} ${featured ? 'md:col-span-2' : ''}`}
       style={{
         background:
-          'radial-gradient(circle at 82% -34%, rgba(255,255,255,0.05), transparent 44%), linear-gradient(170deg, rgba(26,27,30,0.96), rgba(18,18,20,0.98))',
+          'radial-gradient(circle at 88% -28%, rgba(255,255,255,0.04), transparent 44%), linear-gradient(160deg, rgba(23,25,33,0.97), rgba(15,17,24,0.98))',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow: '0 12px 32px rgba(0,0,0,0.36), 0 0 0 1px rgba(255,255,255,0.02) inset',
       }}
     >
-      <span className={`pointer-events-none absolute left-0 top-0 h-full w-[2px] ${classes.accent}`} />
+      <span className={`pointer-events-none absolute left-0 top-[12%] h-[76%] w-[3px] rounded-r-sm ${classes.accent}`} />
 
       <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-        <p className="min-w-0 flex-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9ca3af] sm:text-[12px] sm:tracking-[0.14em]">{title}</p>
+        <p className="min-w-0 flex-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8b92a6] sm:text-[11px]">{title}</p>
         <motion.span
           className={`inline-flex max-w-full self-start items-center rounded-full border px-2 py-1 text-[10px] font-semibold sm:self-auto sm:px-2.5 sm:text-[11px] ${classes.badge}`}
           initial={reduced ? undefined : { opacity: 0, scale: 0.96 }}
@@ -135,14 +142,14 @@ export function KPIStatCard({
       </div>
 
       <div className="mt-3 flex items-end gap-2">
-        <strong className={`text-[38px] font-black leading-[0.95] md:text-[44px] ${classes.value}`}>
+        <strong className={`text-[40px] font-black leading-[0.92] tracking-[-0.03em] md:text-[46px] ${classes.value}`}>
           {formatValue(renderedValue, suffix)}
         </strong>
       </div>
 
-      <p className="mt-2 text-[13px] leading-[1.35] text-[#d1d5db]">{insight}</p>
+      <p className="mt-2 text-[12px] leading-[1.45] text-[#8b92a6]">{insight}</p>
 
-      <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-[rgba(58,61,66,0.55)]">
+      <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-[rgba(46,50,64,0.6)]">
         <motion.span
           className={`block h-full rounded-full bg-gradient-to-r ${classes.bar}`}
           initial={reduced ? { width: `${progressSafe}%` } : { width: 0 }}
