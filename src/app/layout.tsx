@@ -27,6 +27,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={inter.variable}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function () {
+                try {
+                  var BUILD_KEY = '@vcars_web_build_version';
+                  var BUILD_VALUE = '2026-04-27-hotfix-1';
+                  var prev = localStorage.getItem(BUILD_KEY);
+                  if (prev === BUILD_VALUE) return;
+
+                  localStorage.setItem(BUILD_KEY, BUILD_VALUE);
+                  localStorage.removeItem('@vcars_entries');
+                  localStorage.removeItem('@vcars_current_entry');
+                  localStorage.removeItem('@vcars_order_forms');
+
+                  var href = window.location.href || '';
+                  var hasFlag = href.indexOf('_vcars_refresh=1') !== -1;
+                  if (!hasFlag) {
+                    var sep = href.indexOf('?') === -1 ? '?' : '&';
+                    window.location.replace(href + sep + '_vcars_refresh=1');
+                  }
+                } catch (_) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body>
         <InitialLoaderGate>
