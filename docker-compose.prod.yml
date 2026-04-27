@@ -4,6 +4,16 @@ services:
     container_name: vcars-web-prod
     env_file:
       - .env.prod
+    environment:
+      API_PROXY_TARGET: http://vcars-api-api-1:4000
     ports:
       - "0.0.0.0:3030:3000"
+    networks:
+      - default
+      - vcars_api_net
     restart: unless-stopped
+
+networks:
+  vcars_api_net:
+    external: true
+    name: vcars-api_default
