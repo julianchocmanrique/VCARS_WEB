@@ -1,0 +1,99 @@
+name: Deploy VCARS_API PROD from VCARS_WEB repo
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/deploy-api-prod-from-web.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy_api_prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API PROD via SSH (intento 1)
+        id: deploy_try_1
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 45s
+          command_timeout: 120m
+          script: |
+            set -euo pipefail
+            LOCKFILE=/tmp/vcars_api_prod_deploy.lock
+            flock -w 45 "$LOCKFILE" bash -s <<'INNER'
+            set -euo pipefail
+            export DOCKER_BUILDKIT=1
+            export COMPOSE_DOCKER_CLI_BUILD=1
+            SRC=/root/.openclaw/workspace/VCARS_API_SRC
+            cd "$SRC"
+            git fetch --prune origin
+            git checkout main
+            git reset --hard origin/main
+
+            test -f .env.prod || cp .env.prod.example .env.prod
+
+            docker compose -p vcars_api_prod -f docker-compose.prod.yml up -d --build
+            docker compose -p vcars_api_prod -f docker-compose.prod.yml ps
+            curl -fsSIL --max-time 20 http://127.0.0.1:4010/healthz || true
+            INNER
+
+      - name: Deploy API PROD via SSH (intento 2)
+        id: deploy_try_2
+        if: steps.deploy_try_1.outcome == 'failure'
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 45s
+          command_timeout: 120m
+          script: |
+            set -euo pipefail
+            LOCKFILE=/tmp/vcars_api_prod_deploy.lock
+            flock -w 45 "$LOCKFILE" bash -s <<'INNER'
+            set -euo pipefail
+            export DOCKER_BUILDKIT=1
+            export COMPOSE_DOCKER_CLI_BUILD=1
+            SRC=/root/.openclaw/workspace/VCARS_API_SRC
+            cd "$SRC"
+            git fetch --prune origin
+            git checkout main
+            git reset --hard origin/main
+            test -f .env.prod || cp .env.prod.example .env.prod
+            docker compose -p vcars_api_prod -f docker-compose.prod.yml up -d --build
+            docker compose -p vcars_api_prod -f docker-compose.prod.yml ps
+            curl -fsSIL --max-time 20 http://127.0.0.1:4010/healthz || true
+            INNER
+
+      - name: Deploy API PROD via SSH (intento 3)
+        id: deploy_try_3
+        if: steps.deploy_try_1.outcome == 'failure' && steps.deploy_try_2.outcome == 'failure'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 45s
+          command_timeout: 120m
+          script: |
+            set -euo pipefail
+            LOCKFILE=/tmp/vcars_api_prod_deploy.lock
+            flock -w 45 "$LOCKFILE" bash -s <<'INNER'
+            set -euo pipefail
+            export DOCKER_BUILDKIT=1
+            export COMPOSE_DOCKER_CLI_BUILD=1
+            SRC=/root/.openclaw/workspace/VCARS_API_SRC
+            cd "$SRC"
+            git fetch --prune origin
+            git checkout main
+            git reset --hard origin/main
+            test -f .env.prod || cp .env.prod.example .env.prod
+            docker compose -p vcars_api_prod -f docker-compose.prod.yml up -d --build
+            docker compose -p vcars_api_prod -f docker-compose.prod.yml ps
+            curl -fsSIL --max-time 20 http://127.0.0.1:4010/healthz || true
+            INNER
