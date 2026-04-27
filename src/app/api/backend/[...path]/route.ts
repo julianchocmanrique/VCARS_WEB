@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readFileSync } from 'node:fs';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,13 +15,46 @@ function parseHost(hostHeader: string | null): string {
   return raw.split(':')[0] || '127.0.0.1';
 }
 
+function hexLittleEndianToIpv4(value: string): string | null {
+  const v = String(value || '').trim();
+  if (!/^[0-9a-fA-F]{8}$/.test(v)) return null;
+  const bytes = v.match(/../g);
+  if (!bytes || bytes.length !== 4) return null;
+  const parts = bytes.reverse().map((part) => Number.parseInt(part, 16));
+  if (parts.some((n) => Number.isNaN(n))) return null;
+  return parts.join('.');
+}
+
+function getRouteGateways(): string[] {
+  try {
+    const raw = readFileSync('/proc/net/route', 'utf8');
+    const lines = raw.split('\n').slice(1);
+    const ips = new Set<string>();
+    for (const line of lines) {
+      const cols = line.trim().split(/\s+/);
+      if (cols.length < 3) continue;
+      const destination = cols[1];
+      const gatewayHex = cols[2];
+      if (destination !== '00000000') continue;
+      const ip = hexLittleEndianToIpv4(gatewayHex);
+      if (ip) ips.add(ip);
+    }
+    return Array.from(ips);
+  } catch {
+    return [];
+  }
+}
+
 function getBackendCandidates(req: NextRequest): string[] {
   const host = parseHost(req.headers.get('host'));
   const fromEnv = String(process.env.API_PROXY_TARGET || process.env.NEXT_PUBLIC_API_URL || '').trim();
+  const gateways = getRouteGateways();
   const list = [
     fromEnv,
     `http://${host}:4000`,
     `http://${host}:4010`,
+    ...gateways.map((ip) => `http://${ip}:4000`),
+    ...gateways.map((ip) => `http://${ip}:4010`),
     'http://172.22.0.1:4000',
     'http://172.22.0.1:4010',
     'http://172.17.0.1:4000',
