@@ -77,8 +77,10 @@ function getBackendCandidates(req: NextRequest): string[] {
 async function forward(req: NextRequest, params: { path: string[] }) {
   const path = (params.path || []).join('/');
   const query = req.nextUrl.search || '';
+  const debug = req.nextUrl.searchParams.get('debug') === '1';
   const method = req.method.toUpperCase();
   const candidates = getBackendCandidates(req);
+  const attemptErrors: Array<{ base: string; reason: string }> = [];
 
   const headers = new Headers();
   const auth = req.headers.get('authorization');
@@ -107,14 +109,20 @@ async function forward(req: NextRequest, params: { path: string[] }) {
       const out = new NextResponse(text, { status: res.status });
       const ct = res.headers.get('content-type');
       if (ct) out.headers.set('content-type', ct);
+      if (debug) out.headers.set('x-vcars-proxy-base', base);
       return out;
     } catch (err) {
       lastError = err instanceof Error ? err.message : 'Error de red';
+      if (debug) attemptErrors.push({ base, reason: lastError });
     }
   }
 
   return NextResponse.json(
-    { ok: false, error: `No se pudo conectar al backend${lastError ? `: ${lastError}` : ''}` },
+    {
+      ok: false,
+      error: `No se pudo conectar al backend${lastError ? `: ${lastError}` : ''}`,
+      ...(debug ? { attempts: attemptErrors, candidates } : {}),
+    },
     { status: 502 },
   );
 }
