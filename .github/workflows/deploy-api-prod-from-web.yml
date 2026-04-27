@@ -57,6 +57,18 @@ jobs:
             docker compose -p vcars_api_prod -f docker-compose.prod.yml up -d --build
             docker compose -p vcars_api_prod -f docker-compose.prod.yml ps
             curl -fsSIL --max-time 20 http://127.0.0.1:4010/healthz || true
+
+            LEGACY=/root/.openclaw/workspace/deployments/vcars-api
+            if [ -d "$LEGACY/.git" ]; then
+              cd "$LEGACY"
+              git fetch --prune origin
+              git checkout main
+              git reset --hard origin/main
+              test -f .env || cp .env.example .env
+              docker compose -p vcars-api -f docker-compose.yml up -d --build
+              docker compose -p vcars-api -f docker-compose.yml ps
+              curl -fsSIL --max-time 20 http://127.0.0.1:4000/healthz || true
+            fi
             INNER
 
       - name: Deploy API PROD via SSH (intento 2)
@@ -104,6 +116,18 @@ jobs:
             docker compose -p vcars_api_prod -f docker-compose.prod.yml up -d --build
             docker compose -p vcars_api_prod -f docker-compose.prod.yml ps
             curl -fsSIL --max-time 20 http://127.0.0.1:4010/healthz || true
+
+            LEGACY=/root/.openclaw/workspace/deployments/vcars-api
+            if [ -d "$LEGACY/.git" ]; then
+              cd "$LEGACY"
+              git fetch --prune origin
+              git checkout main
+              git reset --hard origin/main
+              test -f .env || cp .env.example .env
+              docker compose -p vcars-api -f docker-compose.yml up -d --build
+              docker compose -p vcars-api -f docker-compose.yml ps
+              curl -fsSIL --max-time 20 http://127.0.0.1:4000/healthz || true
+            fi
             INNER
 
       - name: Deploy API PROD via SSH (intento 3)
@@ -150,4 +174,16 @@ jobs:
             docker compose -p vcars_api_prod -f docker-compose.prod.yml up -d --build
             docker compose -p vcars_api_prod -f docker-compose.prod.yml ps
             curl -fsSIL --max-time 20 http://127.0.0.1:4010/healthz || true
+
+            LEGACY=/root/.openclaw/workspace/deployments/vcars-api
+            if [ -d "$LEGACY/.git" ]; then
+              cd "$LEGACY"
+              git fetch --prune origin
+              git checkout main
+              git reset --hard origin/main
+              test -f .env || cp .env.example .env
+              docker compose -p vcars-api -f docker-compose.yml up -d --build
+              docker compose -p vcars-api -f docker-compose.yml ps
+              curl -fsSIL --max-time 20 http://127.0.0.1:4000/healthz || true
+            fi
             INNER
