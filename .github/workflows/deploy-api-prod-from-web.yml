@@ -59,16 +59,19 @@ jobs:
             curl -fsSIL --max-time 20 http://127.0.0.1:4010/healthz || true
 
             LEGACY=/root/.openclaw/workspace/deployments/vcars-api
-            if [ -d "$LEGACY/.git" ]; then
-              cd "$LEGACY"
-              git fetch --prune origin
-              git checkout main
-              git reset --hard origin/main
-              test -f .env || cp .env.example .env
-              docker compose -p vcars-api -f docker-compose.yml up -d --build
-              docker compose -p vcars-api -f docker-compose.yml ps
-              curl -fsSIL --max-time 20 http://127.0.0.1:4000/healthz || true
+            if [ ! -d "$LEGACY/.git" ]; then
+              mkdir -p /root/.openclaw/workspace/deployments
+              rm -rf "$LEGACY"
+              git clone https://github.com/julianchocmanrique/vcars-api.git "$LEGACY"
             fi
+            cd "$LEGACY"
+            git fetch --prune origin
+            git checkout main
+            git reset --hard origin/main
+            test -f .env || cp .env.example .env
+            docker compose -p vcars-api -f docker-compose.yml up -d --build
+            docker compose -p vcars-api -f docker-compose.yml ps
+            curl -fsSIL --max-time 20 http://127.0.0.1:4000/healthz || true
             INNER
 
       - name: Deploy API PROD via SSH (intento 2)
@@ -118,16 +121,19 @@ jobs:
             curl -fsSIL --max-time 20 http://127.0.0.1:4010/healthz || true
 
             LEGACY=/root/.openclaw/workspace/deployments/vcars-api
-            if [ -d "$LEGACY/.git" ]; then
-              cd "$LEGACY"
-              git fetch --prune origin
-              git checkout main
-              git reset --hard origin/main
-              test -f .env || cp .env.example .env
-              docker compose -p vcars-api -f docker-compose.yml up -d --build
-              docker compose -p vcars-api -f docker-compose.yml ps
-              curl -fsSIL --max-time 20 http://127.0.0.1:4000/healthz || true
+            if [ ! -d "$LEGACY/.git" ]; then
+              mkdir -p /root/.openclaw/workspace/deployments
+              rm -rf "$LEGACY"
+              git clone https://github.com/julianchocmanrique/vcars-api.git "$LEGACY"
             fi
+            cd "$LEGACY"
+            git fetch --prune origin
+            git checkout main
+            git reset --hard origin/main
+            test -f .env || cp .env.example .env
+            docker compose -p vcars-api -f docker-compose.yml up -d --build
+            docker compose -p vcars-api -f docker-compose.yml ps
+            curl -fsSIL --max-time 20 http://127.0.0.1:4000/healthz || true
             INNER
 
       - name: Deploy API PROD via SSH (intento 3)
@@ -176,14 +182,17 @@ jobs:
             curl -fsSIL --max-time 20 http://127.0.0.1:4010/healthz || true
 
             LEGACY=/root/.openclaw/workspace/deployments/vcars-api
-            if [ -d "$LEGACY/.git" ]; then
-              cd "$LEGACY"
-              git fetch --prune origin
-              git checkout main
-              git reset --hard origin/main
-              test -f .env || cp .env.example .env
-              docker compose -p vcars-api -f docker-compose.yml up -d --build
-              docker compose -p vcars-api -f docker-compose.yml ps
-              curl -fsSIL --max-time 20 http://127.0.0.1:4000/healthz || true
+            if [ ! -d "$LEGACY/.git" ]; then
+              mkdir -p /root/.openclaw/workspace/deployments
+              rm -rf "$LEGACY"
+              git clone https://github.com/julianchocmanrique/vcars-api.git "$LEGACY"
             fi
+            cd "$LEGACY"
+            git fetch --prune origin
+            git checkout main
+            git reset --hard origin/main
+            test -f .env || cp .env.example .env
+            docker compose -p vcars-api -f docker-compose.yml up -d --build
+            docker compose -p vcars-api -f docker-compose.yml ps
+            curl -fsSIL --max-time 20 http://127.0.0.1:4000/healthz || true
             INNER
