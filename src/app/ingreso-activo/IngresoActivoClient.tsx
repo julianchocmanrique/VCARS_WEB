@@ -121,6 +121,11 @@ export default function IngresoActivoClient() {
       router.replace('/login');
       return;
     }
+    if (!session.token) {
+      setWarning('Tu sesión no tiene token de backend. Vuelve a iniciar sesión para cargar datos reales.');
+      router.replace('/login?reason=missing_token');
+      return;
+    }
 
     const localRole = getRole();
     const localRawEntries = getEntries();
@@ -145,7 +150,7 @@ export default function IngresoActivoClient() {
         setEntriesState(normalized);
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'No se pudo cargar desde backend';
-        if (!msg.toLowerCase().includes('no autorizado')) setWarning(msg);
+        setWarning(msg);
       }
     })();
   }, [router]);
