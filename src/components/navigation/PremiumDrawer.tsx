@@ -29,18 +29,18 @@ export function PremiumDrawer({ open, onClose, items, activeKey, headerTitle = '
           />
 
           <motion.aside
-            className="fixed left-0 top-0 z-[60] h-full w-[88vw] max-w-[352px] border-r border-[rgba(58,61,66,0.82)] bg-[linear-gradient(180deg,rgba(18,18,20,0.98),rgba(11,11,12,0.98))] p-4 shadow-[24px_0_60px_rgba(0,0,0,0.5)]"
+            className="fixed left-0 top-0 z-[60] h-full w-[88vw] max-w-[352px] border-r border-[rgba(46,50,64,0.7)] bg-[rgba(8,10,18,0.96)] p-5 shadow-[24px_0_80px_rgba(0,0,0,0.6)] backdrop-blur-2xl"
             variants={vcarsVariants.drawer(false)}
             initial="hidden"
             animate="show"
             exit="exit"
           >
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#9ca3af]">{headerTitle}</p>
+            <div className="mb-5 flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#62b5f7]">{headerTitle}</p>
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[rgba(58,61,66,0.82)] bg-[linear-gradient(180deg,rgba(26,27,30,0.88),rgba(18,18,20,0.82))] text-[#d1d5db]"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[rgba(46,50,64,0.8)] bg-[rgba(23,25,33,0.8)] text-[#8b92a6] transition hover:border-[rgba(47,126,232,0.5)] hover:text-[#f0f4ff]"
               >
                 ✕
               </button>
@@ -60,9 +60,9 @@ export function PremiumDrawer({ open, onClose, items, activeKey, headerTitle = '
                         <Link
                           href={item.href}
                           onClick={onClose}
-                          className={`flex min-h-11 items-center rounded-xl border px-3 text-[14px] font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] ${isActive
-                            ? 'border-[rgba(31,95,159,0.52)] bg-[linear-gradient(180deg,rgba(31,95,159,0.3),rgba(23,79,134,0.26))] text-[#f5f5f5]'
-                            : 'border-[rgba(58,61,66,0.8)] bg-[linear-gradient(180deg,rgba(26,27,30,0.76),rgba(18,18,20,0.72))] text-[#d1d5db]'}`}
+                          className={`flex min-h-11 items-center rounded-xl border px-4 text-[14px] font-semibold ${isActive
+                            ? 'border-[rgba(47,126,232,0.55)] bg-[linear-gradient(145deg,rgba(47,126,232,0.28),rgba(26,109,212,0.2))] text-[#f0f4ff] shadow-[0_0_16px_rgba(47,126,232,0.16)]'
+                            : 'border-[rgba(46,50,64,0.7)] bg-[rgba(23,25,33,0.7)] text-[#8b92a6] hover:border-[rgba(47,126,232,0.4)] hover:text-[#c4cad8]'}`}
                         >
                           {item.label}
                         </Link>

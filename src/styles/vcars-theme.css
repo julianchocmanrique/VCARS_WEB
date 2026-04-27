@@ -1,34 +1,44 @@
 :root {
   /* Primitive palette */
-  --color-base-black: #0b0b0c;
-  --color-base-gray-900: #121214;
-  --color-base-gray-800: #1a1b1e;
-  --color-base-gray-700: #2a2c30;
-  --color-base-gray-600: #3a3d42;
-  --color-base-gray-500: #6b7280;
-  --color-base-gray-400: #9ca3af;
-  --color-base-gray-300: #d1d5db;
-  --color-base-white-soft: #f5f5f5;
+  --color-base-black: #060810;
+  --color-base-gray-950: #0a0c14;
+  --color-base-gray-900: #0f1118;
+  --color-base-gray-800: #171921;
+  --color-base-gray-700: #22252f;
+  --color-base-gray-600: #2e3240;
+  --color-base-gray-500: #4a5068;
+  --color-base-gray-400: #8b92a6;
+  --color-base-gray-300: #c4cad8;
+  --color-base-white-soft: #f0f4ff;
 
-  --color-base-blue-500: #2a6fb7;
-  --color-base-blue-600: #1f5f9f;
-  --color-base-blue-700: #174f86;
-  --color-base-sky-400: #69b7f5;
-  --color-base-sky-500: #45a4ed;
-  --color-base-red-500: #e11d2e;
-  --color-base-red-700: #a81a27;
+  --color-base-blue-400: #4da8f5;
+  --color-base-blue-500: #2f7ee8;
+  --color-base-blue-600: #1a6dd4;
+  --color-base-blue-700: #1258b0;
+  --color-base-sky-300: #93ccff;
+  --color-base-sky-400: #62b5f7;
+  --color-base-sky-500: #3ba8f0;
+  --color-base-indigo-500: #4f63e8;
+  --color-base-red-500: #e53030;
+  --color-base-red-700: #b01e1e;
+  --color-base-emerald-400: #34d399;
+  --color-base-amber-400: #fbbf24;
 
-  /* Semantic VCARS theme mapped to primitive palette */
+  /* Semantic VCARS theme */
   --vc-bg: var(--color-base-black);
+  --vc-bg-deep: #030508;
   --vc-surface: var(--color-base-gray-900);
   --vc-surface-alt: var(--color-base-gray-800);
   --vc-surface-elev: var(--color-base-gray-700);
+  --vc-surface-glass: rgba(15, 17, 24, 0.72);
 
   --vc-text: var(--color-base-white-soft);
   --vc-muted: var(--color-base-gray-300);
+  --vc-muted-soft: var(--color-base-gray-400);
 
   --vc-accent: var(--color-base-blue-500);
   --vc-accent-soft: var(--color-base-sky-400);
+  --vc-accent-bright: var(--color-base-sky-300);
   --vc-accent-ink: var(--color-base-white-soft);
   --vc-accent-deep: var(--color-base-blue-700);
 
@@ -36,33 +46,44 @@
   --vc-border-strong: var(--color-base-gray-600);
 
   --vc-danger: var(--color-base-red-500);
+  --vc-success: var(--color-base-emerald-400);
+  --vc-warning: var(--color-base-amber-400);
 
   --vc-blue: var(--color-base-blue-600);
   --vc-blue-light: var(--color-base-sky-500);
-  /* Active tab highlight color (was yellow) */
-  /* Active tab highlight color (wine red) */
-  --vc-yellow: #f4df2f;
+  --vc-yellow: #f5e342;
 
-  /* Neutralized outer atmosphere with cool-blue brand glow */
-  --vc-overlay-1: rgba(69, 164, 237, 0.09);
-  --vc-overlay-2: rgba(31, 95, 159, 0.14);
-  --vc-panel-border: rgba(58, 61, 66, 0.44);
-  --vc-card-border: rgba(58, 61, 66, 0.36);
-  --vc-tag-border: rgba(107, 114, 128, 0.36);
-  --vc-tag-bg: rgba(26, 27, 30, 0.66);
-  --vc-media-border: rgba(58, 61, 66, 0.42);
-  --vc-media-glow: rgba(69, 164, 237, 0.16);
-  --vc-halo: rgba(69, 164, 237, 0.22);
-  --vc-badge-border: rgba(58, 61, 66, 0.58);
-  --vc-badge-bg: rgba(11, 11, 12, 0.72);
+  /* Atmospheric overlays */
+  --vc-overlay-1: rgba(47, 126, 232, 0.1);
+  --vc-overlay-2: rgba(26, 109, 212, 0.15);
+  --vc-panel-border: rgba(46, 50, 64, 0.6);
+  --vc-card-border: rgba(46, 50, 64, 0.55);
+  --vc-card-border-hover: rgba(62, 120, 200, 0.55);
+  --vc-tag-border: rgba(74, 80, 104, 0.5);
+  --vc-tag-bg: rgba(23, 25, 33, 0.8);
+  --vc-media-border: rgba(46, 50, 64, 0.55);
+  --vc-media-glow: rgba(47, 126, 232, 0.18);
+  --vc-halo: rgba(47, 126, 232, 0.26);
+  --vc-badge-border: rgba(46, 50, 64, 0.65);
+  --vc-badge-bg: rgba(10, 12, 20, 0.78);
+
+  /* Glass layer */
+  --vc-glass-bg: rgba(12, 14, 22, 0.8);
+  --vc-glass-border: rgba(255, 255, 255, 0.07);
+  --vc-glass-blur: blur(16px);
+
+  /* Gradient presets */
+  --vc-gradient-card: linear-gradient(145deg, rgba(23, 25, 33, 0.96) 0%, rgba(15, 17, 24, 0.98) 100%);
+  --vc-gradient-blue: linear-gradient(135deg, #1a6dd4 0%, #2f7ee8 50%, #3ba8f0 100%);
+  --vc-gradient-surface: linear-gradient(160deg, rgba(23, 25, 33, 0.98) 0%, rgba(10, 12, 20, 0.98) 100%);
 }
 
 /* Skeleton system */
 .vc-skeleton {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(120deg, rgba(26, 27, 30, 0.95) 0%, rgba(42, 44, 48, 0.95) 45%, rgba(26, 27, 30, 0.95) 100%);
-  border: 1px solid rgba(58, 61, 66, 0.42);
+  background: linear-gradient(120deg, rgba(23, 25, 33, 0.95) 0%, rgba(34, 37, 47, 0.95) 45%, rgba(23, 25, 33, 0.95) 100%);
+  border: 1px solid rgba(46, 50, 64, 0.55);
 }
 
 .vc-skeleton::after {
@@ -70,7 +91,7 @@
   position: absolute;
   inset: 0;
   transform: translateX(-120%);
-  background: linear-gradient(100deg, transparent 0%, rgba(245, 245, 245, 0.14) 45%, transparent 100%);
+  background: linear-gradient(100deg, transparent 0%, rgba(240, 244, 255, 0.12) 45%, transparent 100%);
   animation: vcShimmer 1.6s ease-in-out infinite;
 }
 

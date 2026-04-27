@@ -39,30 +39,30 @@ const cardStyles: Record<
 > = {
   default: {
     shell:
-      'border-[rgba(58,61,66,0.88)] bg-[linear-gradient(168deg,rgba(18,18,20,0.95),rgba(11,11,12,0.95))] shadow-[0_16px_36px_rgba(0,0,0,0.42)]',
-    process: 'border-[rgba(58,61,66,0.86)] bg-[linear-gradient(180deg,rgba(42,44,48,0.9),rgba(26,27,30,0.94))] text-[#f5f5f5]',
-    plate: 'bg-[#f2de35] text-[#0b0b0c] border-[#151515]',
-    glow: 'group-hover:shadow-[0_0_36px_rgba(255,255,255,0.06)]',
+      'border-[rgba(46,50,64,0.75)] bg-[linear-gradient(160deg,rgba(23,25,33,0.97),rgba(10,12,20,0.97))] shadow-[0_20px_48px_rgba(0,0,0,0.48),0_0_0_1px_rgba(255,255,255,0.02)_inset]',
+    process: 'border-[rgba(46,50,64,0.8)] bg-[linear-gradient(160deg,rgba(34,37,47,0.9),rgba(23,25,33,0.95))] text-[#c4cad8]',
+    plate: 'bg-[#f5e342] text-[#060810] border-[#101010]',
+    glow: 'group-hover:shadow-[0_24px_56px_rgba(0,0,0,0.52),0_0_0_1px_rgba(47,126,232,0.18)_inset]',
   },
   selected: {
     shell:
-      'border-[rgba(31,95,159,0.62)] bg-[linear-gradient(168deg,rgba(18,18,20,0.97),rgba(11,11,12,0.97))] shadow-[0_18px_42px_rgba(31,95,159,0.24)]',
-    process: 'border-[rgba(31,95,159,0.66)] bg-[linear-gradient(180deg,rgba(31,95,159,0.48),rgba(23,79,134,0.38))] text-[#f5f5f5]',
-    plate: 'bg-[#f2de35] text-[#0b0b0c] border-[#151515]',
-    glow: 'group-hover:shadow-[0_0_40px_rgba(31,95,159,0.28)]',
+      'border-[rgba(47,126,232,0.6)] bg-[linear-gradient(160deg,rgba(15,17,24,0.98),rgba(10,12,20,0.98))] shadow-[0_20px_48px_rgba(47,126,232,0.22),0_0_0_1px_rgba(93,175,255,0.1)_inset]',
+    process: 'border-[rgba(47,126,232,0.65)] bg-[linear-gradient(160deg,rgba(47,126,232,0.42),rgba(26,109,212,0.32))] text-[#f0f4ff]',
+    plate: 'bg-[#f5e342] text-[#060810] border-[#101010]',
+    glow: 'group-hover:shadow-[0_24px_56px_rgba(47,126,232,0.3),0_0_0_1px_rgba(93,175,255,0.2)_inset]',
   },
   critical: {
     shell:
-      'border-[rgba(69,164,237,0.70)] bg-[linear-gradient(168deg,rgba(18,18,20,0.97),rgba(11,11,12,0.97))] shadow-[0_18px_42px_rgba(69,164,237,0.22)]',
-    process: 'border-[rgba(69,164,237,0.68)] bg-[linear-gradient(180deg,rgba(31,95,159,0.52),rgba(23,79,134,0.4))] text-[#f5f5f5]',
-    plate: 'bg-[#f2de35] text-[#0b0b0c] border-[#151515]',
-    glow: 'group-hover:shadow-[0_0_42px_rgba(69,164,237,0.26)]',
+      'border-[rgba(59,168,240,0.72)] bg-[linear-gradient(160deg,rgba(15,17,24,0.98),rgba(10,12,20,0.98))] shadow-[0_20px_48px_rgba(47,126,232,0.24)]',
+    process: 'border-[rgba(59,168,240,0.7)] bg-[linear-gradient(160deg,rgba(47,126,232,0.48),rgba(26,109,212,0.38))] text-[#f0f4ff]',
+    plate: 'bg-[#f5e342] text-[#060810] border-[#101010]',
+    glow: 'group-hover:shadow-[0_24px_56px_rgba(47,126,232,0.32)]',
   },
   disabled: {
     shell:
-      'border-[rgba(58,61,66,0.74)] bg-[linear-gradient(168deg,rgba(18,18,20,0.82),rgba(11,11,12,0.82))] opacity-60 saturate-[0.82]',
-    process: 'border-[rgba(58,61,66,0.72)] bg-[rgba(26,27,30,0.78)] text-[#9ca3af]',
-    plate: 'bg-[#d3c327] text-[#1a1b1e] border-[#262626]',
+      'border-[rgba(46,50,64,0.6)] bg-[linear-gradient(160deg,rgba(23,25,33,0.82),rgba(10,12,20,0.82))] opacity-55 saturate-[0.8]',
+    process: 'border-[rgba(46,50,64,0.65)] bg-[rgba(23,25,33,0.75)] text-[#8b92a6]',
+    plate: 'bg-[#d6c82a] text-[#1a1b1e] border-[#252525]',
     glow: '',
   },
 };
@@ -146,7 +146,7 @@ export function VehicleCard({
 
       <div
         className="pointer-events-none absolute inset-0 rounded-[24px] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05), 0 0 34px rgba(69,164,237,0.14)' }}
+        style={{ boxShadow: 'inset 0 0 0 1px rgba(93,175,255,0.08), 0 0 40px rgba(47,126,232,0.16)' }}
       />
     </motion.article>
   );
