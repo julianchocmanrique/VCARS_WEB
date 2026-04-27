@@ -19,11 +19,11 @@ export function getApiBaseUrlCandidates(): string[] {
     const protocol = window.location.protocol || 'http:';
     const hostname = window.location.hostname || 'localhost';
     const origin = window.location.origin || `${protocol}//${hostname}`;
-    list.unshift(`${origin}${String(BASE_PATH).replace(/\/+$/, '')}/api/backend`);
     if (hostname) {
+      list.unshift(`${protocol}//${hostname}:4000`);
       list.push(`${protocol}//${hostname}:4010`);
-      list.push(`${protocol}//${hostname}:4000`);
     }
+    list.push(`${origin}${String(BASE_PATH).replace(/\/+$/, '')}/api/backend`);
   }
 
   list.push(DEFAULT_API_URL);
