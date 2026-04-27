@@ -28,7 +28,25 @@ jobs:
             set -euo pipefail
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
-            SRC=/root/.openclaw/workspace/VCARS_API_SRC
+            SRC=""
+            for CANDIDATE in \
+              /root/.openclaw/workspace/VCARS_API_SRC \
+              /root/.openclaw/workspace/VCARS_API \
+              /root/.openclaw/workspace/vcars-api \
+              /root/.openclaw/workspace/deployments/vcars-api \
+              /root/vcars-api
+            do
+              if [ -d "$CANDIDATE/.git" ]; then
+                SRC="$CANDIDATE"
+                break
+              fi
+            done
+            if [ -z "$SRC" ]; then
+              SRC=/root/.openclaw/workspace/deployments/vcars-api
+              mkdir -p /root/.openclaw/workspace/deployments
+              rm -rf "$SRC"
+              git clone https://github.com/julianchocmanrique/vcars-api.git "$SRC"
+            fi
             cd "$SRC"
             git fetch --prune origin
             git checkout main
@@ -59,7 +77,25 @@ jobs:
             set -euo pipefail
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
-            SRC=/root/.openclaw/workspace/VCARS_API_SRC
+            SRC=""
+            for CANDIDATE in \
+              /root/.openclaw/workspace/VCARS_API_SRC \
+              /root/.openclaw/workspace/VCARS_API \
+              /root/.openclaw/workspace/vcars-api \
+              /root/.openclaw/workspace/deployments/vcars-api \
+              /root/vcars-api
+            do
+              if [ -d "$CANDIDATE/.git" ]; then
+                SRC="$CANDIDATE"
+                break
+              fi
+            done
+            if [ -z "$SRC" ]; then
+              SRC=/root/.openclaw/workspace/deployments/vcars-api
+              mkdir -p /root/.openclaw/workspace/deployments
+              rm -rf "$SRC"
+              git clone https://github.com/julianchocmanrique/vcars-api.git "$SRC"
+            fi
             cd "$SRC"
             git fetch --prune origin
             git checkout main
@@ -87,7 +123,25 @@ jobs:
             set -euo pipefail
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
-            SRC=/root/.openclaw/workspace/VCARS_API_SRC
+            SRC=""
+            for CANDIDATE in \
+              /root/.openclaw/workspace/VCARS_API_SRC \
+              /root/.openclaw/workspace/VCARS_API \
+              /root/.openclaw/workspace/vcars-api \
+              /root/.openclaw/workspace/deployments/vcars-api \
+              /root/vcars-api
+            do
+              if [ -d "$CANDIDATE/.git" ]; then
+                SRC="$CANDIDATE"
+                break
+              fi
+            done
+            if [ -z "$SRC" ]; then
+              SRC=/root/.openclaw/workspace/deployments/vcars-api
+              mkdir -p /root/.openclaw/workspace/deployments
+              rm -rf "$SRC"
+              git clone https://github.com/julianchocmanrique/vcars-api.git "$SRC"
+            fi
             cd "$SRC"
             git fetch --prune origin
             git checkout main
