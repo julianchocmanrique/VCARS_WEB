@@ -17,7 +17,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 1200s
+          timeout: 45s
           command_timeout: 120m
           script: |
             set -euo pipefail
@@ -51,7 +51,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 1200s
+          timeout: 45s
           command_timeout: 120m
           script: |
             set -euo pipefail
@@ -80,7 +80,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 1200s
+          timeout: 45s
           command_timeout: 120m
           script: |
             set -euo pipefail
