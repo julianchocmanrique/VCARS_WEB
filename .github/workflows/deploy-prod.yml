@@ -20,7 +20,7 @@ jobs:
           script: |
             set -euo pipefail
             LOCKFILE=/tmp/vcars_web_prod_deploy.lock
-            flock -w 5400 "$LOCKFILE" bash -s <<'INNER'
+            flock -w 45 "$LOCKFILE" bash -s <<'INNER'
             set -euo pipefail
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
