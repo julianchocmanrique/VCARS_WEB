@@ -9,18 +9,20 @@ jobs:
   deploy_lab:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy LAB via SSH
+      - name: Deploy LAB via SSH (intento 1)
+        id: deploy_try_1
+        continue-on-error: true
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 1200s
+          timeout: 45s
           command_timeout: 120m
           script: |
             set -euo pipefail
             LOCKFILE=/tmp/vcars_web_lab_deploy.lock
-            flock -w 5400 "$LOCKFILE" bash -s <<'INNER'
+            flock -w 45 "$LOCKFILE" bash -s <<'INNER'
             set -euo pipefail
             export DOCKER_BUILDKIT=1
             export COMPOSE_DOCKER_CLI_BUILD=1
@@ -35,6 +37,65 @@ jobs:
             # Limpieza de contenedor legado que ocupaba el puerto 3010.
             docker rm -f vcars-web2 >/dev/null 2>&1 || true
 
+            docker compose -p vcars_web_lab -f docker-compose.lab.yml up -d --build
+            docker compose -p vcars_web_lab -f docker-compose.lab.yml ps
+            curl -fsSIL --max-time 20 http://127.0.0.1:3010/vcars/login/ || true
+            INNER
+
+      - name: Deploy LAB via SSH (intento 2)
+        id: deploy_try_2
+        if: steps.deploy_try_1.outcome == 'failure'
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 45s
+          command_timeout: 120m
+          script: |
+            set -euo pipefail
+            LOCKFILE=/tmp/vcars_web_lab_deploy.lock
+            flock -w 45 "$LOCKFILE" bash -s <<'INNER'
+            set -euo pipefail
+            export DOCKER_BUILDKIT=1
+            export COMPOSE_DOCKER_CLI_BUILD=1
+            SRC=/root/.openclaw/workspace/VCARS_WEB_SRC
+            cd "$SRC"
+            git fetch --prune origin
+            git checkout lab
+            git reset --hard origin/lab
+            test -f .env.lab || cp .env.lab.example .env.lab
+            docker rm -f vcars-web2 >/dev/null 2>&1 || true
+            docker compose -p vcars_web_lab -f docker-compose.lab.yml up -d --build
+            docker compose -p vcars_web_lab -f docker-compose.lab.yml ps
+            curl -fsSIL --max-time 20 http://127.0.0.1:3010/vcars/login/ || true
+            INNER
+
+      - name: Deploy LAB via SSH (intento 3)
+        id: deploy_try_3
+        if: steps.deploy_try_1.outcome == 'failure' && steps.deploy_try_2.outcome == 'failure'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 45s
+          command_timeout: 120m
+          script: |
+            set -euo pipefail
+            LOCKFILE=/tmp/vcars_web_lab_deploy.lock
+            flock -w 45 "$LOCKFILE" bash -s <<'INNER'
+            set -euo pipefail
+            export DOCKER_BUILDKIT=1
+            export COMPOSE_DOCKER_CLI_BUILD=1
+            SRC=/root/.openclaw/workspace/VCARS_WEB_SRC
+            cd "$SRC"
+            git fetch --prune origin
+            git checkout lab
+            git reset --hard origin/lab
+            test -f .env.lab || cp .env.lab.example .env.lab
+            docker rm -f vcars-web2 >/dev/null 2>&1 || true
             docker compose -p vcars_web_lab -f docker-compose.lab.yml up -d --build
             docker compose -p vcars_web_lab -f docker-compose.lab.yml ps
             curl -fsSIL --max-time 20 http://127.0.0.1:3010/vcars/login/ || true
