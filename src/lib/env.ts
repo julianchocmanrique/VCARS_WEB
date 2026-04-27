@@ -19,11 +19,17 @@ export function getApiBaseUrlCandidates(): string[] {
     const protocol = window.location.protocol || 'http:';
     const hostname = window.location.hostname || 'localhost';
     const origin = window.location.origin || `${protocol}//${hostname}`;
-    if (hostname) {
-      list.unshift(`${protocol}//${hostname}:4000`);
+    const sameOriginProxy = `${origin}${String(BASE_PATH).replace(/\/+$/, '')}/api/backend`;
+
+    // Prefer the same-origin proxy first to avoid cross-port drift between LAB/PROD.
+    list.push(sameOriginProxy);
+
+    // Raw port fallbacks are only helpful for local development.
+    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+    if (isLocalHost && hostname) {
+      list.push(`${protocol}//${hostname}:4000`);
       list.push(`${protocol}//${hostname}:4010`);
     }
-    list.push(`${origin}${String(BASE_PATH).replace(/\/+$/, '')}/api/backend`);
   }
 
   list.push(DEFAULT_API_URL);
