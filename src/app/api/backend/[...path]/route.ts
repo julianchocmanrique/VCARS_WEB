@@ -21,6 +21,10 @@ function getBackendCandidates(req: NextRequest): string[] {
     fromEnv,
     `http://${host}:4010`,
     `http://${host}:4000`,
+    'http://172.17.0.1:4010',
+    'http://172.17.0.1:4000',
+    'http://host.docker.internal:4010',
+    'http://host.docker.internal:4000',
     'http://127.0.0.1:4010',
     'http://127.0.0.1:4000',
   ].filter(Boolean);

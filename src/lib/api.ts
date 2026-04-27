@@ -19,10 +19,11 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const bases = getApiBaseUrlCandidates();
   let lastNetworkError: unknown = null;
   let res: Response | null = null;
+  let lastServerErrorText = '';
 
   for (const base of bases) {
     try {
-      res = await fetch(joinUrl(base, path), {
+      const candidateRes = await fetch(joinUrl(base, path), {
         ...init,
         headers: {
           Accept: 'application/json',
@@ -32,6 +33,14 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
         },
         cache: 'no-store',
       });
+
+      if (candidateRes.status >= 500) {
+        const failText = await candidateRes.text().catch(() => '');
+        lastServerErrorText = failText || `HTTP ${candidateRes.status}`;
+        continue;
+      }
+
+      res = candidateRes;
       break;
     } catch (err) {
       lastNetworkError = err;
@@ -39,7 +48,9 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!res) {
-    const suffix = lastNetworkError instanceof Error ? `: ${lastNetworkError.message}` : '';
+    const networkSuffix = lastNetworkError instanceof Error ? `: ${lastNetworkError.message}` : '';
+    const serverSuffix = lastServerErrorText ? `: ${lastServerErrorText}` : '';
+    const suffix = networkSuffix || serverSuffix;
     throw new Error(`No se pudo conectar al backend${suffix}`);
   }
 
