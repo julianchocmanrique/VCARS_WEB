@@ -270,7 +270,6 @@ export default function IngresoActivoClient() {
           <div className="vc-list-header process-header">
             <div className="process-header-main">
               <h2 className="vc-list-title">Lista de vehículos</h2>
-              <p className="vc-list-subtitle">Cards premium con imagen, estado y placa</p>
             </div>
             <div className="vc-list-tools">
               <span className="vc-pill">{viewEntries.length}</span>
