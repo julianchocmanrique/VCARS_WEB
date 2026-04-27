@@ -1,0 +1,47 @@
+name: Reset VCARS PROD Data to Zero
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - ".github/workflows/reset-vcars-prod-data.yml"
+  workflow_dispatch:
+
+jobs:
+  reset_prod_data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reset DB/API data on VPS
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 60s
+          command_timeout: 60m
+          script: |
+            set -euo pipefail
+            LOCKFILE=/tmp/vcars_reset_prod_data.lock
+            flock -w 120 "$LOCKFILE" bash -s <<'INNER'
+            set -euo pipefail
+
+            SQL="TRUNCATE TABLE \"ServiceOrderAsset\", \"ServiceOrderForm\", \"QuoteItem\", \"FormalQuote\", \"InternalQuote\", \"Notification\", \"Entry\", \"Vehicle\", \"Customer\" RESTART IDENTITY CASCADE;"
+
+            # Legacy stack (web currently proxying to this one)
+            if docker ps -a --format '{{.Names}}' | grep -q '^vcars-api-db-1$'; then
+              docker exec -i vcars-api-db-1 psql -U vcars -d vcars -v ON_ERROR_STOP=1 -c "$SQL"
+            fi
+
+            # Split PROD stack
+            if docker ps -a --format '{{.Names}}' | grep -q '^vcars-db-prod$'; then
+              docker exec -i vcars-db-prod psql -U vcars -d vcars_prod -v ON_ERROR_STOP=1 -c "$SQL"
+            fi
+
+            # Remove stored uploaded assets/signatures if present
+            rm -rf /root/.openclaw/workspace/deployments/vcars-api/uploads/service-orders/* || true
+            rm -rf /root/.openclaw/workspace/deployments/vcars-api/dist/uploads/service-orders/* || true
+            rm -rf /root/.openclaw/workspace/VCARS_API_SRC/uploads/service-orders/* || true
+            rm -rf /root/.openclaw/workspace/VCARS_API_SRC/dist/uploads/service-orders/* || true
+
+            echo "RESET_OK"
+            INNER

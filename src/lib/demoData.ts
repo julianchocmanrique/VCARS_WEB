@@ -308,42 +308,14 @@ export function getDemoFormsByPlate(): DemoFormsByPlate {
 }
 
 export function applyDemoEntries(existing: Entry[]): Entry[] {
-  const demo = getDemoEntries();
   const existingList = Array.isArray(existing) ? existing : [];
-  const existingByPlate = new Map(
-    existingList.map((item) => [String(item.placa || '').toUpperCase(), item] as const),
-  );
-
-  const mergedDemo = demo.map((demoEntry) => {
-    const key = String(demoEntry.placa || '').toUpperCase();
-    const existingEntry = existingByPlate.get(key);
-    if (!existingEntry) return demoEntry;
-    const merged = { ...demoEntry, ...existingEntry } as Entry;
-    for (const [fieldKey, demoValue] of Object.entries(demoEntry) as Array<[keyof Entry, unknown]>) {
-      const existingValue = (existingEntry as Record<string, unknown>)[fieldKey as string];
-      if (existingValue == null) {
-        (merged as Record<string, unknown>)[fieldKey as string] = demoValue;
-        continue;
-      }
-      if (typeof existingValue === 'string' && existingValue.trim().length === 0) {
-        (merged as Record<string, unknown>)[fieldKey as string] = demoValue;
-        continue;
-      }
-      if (Array.isArray(existingValue) && existingValue.length === 0) {
-        (merged as Record<string, unknown>)[fieldKey as string] = demoValue;
-        continue;
-      }
-      if (typeof existingValue === 'object' && !Array.isArray(existingValue)) {
-        const keys = Object.keys(existingValue as Record<string, unknown>);
-        if (keys.length === 0) {
-          (merged as Record<string, unknown>)[fieldKey as string] = demoValue;
-        }
-      }
-    }
-    return merged;
+  const demoPlates = new Set(getDemoEntries().map((d) => String(d.placa || '').toUpperCase()));
+  return existingList.filter((item) => {
+    const plate = String(item.placa || '').toUpperCase();
+    const id = String(item.id || '').toLowerCase();
+    if (!plate) return false;
+    if (demoPlates.has(plate)) return false;
+    if (id.startsWith('demo-')) return false;
+    return true;
   });
-
-  const demoPlates = new Set(demo.map((d) => d.placa));
-  const custom = existingList.filter((item) => !demoPlates.has(String(item.placa || '').toUpperCase()));
-  return [...mergedDemo, ...custom];
 }
