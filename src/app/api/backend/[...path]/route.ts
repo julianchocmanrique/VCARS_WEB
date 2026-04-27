@@ -17,10 +17,13 @@ function parseHost(hostHeader: string | null): string {
 function getBackendCandidates(req: NextRequest): string[] {
   const host = parseHost(req.headers.get('host'));
   const fromEnv = String(process.env.API_PROXY_TARGET || process.env.NEXT_PUBLIC_API_URL || '').trim();
+  const dockerGateways = Array.from({ length: 15 }, (_, idx) => `172.${idx + 17}.0.1`);
   const list = [
     fromEnv,
     `http://${host}:4010`,
     `http://${host}:4000`,
+    ...dockerGateways.map((ip) => `http://${ip}:4010`),
+    ...dockerGateways.map((ip) => `http://${ip}:4000`),
     'http://172.17.0.1:4010',
     'http://172.17.0.1:4000',
     'http://host.docker.internal:4010',
