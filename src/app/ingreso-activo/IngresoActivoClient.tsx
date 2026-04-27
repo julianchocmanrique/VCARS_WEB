@@ -272,7 +272,7 @@ export default function IngresoActivoClient() {
           items={NAV_ITEMS}
           activeKey="process"
           onMenuClick={() => setDrawerOpen(true)}
-          rightSlot={<span className="hidden rounded-full border border-[rgba(58,61,66,0.9)] bg-[rgba(18,18,20,0.8)] px-3 py-1.5 text-[11px] font-semibold text-[#d1d5db] md:inline-flex">Proceso activo</span>}
+          rightSlot={<span className="hidden rounded-full border border-[rgba(46,50,64,0.8)] bg-[rgba(23,25,33,0.72)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8b92a6] backdrop-blur-sm md:inline-flex">Proceso activo</span>}
         />
       </div>
 
@@ -290,7 +290,6 @@ export default function IngresoActivoClient() {
           <div className="vc-list-header process-header">
             <div className="process-header-main">
               <h2 className="vc-list-title">Lista de vehículos</h2>
-              <p className="vc-list-subtitle">Cards premium con imagen, estado y placa</p>
             </div>
             <div className="vc-list-tools">
               <span className="vc-pill">{viewEntries.length}</span>
@@ -302,7 +301,7 @@ export default function IngresoActivoClient() {
           </div>
 
           {role === 'administrativo' ? (
-            <div className="mb-3 rounded-xl border border-[rgba(31,95,159,0.35)] bg-[rgba(18,27,40,0.52)] px-3 py-3">
+            <div className="mb-3 rounded-xl border border-[rgba(47,126,232,0.32)] bg-[rgba(15,17,24,0.72)] px-3 py-3 backdrop-blur-sm">
               <div className="vc-grid-2">
                 <div>
                   <label className="vc-label" htmlFor="party-filter-mode">Filtrar por</label>
@@ -357,9 +356,9 @@ export default function IngresoActivoClient() {
           ) : null}
 
           {stageFilter !== 'all' ? (
-            <div className="mb-3 flex items-center justify-between rounded-xl border border-[rgba(31,95,159,0.35)] bg-[rgba(18,27,40,0.52)] px-3 py-2 text-sm text-[#dff1ff]">
-              <span>Filtro por etapa: <strong>{STAGE_LABEL[stageFilter]}</strong></span>
-              <Link href="/ingreso-activo" className="rounded-full border border-[rgba(95,158,220,0.45)] px-2.5 py-1 text-xs text-[#bfe4ff] hover:bg-[rgba(95,158,220,0.14)]">Quitar</Link>
+            <div className="mb-3 flex items-center justify-between rounded-xl border border-[rgba(47,126,232,0.38)] bg-[rgba(15,17,24,0.72)] px-3 py-2 text-sm text-[#c4cad8] backdrop-blur-sm">
+              <span>Filtro por etapa: <strong className="text-[#93ccff]">{STAGE_LABEL[stageFilter]}</strong></span>
+              <Link href="/ingreso-activo" className="rounded-full border border-[rgba(47,126,232,0.45)] px-2.5 py-1 text-xs font-semibold text-[#93ccff] transition hover:bg-[rgba(47,126,232,0.18)]">Quitar</Link>
             </div>
           ) : null}
 
