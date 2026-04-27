@@ -40,6 +40,21 @@ function normalize(entry: Entry): Entry {
   return { ...entry, status: entry.status || 'active' };
 }
 
+function toMillis(value?: string): number {
+  const raw = String(value || '').trim();
+  if (!raw) return 0;
+  const ms = Date.parse(raw);
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function sortByRecent(list: Entry[]): Entry[] {
+  return [...list].sort((a, b) => {
+    const am = Math.max(toMillis(a.updatedAt), toMillis(a.fecha));
+    const bm = Math.max(toMillis(b.updatedAt), toMillis(b.fecha));
+    return bm - am;
+  });
+}
+
 function splitVehicleLabel(raw?: string): { name: string; version: string } {
   const value = String(raw || '').trim();
   if (!value) return { name: 'Vehículo sin nombre', version: '' };
@@ -132,7 +147,7 @@ export default function IngresoActivoClient() {
     const seeded = applyDemoEntries(localRawEntries);
     setEntries(seeded);
     ensureDemoFormsSeed();
-    const localEntries = seeded.map(normalize);
+    const localEntries = sortByRecent(seeded.map(normalize));
 
     queueMicrotask(() => {
       setMounted(true);
@@ -145,7 +160,7 @@ export default function IngresoActivoClient() {
         const vehicles = await listVehicles({ take: 50 });
         const mapped = vehicles.map(apiVehicleToEntry).filter(Boolean) as Entry[];
         const merged = applyDemoEntries(mapped);
-        const normalized = merged.map(normalize);
+        const normalized = sortByRecent(merged.map(normalize));
         setEntries(normalized);
         setEntriesState(normalized);
       } catch (e) {
