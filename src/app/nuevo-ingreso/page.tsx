@@ -90,6 +90,16 @@ type FeedbackState = {
   message: string;
 } | null;
 
+function isDataImageUrl(value: string): boolean {
+  return String(value || '').startsWith('data:image/');
+}
+
+function keepPersistentAssetValue(value: string): string {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  return isDataImageUrl(raw) ? '' : raw;
+}
+
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -533,6 +543,18 @@ export default function NuevoIngresoPage() {
       const persistedSignatures = backend
         ? await withTimeout(uploadReceptionSignatures(normalizedPlate, signaturesByRole), 35000, 'subida de firmas')
         : signaturesByRole;
+      const persistedPhotosForStorage: Record<PhotoSlotKey, string> = {
+        superior: keepPersistentAssetValue(persistedPhotos.superior),
+        inferior: keepPersistentAssetValue(persistedPhotos.inferior),
+        lateralDerecho: keepPersistentAssetValue(persistedPhotos.lateralDerecho),
+        lateralIzquierdo: keepPersistentAssetValue(persistedPhotos.lateralIzquierdo),
+        frontal: keepPersistentAssetValue(persistedPhotos.frontal),
+        trasero: keepPersistentAssetValue(persistedPhotos.trasero),
+      };
+      const persistedSignaturesForStorage: Record<SignaturePadKey, string> = {
+        cliente: keepPersistentAssetValue(persistedSignatures.cliente),
+        taller: keepPersistentAssetValue(persistedSignatures.taller),
+      };
 
       const nowISO = new Date().toISOString();
       const inventarioSerialized = JSON.stringify(inventarioAccesorios);
@@ -568,8 +590,8 @@ export default function NuevoIngresoPage() {
         soatExpiry: soatExpiry.trim(),
         rtmExpiry: rtmExpiry.trim(),
         wantsOldParts,
-        intakePhotosByZone: persistedPhotos,
-        intakePhotos: PHOTO_SLOTS.map((slot) => persistedPhotos[slot.key]).filter(Boolean),
+        intakePhotosByZone: persistedPhotosForStorage,
+        intakePhotos: PHOTO_SLOTS.map((slot) => persistedPhotosForStorage[slot.key]).filter(Boolean),
         paso: 'Orden de servicio',
         stepIndex: 0,
         status: 'active',
@@ -614,26 +636,26 @@ export default function NuevoIngresoPage() {
         condicionFisica: condicionFisica.trim(),
         observacionesAccesorios: additionalAccessoriesNotes.trim(),
         inventarioAccesorios: inventarioSerialized,
-        photo_superior: persistedPhotos.superior || '',
-        photo_inferior: persistedPhotos.inferior || '',
-        photo_lateralDerecho: persistedPhotos.lateralDerecho || '',
-        photo_lateralIzquierdo: persistedPhotos.lateralIzquierdo || '',
-        photo_frontal: persistedPhotos.frontal || '',
-        photo_trasero: persistedPhotos.trasero || '',
-        photo_verified_superior: persistedPhotos.superior ? 'SI' : '',
-        photo_verified_inferior: persistedPhotos.inferior ? 'SI' : '',
-        photo_verified_lateralDerecho: persistedPhotos.lateralDerecho ? 'SI' : '',
-        photo_verified_lateralIzquierdo: persistedPhotos.lateralIzquierdo ? 'SI' : '',
-        photo_verified_frontal: persistedPhotos.frontal ? 'SI' : '',
-        photo_verified_trasero: persistedPhotos.trasero ? 'SI' : '',
-        photo_verified_source_superior: persistedPhotos.superior ? 'AUTO' : '',
-        photo_verified_source_inferior: persistedPhotos.inferior ? 'AUTO' : '',
-        photo_verified_source_lateralDerecho: persistedPhotos.lateralDerecho ? 'AUTO' : '',
-        photo_verified_source_lateralIzquierdo: persistedPhotos.lateralIzquierdo ? 'AUTO' : '',
-        photo_verified_source_frontal: persistedPhotos.frontal ? 'AUTO' : '',
-        photo_verified_source_trasero: persistedPhotos.trasero ? 'AUTO' : '',
-        firmaClienteEmpresa: persistedSignatures.cliente || '',
-        firmaTallerRecibe: persistedSignatures.taller || '',
+        photo_superior: persistedPhotosForStorage.superior || '',
+        photo_inferior: persistedPhotosForStorage.inferior || '',
+        photo_lateralDerecho: persistedPhotosForStorage.lateralDerecho || '',
+        photo_lateralIzquierdo: persistedPhotosForStorage.lateralIzquierdo || '',
+        photo_frontal: persistedPhotosForStorage.frontal || '',
+        photo_trasero: persistedPhotosForStorage.trasero || '',
+        photo_verified_superior: persistedPhotosForStorage.superior ? 'SI' : '',
+        photo_verified_inferior: persistedPhotosForStorage.inferior ? 'SI' : '',
+        photo_verified_lateralDerecho: persistedPhotosForStorage.lateralDerecho ? 'SI' : '',
+        photo_verified_lateralIzquierdo: persistedPhotosForStorage.lateralIzquierdo ? 'SI' : '',
+        photo_verified_frontal: persistedPhotosForStorage.frontal ? 'SI' : '',
+        photo_verified_trasero: persistedPhotosForStorage.trasero ? 'SI' : '',
+        photo_verified_source_superior: persistedPhotosForStorage.superior ? 'AUTO' : '',
+        photo_verified_source_inferior: persistedPhotosForStorage.inferior ? 'AUTO' : '',
+        photo_verified_source_lateralDerecho: persistedPhotosForStorage.lateralDerecho ? 'AUTO' : '',
+        photo_verified_source_lateralIzquierdo: persistedPhotosForStorage.lateralIzquierdo ? 'AUTO' : '',
+        photo_verified_source_frontal: persistedPhotosForStorage.frontal ? 'AUTO' : '',
+        photo_verified_source_trasero: persistedPhotosForStorage.trasero ? 'AUTO' : '',
+        firmaClienteEmpresa: persistedSignaturesForStorage.cliente || '',
+        firmaTallerRecibe: persistedSignaturesForStorage.taller || '',
       });
 
       const list = getEntries();
