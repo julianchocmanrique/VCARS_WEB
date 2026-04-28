@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
+import { ChangeEvent, FormEvent, useMemo, useRef, useState } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { ActionButton, type ActionButtonState } from '@/components/ui/ActionButton';
@@ -59,6 +59,7 @@ const INVENTORY_ITEMS = [
 ] as const;
 
 type PhotoSlotKey = (typeof PHOTO_SLOTS)[number]['key'];
+type DateFieldKey = 'entryDate' | 'expectedDeliveryDate' | 'soatExpiry' | 'rtmExpiry';
 
 const EMPTY_INTAKE_PHOTOS: Record<PhotoSlotKey, string> = {
   superior: '',
@@ -85,6 +86,13 @@ function buildOrderNumber(): string {
   const d = String(now.getDate()).padStart(2, '0');
   const t = String(now.getTime()).slice(-4);
   return `OS-${y}${m}${d}-${t}`;
+}
+
+const INVENTORY_VALUE_SEQUENCE: InventoryValue[] = ['', 'S', 'N', 'C', 'I'];
+
+function nextInventoryValue(value: InventoryValue): InventoryValue {
+  const index = INVENTORY_VALUE_SEQUENCE.indexOf(value);
+  return INVENTORY_VALUE_SEQUENCE[(index + 1) % INVENTORY_VALUE_SEQUENCE.length];
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -116,6 +124,12 @@ async function uploadReceptionPhotos(
 
 export default function NuevoIngresoPage() {
   const router = useRouter();
+  const dateInputRefs = useRef<Record<DateFieldKey, HTMLInputElement | null>>({
+    entryDate: null,
+    expectedDeliveryDate: null,
+    soatExpiry: null,
+    rtmExpiry: null,
+  });
 
   const [orderNumber, setOrderNumber] = useState(buildOrderNumber());
   const [entryDate, setEntryDate] = useState(todayISO());
@@ -198,6 +212,22 @@ export default function NuevoIngresoPage() {
 
   function setInventoryValue(itemKey: string, value: InventoryValue) {
     setInventarioAccesorios((prev) => ({ ...prev, [itemKey]: value }));
+  }
+
+  function registerDateInputRef(key: DateFieldKey, node: HTMLInputElement | null) {
+    dateInputRefs.current[key] = node;
+  }
+
+  function openDatePicker(key: DateFieldKey) {
+    const input = dateInputRefs.current[key];
+    if (!input) return;
+    try {
+      input.showPicker?.();
+    } catch {
+      // some browsers block showPicker; focus/click fallback
+    }
+    input.focus();
+    input.click();
   }
 
   async function onSubmit(e: FormEvent) {
@@ -387,8 +417,14 @@ export default function NuevoIngresoPage() {
             </div>
             <div>
               <label className="vc-label">Fecha entrada *</label>
-              <div className="vc-input-wrap">
-                <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
+              <div className="vc-input-wrap" onClick={() => openDatePicker('entryDate')} style={{ cursor: 'pointer' }}>
+                <input
+                  ref={(node) => registerDateInputRef('entryDate', node)}
+                  type="date"
+                  value={entryDate}
+                  onClick={() => openDatePicker('entryDate')}
+                  onChange={(e) => setEntryDate(e.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -396,8 +432,14 @@ export default function NuevoIngresoPage() {
           <div className="vc-grid-2">
             <div>
               <label className="vc-label">Fecha prevista entrega</label>
-              <div className="vc-input-wrap">
-                <input type="date" value={expectedDeliveryDate} onChange={(e) => setExpectedDeliveryDate(e.target.value)} />
+              <div className="vc-input-wrap" onClick={() => openDatePicker('expectedDeliveryDate')} style={{ cursor: 'pointer' }}>
+                <input
+                  ref={(node) => registerDateInputRef('expectedDeliveryDate', node)}
+                  type="date"
+                  value={expectedDeliveryDate}
+                  onClick={() => openDatePicker('expectedDeliveryDate')}
+                  onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                />
               </div>
             </div>
             <div>
@@ -648,14 +690,26 @@ export default function NuevoIngresoPage() {
           <div className="vc-grid-2">
             <div>
               <label className="vc-label">SOAT (vencimiento)</label>
-              <div className="vc-input-wrap">
-                <input type="date" value={soatExpiry} onChange={(e) => setSoatExpiry(e.target.value)} />
+              <div className="vc-input-wrap" onClick={() => openDatePicker('soatExpiry')} style={{ cursor: 'pointer' }}>
+                <input
+                  ref={(node) => registerDateInputRef('soatExpiry', node)}
+                  type="date"
+                  value={soatExpiry}
+                  onClick={() => openDatePicker('soatExpiry')}
+                  onChange={(e) => setSoatExpiry(e.target.value)}
+                />
               </div>
             </div>
             <div>
               <label className="vc-label">Rev. Tec. Mecánica (vencimiento)</label>
-              <div className="vc-input-wrap">
-                <input type="date" value={rtmExpiry} onChange={(e) => setRtmExpiry(e.target.value)} />
+              <div className="vc-input-wrap" onClick={() => openDatePicker('rtmExpiry')} style={{ cursor: 'pointer' }}>
+                <input
+                  ref={(node) => registerDateInputRef('rtmExpiry', node)}
+                  type="date"
+                  value={rtmExpiry}
+                  onClick={() => openDatePicker('rtmExpiry')}
+                  onChange={(e) => setRtmExpiry(e.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -666,20 +720,26 @@ export default function NuevoIngresoPage() {
           </p>
           <div className="vc-grid-2">
             {INVENTORY_ITEMS.map((item) => (
-              <div key={item.key} className="vc-input-wrap" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10, alignItems: 'center' }}>
+              <button
+                key={item.key}
+                type="button"
+                className="vc-input-wrap"
+                style={{
+                  width: '100%',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto',
+                  gap: 10,
+                  alignItems: 'center',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setInventoryValue(item.key, nextInventoryValue(inventarioAccesorios[item.key] || ''))}
+                aria-label={`Cambiar estado de ${item.label}`}
+                title="Click para cambiar entre -, S, N, C, I"
+              >
                 <span style={{ fontSize: 12, color: 'var(--vc-muted)' }}>{item.label}</span>
-                <select
-                  className="vc-select"
-                  value={inventarioAccesorios[item.key] || ''}
-                  onChange={(e) => setInventoryValue(item.key, e.target.value as InventoryValue)}
-                >
-                  <option value="">-</option>
-                  <option value="S">S</option>
-                  <option value="N">N</option>
-                  <option value="C">C</option>
-                  <option value="I">I</option>
-                </select>
-              </div>
+                <strong>{inventarioAccesorios[item.key] || '-'}</strong>
+              </button>
             ))}
           </div>
 
