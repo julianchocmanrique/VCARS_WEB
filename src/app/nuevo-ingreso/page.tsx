@@ -104,6 +104,21 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return await new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Timeout en ${label}`)), ms);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
 async function uploadReceptionPhotos(
   plate: string,
   photosByZone: Record<PhotoSlotKey, string>,
@@ -113,7 +128,11 @@ async function uploadReceptionPhotos(
     const source = String(photosByZone[slot.key] || '');
     if (!source.startsWith('data:image/')) continue;
     try {
-      const asset = await uploadServiceOrderAsset(plate, 'recepcion', `photo_${slot.key}`, source);
+      const asset = await withTimeout(
+        uploadServiceOrderAsset(plate, 'recepcion', `photo_${slot.key}`, source),
+        15000,
+        `subida de foto ${slot.label}`,
+      );
       uploaded[slot.key] = asset.url;
     } catch {
       // Keep fallback value if upload fails.
@@ -264,138 +283,150 @@ export default function NuevoIngresoPage() {
     setFeedback(null);
     setError('');
 
-    let backend: { vehicle?: { id?: string }; entry?: { id?: string } } | null = null;
     try {
-      backend = await createIngreso({
-        plate: placa.trim().toUpperCase(),
-        customerName: holderName.trim(),
-        customerPhone: telefono.trim(),
-        customerEmail: email.trim(),
-        vehicleModel: vehiculo.trim(),
-        vehicleColor: color.trim(),
-        receivedBy: recibio.trim(),
-        notes: fallaCliente.trim(),
-        mileageKm: kilometraje.trim() ? Number(kilometraje) : undefined,
+      let backend: { vehicle?: { id?: string }; entry?: { id?: string } } | null = null;
+      try {
+        backend = await withTimeout(
+          createIngreso({
+            plate: placa.trim().toUpperCase(),
+            customerName: holderName.trim(),
+            customerPhone: telefono.trim(),
+            customerEmail: email.trim(),
+            vehicleModel: vehiculo.trim(),
+            vehicleColor: color.trim(),
+            receivedBy: recibio.trim(),
+            notes: fallaCliente.trim(),
+            mileageKm: kilometraje.trim() ? Number(kilometraje) : undefined,
+            fuelLevel: fuelLevel.trim(),
+          }),
+          20000,
+          'creación de ingreso',
+        );
+      } catch {
+        backend = null;
+      }
+
+      const normalizedPlate = placa.trim().toUpperCase();
+      const persistedPhotos = backend
+        ? await withTimeout(uploadReceptionPhotos(normalizedPlate, intakePhotosByZone), 35000, 'subida de evidencias')
+        : intakePhotosByZone;
+
+      const nowISO = new Date().toISOString();
+      const inventarioSerialized = JSON.stringify(inventarioAccesorios);
+
+      const payload: Entry = {
+        id: `entry-${Date.now()}`,
+        orderNumber: orderNumber.trim(),
+        placa: normalizedPlate,
+        cliente: holderName.trim(),
+        ownerName: holderName.trim(),
+        companyEntity: companyEntity.trim(),
+        empresa: holderType === 'empresa' ? (companyEntity.trim() || holderName.trim()) : '',
+        nitCc: nitCc.trim(),
+        direccion: direccion.trim(),
+        telefono: telefono.trim(),
+        email: email.trim(),
+        vehiculo: vehiculo.trim(),
+        marca: marca.trim(),
+        modelo: modelo.trim(),
+        color: color.trim(),
+        invoiceName: invoiceName.trim() || holderName.trim(),
+        billingNitCc: billingNitCc.trim(),
+        paymentMethod,
+        creditDays: paymentMethod === 'credito' ? creditDays.trim() : '',
+        transferChannel: paymentMethod === 'transferencia' ? transferChannel.trim() : '',
         fuelLevel: fuelLevel.trim(),
+        receivedBy: recibio.trim(),
+        tecnicoAsignado: tecnicoAsignado.trim(),
+        additionalAccessoriesNotes: additionalAccessoriesNotes.trim(),
+        condicionFisica: condicionFisica.trim(),
+        inventarioAccesorios: inventarioSerialized,
+        expectedDeliveryDate: expectedDeliveryDate.trim(),
+        soatExpiry: soatExpiry.trim(),
+        rtmExpiry: rtmExpiry.trim(),
+        wantsOldParts,
+        intakePhotosByZone: persistedPhotos,
+        intakePhotos: PHOTO_SLOTS.map((slot) => persistedPhotos[slot.key]).filter(Boolean),
+        paso: 'Orden de servicio',
+        stepIndex: 0,
+        status: 'active',
+        fecha: entryDate.trim() || nowISO,
+        updatedAt: nowISO,
+        backend: backend
+          ? {
+              vehicleId: backend.vehicle?.id,
+              entryId: backend.entry?.id || null,
+            }
+          : undefined,
+      };
+
+      setStepFields(payload.placa, 'recepcion', {
+        entry_orderNumber: payload.orderNumber || '',
+        entry_fecha: payload.fecha || '',
+        entry_expectedDeliveryDate: payload.expectedDeliveryDate || '',
+        entry_placa: payload.placa || '',
+        entry_ownerName: payload.ownerName || '',
+        entry_cliente: payload.cliente || '',
+        entry_nitCc: payload.nitCc || '',
+        entry_companyEntity: payload.companyEntity || '',
+        entry_empresa: payload.empresa || '',
+        entry_direccion: payload.direccion || '',
+        entry_telefono: payload.telefono || '',
+        entry_email: payload.email || '',
+        entry_invoiceName: payload.invoiceName || '',
+        entry_billingNitCc: payload.billingNitCc || '',
+        entry_paymentMethod: payload.paymentMethod || '',
+        entry_transferChannel: payload.transferChannel || '',
+        entry_creditDays: payload.creditDays || '',
+        entry_color: payload.color || '',
+        entry_marca: payload.marca || '',
+        entry_modelo: payload.modelo || '',
+        entry_fuelLevel: payload.fuelLevel || '',
+        fallaCliente: fallaCliente.trim(),
+        kilometraje: kilometraje.trim(),
+        tecnicoAsignado: tecnicoAsignado.trim(),
+        wantsOldParts: wantsOldParts.trim(),
+        soatExpiry: soatExpiry.trim(),
+        rtmExpiry: rtmExpiry.trim(),
+        condicionFisica: condicionFisica.trim(),
+        observacionesAccesorios: additionalAccessoriesNotes.trim(),
+        inventarioAccesorios: inventarioSerialized,
+        photo_superior: persistedPhotos.superior || '',
+        photo_inferior: persistedPhotos.inferior || '',
+        photo_lateralDerecho: persistedPhotos.lateralDerecho || '',
+        photo_lateralIzquierdo: persistedPhotos.lateralIzquierdo || '',
+        photo_frontal: persistedPhotos.frontal || '',
+        photo_trasero: persistedPhotos.trasero || '',
+        photo_verified_superior: persistedPhotos.superior ? 'SI' : '',
+        photo_verified_inferior: persistedPhotos.inferior ? 'SI' : '',
+        photo_verified_lateralDerecho: persistedPhotos.lateralDerecho ? 'SI' : '',
+        photo_verified_lateralIzquierdo: persistedPhotos.lateralIzquierdo ? 'SI' : '',
+        photo_verified_frontal: persistedPhotos.frontal ? 'SI' : '',
+        photo_verified_trasero: persistedPhotos.trasero ? 'SI' : '',
+        photo_verified_source_superior: persistedPhotos.superior ? 'AUTO' : '',
+        photo_verified_source_inferior: persistedPhotos.inferior ? 'AUTO' : '',
+        photo_verified_source_lateralDerecho: persistedPhotos.lateralDerecho ? 'AUTO' : '',
+        photo_verified_source_lateralIzquierdo: persistedPhotos.lateralIzquierdo ? 'AUTO' : '',
+        photo_verified_source_frontal: persistedPhotos.frontal ? 'AUTO' : '',
+        photo_verified_source_trasero: persistedPhotos.trasero ? 'AUTO' : '',
       });
-    } catch {
-      backend = null;
+
+      const list = getEntries();
+      const next = [payload, ...list];
+      setEntries(next);
+      setCurrentEntry(payload);
+      setSubmitState('success');
+      setFeedback({ type: 'success', message: `Orden de servicio ${payload.placa} guardada correctamente.` });
+
+      setTimeout(() => router.push('/ingreso-activo'), 260);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo guardar la orden de servicio.';
+      setError(message);
+      setSubmitState('error');
+      setFeedback({ type: 'error', message });
+    } finally {
+      setSaving(false);
     }
-
-    const normalizedPlate = placa.trim().toUpperCase();
-    const persistedPhotos = backend
-      ? await uploadReceptionPhotos(normalizedPlate, intakePhotosByZone)
-      : intakePhotosByZone;
-
-    const nowISO = new Date().toISOString();
-    const inventarioSerialized = JSON.stringify(inventarioAccesorios);
-
-    const payload: Entry = {
-      id: `entry-${Date.now()}`,
-      orderNumber: orderNumber.trim(),
-      placa: normalizedPlate,
-      cliente: holderName.trim(),
-      ownerName: holderName.trim(),
-      companyEntity: companyEntity.trim(),
-      empresa: holderType === 'empresa' ? (companyEntity.trim() || holderName.trim()) : '',
-      nitCc: nitCc.trim(),
-      direccion: direccion.trim(),
-      telefono: telefono.trim(),
-      email: email.trim(),
-      vehiculo: vehiculo.trim(),
-      marca: marca.trim(),
-      modelo: modelo.trim(),
-      color: color.trim(),
-      invoiceName: invoiceName.trim() || holderName.trim(),
-      billingNitCc: billingNitCc.trim(),
-      paymentMethod,
-      creditDays: paymentMethod === 'credito' ? creditDays.trim() : '',
-      transferChannel: paymentMethod === 'transferencia' ? transferChannel.trim() : '',
-      fuelLevel: fuelLevel.trim(),
-      receivedBy: recibio.trim(),
-      tecnicoAsignado: tecnicoAsignado.trim(),
-      additionalAccessoriesNotes: additionalAccessoriesNotes.trim(),
-      condicionFisica: condicionFisica.trim(),
-      inventarioAccesorios: inventarioSerialized,
-      expectedDeliveryDate: expectedDeliveryDate.trim(),
-      soatExpiry: soatExpiry.trim(),
-      rtmExpiry: rtmExpiry.trim(),
-      wantsOldParts,
-      intakePhotosByZone: persistedPhotos,
-      intakePhotos: PHOTO_SLOTS.map((slot) => persistedPhotos[slot.key]).filter(Boolean),
-      paso: 'Orden de servicio',
-      stepIndex: 0,
-      status: 'active',
-      fecha: entryDate.trim() || nowISO,
-      updatedAt: nowISO,
-      backend: backend
-        ? {
-            vehicleId: backend.vehicle?.id,
-            entryId: backend.entry?.id || null,
-          }
-        : undefined,
-    };
-
-    setStepFields(payload.placa, 'recepcion', {
-      entry_orderNumber: payload.orderNumber || '',
-      entry_fecha: payload.fecha || '',
-      entry_expectedDeliveryDate: payload.expectedDeliveryDate || '',
-      entry_placa: payload.placa || '',
-      entry_ownerName: payload.ownerName || '',
-      entry_cliente: payload.cliente || '',
-      entry_nitCc: payload.nitCc || '',
-      entry_companyEntity: payload.companyEntity || '',
-      entry_empresa: payload.empresa || '',
-      entry_direccion: payload.direccion || '',
-      entry_telefono: payload.telefono || '',
-      entry_email: payload.email || '',
-      entry_invoiceName: payload.invoiceName || '',
-      entry_billingNitCc: payload.billingNitCc || '',
-      entry_paymentMethod: payload.paymentMethod || '',
-      entry_transferChannel: payload.transferChannel || '',
-      entry_creditDays: payload.creditDays || '',
-      entry_color: payload.color || '',
-      entry_marca: payload.marca || '',
-      entry_modelo: payload.modelo || '',
-      entry_fuelLevel: payload.fuelLevel || '',
-      fallaCliente: fallaCliente.trim(),
-      kilometraje: kilometraje.trim(),
-      tecnicoAsignado: tecnicoAsignado.trim(),
-      wantsOldParts: wantsOldParts.trim(),
-      soatExpiry: soatExpiry.trim(),
-      rtmExpiry: rtmExpiry.trim(),
-      condicionFisica: condicionFisica.trim(),
-      observacionesAccesorios: additionalAccessoriesNotes.trim(),
-      inventarioAccesorios: inventarioSerialized,
-      photo_superior: persistedPhotos.superior || '',
-      photo_inferior: persistedPhotos.inferior || '',
-      photo_lateralDerecho: persistedPhotos.lateralDerecho || '',
-      photo_lateralIzquierdo: persistedPhotos.lateralIzquierdo || '',
-      photo_frontal: persistedPhotos.frontal || '',
-      photo_trasero: persistedPhotos.trasero || '',
-      photo_verified_superior: persistedPhotos.superior ? 'SI' : '',
-      photo_verified_inferior: persistedPhotos.inferior ? 'SI' : '',
-      photo_verified_lateralDerecho: persistedPhotos.lateralDerecho ? 'SI' : '',
-      photo_verified_lateralIzquierdo: persistedPhotos.lateralIzquierdo ? 'SI' : '',
-      photo_verified_frontal: persistedPhotos.frontal ? 'SI' : '',
-      photo_verified_trasero: persistedPhotos.trasero ? 'SI' : '',
-      photo_verified_source_superior: persistedPhotos.superior ? 'AUTO' : '',
-      photo_verified_source_inferior: persistedPhotos.inferior ? 'AUTO' : '',
-      photo_verified_source_lateralDerecho: persistedPhotos.lateralDerecho ? 'AUTO' : '',
-      photo_verified_source_lateralIzquierdo: persistedPhotos.lateralIzquierdo ? 'AUTO' : '',
-      photo_verified_source_frontal: persistedPhotos.frontal ? 'AUTO' : '',
-      photo_verified_source_trasero: persistedPhotos.trasero ? 'AUTO' : '',
-    });
-
-    const list = getEntries();
-    const next = [payload, ...list];
-    setEntries(next);
-    setCurrentEntry(payload);
-    setSubmitState('success');
-    setFeedback({ type: 'success', message: `Orden de servicio ${payload.placa} guardada correctamente.` });
-
-    setSaving(false);
-    setTimeout(() => router.push('/ingreso-activo'), 260);
   }
 
   return (
