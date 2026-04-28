@@ -26,6 +26,14 @@ const PHOTO_SLOTS = [
   { key: 'trasero', label: 'Trasero' },
 ] as const;
 
+const FUEL_LEVELS = [
+  { value: 'E', label: 'E', ratio: 0 },
+  { value: '1/4', label: '1/4', ratio: 0.25 },
+  { value: '1/2', label: '1/2', ratio: 0.5 },
+  { value: '3/4', label: '3/4', ratio: 0.75 },
+  { value: 'F', label: 'F', ratio: 1 },
+] as const;
+
 const INVENTORY_ITEMS = [
   { key: 'radio', label: 'Radio' },
   { key: 'cds', label: "CD's" },
@@ -60,6 +68,7 @@ const INVENTORY_ITEMS = [
 
 type PhotoSlotKey = (typeof PHOTO_SLOTS)[number]['key'];
 type DateFieldKey = 'entryDate' | 'expectedDeliveryDate' | 'soatExpiry' | 'rtmExpiry';
+type FuelLevelValue = (typeof FUEL_LEVELS)[number]['value'];
 
 const EMPTY_INTAKE_PHOTOS: Record<PhotoSlotKey, string> = {
   superior: '',
@@ -93,6 +102,14 @@ const INVENTORY_VALUE_SEQUENCE: InventoryValue[] = ['', 'S', 'N', 'C', 'I'];
 function nextInventoryValue(value: InventoryValue): InventoryValue {
   const index = INVENTORY_VALUE_SEQUENCE.indexOf(value);
   return INVENTORY_VALUE_SEQUENCE[(index + 1) % INVENTORY_VALUE_SEQUENCE.length];
+}
+
+function normalizeFuelLevel(raw?: string): FuelLevelValue {
+  const value = String(raw || '').trim().toUpperCase();
+  if (value === 'E' || value === '1/4' || value === '1/2' || value === '3/4' || value === 'F') return value;
+  if (value === 'EMPTY') return 'E';
+  if (value === 'FULL') return 'F';
+  return '1/2';
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -172,7 +189,7 @@ export default function NuevoIngresoPage() {
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
   const [color, setColor] = useState('');
-  const [fuelLevel, setFuelLevel] = useState('1/2');
+  const [fuelLevel, setFuelLevel] = useState<FuelLevelValue>('1/2');
   const [kilometraje, setKilometraje] = useState('');
   const [fallaCliente, setFallaCliente] = useState('');
   const [additionalAccessoriesNotes, setAdditionalAccessoriesNotes] = useState('');
@@ -193,6 +210,12 @@ export default function NuevoIngresoPage() {
 
   const holderLabel = useMemo(() => (holderType === 'empresa' ? 'Responsable / representante' : 'Propietario'), [holderType]);
   const vehiculo = useMemo(() => [marca.trim(), modelo.trim()].filter(Boolean).join(' '), [marca, modelo]);
+  const fuelNeedleAngle = useMemo(() => {
+    const match = FUEL_LEVELS.find((item) => item.value === fuelLevel);
+    const ratio = match ? match.ratio : 0.5;
+    const deg = -90 + ratio * 180;
+    return `${deg}deg`;
+  }, [fuelLevel]);
 
   async function onPickImage(slot: PhotoSlotKey, e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -650,14 +673,26 @@ export default function NuevoIngresoPage() {
           <div className="vc-grid-2">
             <div>
               <label className="vc-label">Nivel combustible</label>
-              <div className="vc-input-wrap">
-                <select className="vc-select" value={fuelLevel} onChange={(e) => setFuelLevel(e.target.value)}>
-                  <option value="E">E</option>
-                  <option value="1/4">1/4</option>
-                  <option value="1/2">1/2</option>
-                  <option value="3/4">3/4</option>
-                  <option value="F">F</option>
-                </select>
+              <div className="vc-input-wrap vc-fuel-wrap">
+                <div className="vc-fuel-gauge">
+                  <div className="vc-fuel-arc" />
+                  <div className="vc-fuel-needle" style={{ transform: `translateX(-50%) rotate(${fuelNeedleAngle})` }} />
+                  <div className="vc-fuel-pivot" />
+                  <span className="vc-fuel-mark vc-fuel-mark-e">E</span>
+                  <span className="vc-fuel-mark vc-fuel-mark-f">F</span>
+                </div>
+                <div className="vc-fuel-level-row">
+                  {FUEL_LEVELS.map((level) => (
+                    <button
+                      key={level.value}
+                      type="button"
+                      className={`vc-fuel-chip ${fuelLevel === level.value ? 'is-active' : ''}`}
+                      onClick={() => setFuelLevel(normalizeFuelLevel(level.value))}
+                    >
+                      {level.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <div>
@@ -779,12 +814,21 @@ export default function NuevoIngresoPage() {
           <div className="vc-photo-grid" style={{ marginTop: 10 }}>
             {PHOTO_SLOTS.map((slot) => {
               const src = intakePhotosByZone[slot.key];
+              const inputId = `new-upload-photo-${slot.key}`;
               return (
                 <div key={slot.key} className="vc-photo-item">
                   <p className="vc-photo-label">{slot.label}</p>
-                  <div className="vc-input-wrap">
-                    <input type="file" accept="image/*" onChange={(e) => onPickImage(slot.key, e)} />
-                  </div>
+                  <input
+                    id={inputId}
+                    className="vc-file-hidden-input"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => onPickImage(slot.key, e)}
+                  />
+                  <label htmlFor={inputId} className="vc-btn vc-photo-upload-btn">
+                    Subir foto
+                  </label>
                   {src ? (
                     <>
                       <img src={src} alt={`Foto ${slot.label}`} className="vc-photo-preview" />
