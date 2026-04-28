@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ChangeEvent, FormEvent, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { ActionButton, type ActionButtonState } from '@/components/ui/ActionButton';
@@ -69,6 +69,7 @@ const INVENTORY_ITEMS = [
 type PhotoSlotKey = (typeof PHOTO_SLOTS)[number]['key'];
 type DateFieldKey = 'entryDate' | 'expectedDeliveryDate' | 'soatExpiry' | 'rtmExpiry';
 type FuelLevelValue = (typeof FUEL_LEVELS)[number]['value'];
+type SignaturePadKey = 'cliente' | 'taller';
 
 const EMPTY_INTAKE_PHOTOS: Record<PhotoSlotKey, string> = {
   superior: '',
@@ -77,6 +78,11 @@ const EMPTY_INTAKE_PHOTOS: Record<PhotoSlotKey, string> = {
   lateralIzquierdo: '',
   frontal: '',
   trasero: '',
+};
+
+const SIGNATURE_UPLOAD_FIELD_BY_KEY: Record<SignaturePadKey, 'firmaClienteEmpresa' | 'firmaTallerRecibe'> = {
+  cliente: 'firmaClienteEmpresa',
+  taller: 'firmaTallerRecibe',
 };
 
 type FeedbackState = {
@@ -158,6 +164,28 @@ async function uploadReceptionPhotos(
   return uploaded;
 }
 
+async function uploadReceptionSignatures(
+  plate: string,
+  signatures: Record<SignaturePadKey, string>,
+): Promise<Record<SignaturePadKey, string>> {
+  const uploaded = { ...signatures };
+  for (const key of Object.keys(signatures) as SignaturePadKey[]) {
+    const source = String(signatures[key] || '');
+    if (!source.startsWith('data:image/')) continue;
+    try {
+      const asset = await withTimeout(
+        uploadServiceOrderAsset(plate, 'recepcion', SIGNATURE_UPLOAD_FIELD_BY_KEY[key], source),
+        15000,
+        `subida de firma ${key}`,
+      );
+      uploaded[key] = asset.url;
+    } catch {
+      // Keep local fallback if upload fails.
+    }
+  }
+  return uploaded;
+}
+
 export default function NuevoIngresoPage() {
   const router = useRouter();
   const dateInputRefs = useRef<Record<DateFieldKey, HTMLInputElement | null>>({
@@ -202,6 +230,26 @@ export default function NuevoIngresoPage() {
   const [rtmExpiry, setRtmExpiry] = useState('');
   const [inventarioAccesorios, setInventarioAccesorios] = useState<Record<string, InventoryValue>>({});
   const [intakePhotosByZone, setIntakePhotosByZone] = useState<Record<PhotoSlotKey, string>>(EMPTY_INTAKE_PHOTOS);
+  const [signaturesByRole, setSignaturesByRole] = useState<Record<SignaturePadKey, string>>({
+    cliente: '',
+    taller: '',
+  });
+  const [signatureSavedAt, setSignatureSavedAt] = useState<Record<SignaturePadKey, string>>({
+    cliente: '',
+    taller: '',
+  });
+  const signatureCanvasRefs = useRef<Record<SignaturePadKey, HTMLCanvasElement | null>>({
+    cliente: null,
+    taller: null,
+  });
+  const signatureDrawingRef = useRef<Record<SignaturePadKey, boolean>>({
+    cliente: false,
+    taller: false,
+  });
+  const signatureLastPointRef = useRef<Record<SignaturePadKey, { x: number; y: number } | null>>({
+    cliente: null,
+    taller: null,
+  });
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -272,6 +320,155 @@ export default function NuevoIngresoPage() {
     input.click();
   }
 
+  function syncSignatureCanvasFromValue(key: SignaturePadKey, value: string) {
+    const canvas = signatureCanvasRefs.current[key];
+    if (!canvas || typeof window === 'undefined') return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    ctx.fillStyle = 'rgba(10, 12, 17, 0.86)';
+    ctx.fillRect(0, 0, rect.width, rect.height);
+
+    const source = String(value || '').trim();
+    if (!source) return;
+    const img = new Image();
+    if (!source.startsWith('data:image/')) img.crossOrigin = 'anonymous';
+    img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+    img.src = source;
+  }
+
+  function repaintSignaturesWithRetry(attempt = 0) {
+    const clienteCanvas = signatureCanvasRefs.current.cliente;
+    const tallerCanvas = signatureCanvasRefs.current.taller;
+    const clienteReady = Boolean(clienteCanvas && clienteCanvas.getBoundingClientRect().width > 8);
+    const tallerReady = Boolean(tallerCanvas && tallerCanvas.getBoundingClientRect().width > 8);
+    if (!clienteReady || !tallerReady) {
+      if (attempt >= 8 || typeof window === 'undefined') return;
+      window.requestAnimationFrame(() => repaintSignaturesWithRetry(attempt + 1));
+      return;
+    }
+    syncSignatureCanvasFromValue('cliente', signaturesByRole.cliente);
+    syncSignatureCanvasFromValue('taller', signaturesByRole.taller);
+  }
+
+  useEffect(() => {
+    repaintSignaturesWithRetry();
+  }, [signaturesByRole.cliente, signaturesByRole.taller]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onResize = () => repaintSignaturesWithRetry();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  function registerSignatureCanvasRef(key: SignaturePadKey, node: HTMLCanvasElement | null) {
+    signatureCanvasRefs.current[key] = node;
+    if (!node) return;
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => syncSignatureCanvasFromValue(key, signaturesByRole[key]));
+      return;
+    }
+    syncSignatureCanvasFromValue(key, signaturesByRole[key]);
+  }
+
+  function getSignatureContext(key: SignaturePadKey) {
+    const canvas = signatureCanvasRefs.current[key];
+    if (!canvas) return null;
+    const ctx = canvas.getContext('2d');
+    return { canvas, ctx };
+  }
+
+  function getSignaturePoint(canvas: HTMLCanvasElement, event: ReactPointerEvent<HTMLCanvasElement>) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+  }
+
+  function handleSignaturePointerDown(key: SignaturePadKey, event: ReactPointerEvent<HTMLCanvasElement>) {
+    const refs = getSignatureContext(key);
+    if (!refs || !refs.ctx) return;
+    const { canvas, ctx } = refs;
+    canvas.setPointerCapture(event.pointerId);
+    signatureDrawingRef.current[key] = true;
+    const point = getSignaturePoint(canvas, event);
+    signatureLastPointRef.current[key] = point;
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+    ctx.lineWidth = 2.6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#e6f3ff';
+  }
+
+  function handleSignaturePointerMove(key: SignaturePadKey, event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (!signatureDrawingRef.current[key]) return;
+    const refs = getSignatureContext(key);
+    if (!refs || !refs.ctx) return;
+    const { canvas, ctx } = refs;
+    const point = getSignaturePoint(canvas, event);
+    const last = signatureLastPointRef.current[key];
+    if (!last) {
+      signatureLastPointRef.current[key] = point;
+      return;
+    }
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+    signatureLastPointRef.current[key] = point;
+  }
+
+  async function saveSignature(key: SignaturePadKey) {
+    const refs = getSignatureContext(key);
+    if (!refs) return;
+    const dataUrl = refs.canvas.toDataURL('image/png');
+    let persisted = dataUrl;
+    const normalizedPlate = placa.trim().toUpperCase();
+    if (normalizedPlate) {
+      try {
+        const asset = await withTimeout(
+          uploadServiceOrderAsset(normalizedPlate, 'recepcion', SIGNATURE_UPLOAD_FIELD_BY_KEY[key], dataUrl),
+          15000,
+          `firma ${key}`,
+        );
+        persisted = asset.url;
+      } catch {
+        // Keep local data URL if upload fails.
+      }
+    }
+    setSignaturesByRole((prev) => ({ ...prev, [key]: persisted }));
+    setSignatureSavedAt((prev) => ({ ...prev, [key]: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) }));
+  }
+
+  function handleSignaturePointerUp(key: SignaturePadKey, event: ReactPointerEvent<HTMLCanvasElement>) {
+    const refs = getSignatureContext(key);
+    if (refs) {
+      try {
+        refs.canvas.releasePointerCapture(event.pointerId);
+      } catch {
+        // ignore
+      }
+    }
+    if (!signatureDrawingRef.current[key]) return;
+    signatureDrawingRef.current[key] = false;
+    signatureLastPointRef.current[key] = null;
+    void saveSignature(key);
+  }
+
+  function clearSignature(key: SignaturePadKey) {
+    setSignaturesByRole((prev) => ({ ...prev, [key]: '' }));
+    setSignatureSavedAt((prev) => ({ ...prev, [key]: '' }));
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
 
@@ -333,6 +530,9 @@ export default function NuevoIngresoPage() {
       const persistedPhotos = backend
         ? await withTimeout(uploadReceptionPhotos(normalizedPlate, intakePhotosByZone), 35000, 'subida de evidencias')
         : intakePhotosByZone;
+      const persistedSignatures = backend
+        ? await withTimeout(uploadReceptionSignatures(normalizedPlate, signaturesByRole), 35000, 'subida de firmas')
+        : signaturesByRole;
 
       const nowISO = new Date().toISOString();
       const inventarioSerialized = JSON.stringify(inventarioAccesorios);
@@ -432,6 +632,8 @@ export default function NuevoIngresoPage() {
         photo_verified_source_lateralIzquierdo: persistedPhotos.lateralIzquierdo ? 'AUTO' : '',
         photo_verified_source_frontal: persistedPhotos.frontal ? 'AUTO' : '',
         photo_verified_source_trasero: persistedPhotos.trasero ? 'AUTO' : '',
+        firmaClienteEmpresa: persistedSignatures.cliente || '',
+        firmaTallerRecibe: persistedSignatures.taller || '',
       });
 
       const list = getEntries();
@@ -849,6 +1051,54 @@ export default function NuevoIngresoPage() {
                 </div>
               );
             })}
+          </div>
+
+          <h3 style={{ margin: '14px 0 8px' }}>Firmas</h3>
+          <div className="vc-grid-2">
+            <div>
+              <label className="vc-label">Firma cliente / empresa</label>
+              <div className="vc-signature-box">
+                <canvas
+                  ref={(node) => registerSignatureCanvasRef('cliente', node)}
+                  className="vc-signature-canvas"
+                  onPointerDown={(e) => handleSignaturePointerDown('cliente', e)}
+                  onPointerMove={(e) => handleSignaturePointerMove('cliente', e)}
+                  onPointerUp={(e) => handleSignaturePointerUp('cliente', e)}
+                  onPointerLeave={(e) => handleSignaturePointerUp('cliente', e)}
+                />
+                <div className="vc-signature-actions">
+                  <ActionButton type="button" variant="ghost" size="sm" state="idle" onClick={() => void saveSignature('cliente')}>
+                    Guardar firma
+                  </ActionButton>
+                  <ActionButton type="button" variant="ghost" size="sm" state="idle" onClick={() => clearSignature('cliente')}>
+                    Limpiar
+                  </ActionButton>
+                </div>
+                {signatureSavedAt.cliente ? <p className="vc-subtitle-small">Guardada: {signatureSavedAt.cliente}</p> : null}
+              </div>
+            </div>
+            <div>
+              <label className="vc-label">Firma taller (quien recibe)</label>
+              <div className="vc-signature-box">
+                <canvas
+                  ref={(node) => registerSignatureCanvasRef('taller', node)}
+                  className="vc-signature-canvas"
+                  onPointerDown={(e) => handleSignaturePointerDown('taller', e)}
+                  onPointerMove={(e) => handleSignaturePointerMove('taller', e)}
+                  onPointerUp={(e) => handleSignaturePointerUp('taller', e)}
+                  onPointerLeave={(e) => handleSignaturePointerUp('taller', e)}
+                />
+                <div className="vc-signature-actions">
+                  <ActionButton type="button" variant="ghost" size="sm" state="idle" onClick={() => void saveSignature('taller')}>
+                    Guardar firma
+                  </ActionButton>
+                  <ActionButton type="button" variant="ghost" size="sm" state="idle" onClick={() => clearSignature('taller')}>
+                    Limpiar
+                  </ActionButton>
+                </div>
+                {signatureSavedAt.taller ? <p className="vc-subtitle-small">Guardada: {signatureSavedAt.taller}</p> : null}
+              </div>
+            </div>
           </div>
 
           <ActionFeedback show={Boolean(error)} type="error" message={error} />
