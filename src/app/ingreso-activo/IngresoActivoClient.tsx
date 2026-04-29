@@ -161,7 +161,14 @@ export default function IngresoActivoClient() {
         const normalized = sortByRecent(merged.map(normalize));
         setEntries(normalized);
         setEntriesState(normalized);
+        setWarning('');
       } catch (e) {
+        const status = typeof e === 'object' && e && 'status' in e ? Number((e as { status?: unknown }).status) : 0;
+        if (status === 401 || status === 403) {
+          // Keep local workflow without noisy warning when backend session is not authorized.
+          setWarning('');
+          return;
+        }
         const msg = e instanceof Error ? e.message : 'No se pudo cargar desde backend';
         setWarning(msg);
       }
