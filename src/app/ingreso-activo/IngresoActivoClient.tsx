@@ -137,9 +137,7 @@ export default function IngresoActivoClient() {
       return;
     }
     if (!session.token) {
-      setWarning('Tu sesión no tiene token de backend. Vuelve a iniciar sesión para cargar datos reales.');
-      router.replace('/login?reason=missing_token');
-      return;
+      setWarning('Sesión sin token de backend. Mostrando datos locales mientras restableces sesión.');
     }
 
     const localRole = getRole();
