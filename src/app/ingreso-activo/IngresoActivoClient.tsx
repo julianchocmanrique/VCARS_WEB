@@ -7,14 +7,12 @@ import { listVehicles } from '@/lib/api';
 import { getCarPhotoByModel } from '@/lib/carPhoto';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { apiVehicleToEntry } from '@/lib/mapper';
-import { applyDemoEntries } from '@/lib/demoData';
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { VehicleCard, type VehicleCardVariant } from '@/components/VehicleCard';
 import { PremiumNavbar, type NavItem } from '@/components/navigation/PremiumNavbar';
 import { PremiumDrawer } from '@/components/navigation/PremiumDrawer';
 import { PremiumTabs, type TabItem } from '@/components/navigation/PremiumTabs';
-import { ensureDemoFormsSeed } from '@/lib/orderForms';
 import { SectionTransition } from '@/components/transitions/SectionTransition';
 import { VehicleCardsSkeleton } from '@/components/skeletons';
 import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
@@ -142,10 +140,8 @@ export default function IngresoActivoClient() {
 
     const localRole = getRole();
     const localRawEntries = getEntries();
-    const seeded = applyDemoEntries(localRawEntries);
-    setEntries(seeded);
-    ensureDemoFormsSeed();
-    const localEntries = sortByRecent(seeded.map(normalize));
+    setEntries(localRawEntries);
+    const localEntries = sortByRecent(localRawEntries.map(normalize));
 
     queueMicrotask(() => {
       setMounted(true);
@@ -157,8 +153,7 @@ export default function IngresoActivoClient() {
       try {
         const vehicles = await listVehicles({ take: 50 });
         const mapped = vehicles.map(apiVehicleToEntry).filter(Boolean) as Entry[];
-        const merged = applyDemoEntries(mapped);
-        const normalized = sortByRecent(merged.map(normalize));
+        const normalized = sortByRecent(mapped.map(normalize));
         setEntries(normalized);
         setEntriesState(normalized);
         setWarning('');
