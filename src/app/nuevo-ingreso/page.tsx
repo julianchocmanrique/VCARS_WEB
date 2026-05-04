@@ -7,7 +7,7 @@ import { FlowHeader } from '@/components/FlowHeader';
 import { ActionButton, type ActionButtonState } from '@/components/ui/ActionButton';
 import { ActionFeedback, type ActionFeedbackType } from '@/components/ui/ActionFeedback';
 import { createIngreso } from '@/lib/api';
-import { uploadServiceOrderAsset } from '@/lib/orderFormsBackend';
+import { putStepDataToBackend, uploadServiceOrderAsset } from '@/lib/orderFormsBackend';
 import { setStepFields } from '@/lib/orderForms';
 import { getEntries, setCurrentEntry, setEntries, type Entry } from '@/lib/storage';
 
@@ -160,16 +160,12 @@ async function uploadReceptionPhotos(
   for (const slot of PHOTO_SLOTS) {
     const source = String(photosByZone[slot.key] || '');
     if (!source.startsWith('data:image/')) continue;
-    try {
-      const asset = await withTimeout(
-        uploadServiceOrderAsset(plate, 'recepcion', `photo_${slot.key}`, source),
-        15000,
-        `subida de foto ${slot.label}`,
-      );
-      uploaded[slot.key] = asset.url;
-    } catch {
-      // Keep fallback value if upload fails.
-    }
+    const asset = await withTimeout(
+      uploadServiceOrderAsset(plate, 'recepcion', `photo_${slot.key}`, source),
+      15000,
+      `subida de foto ${slot.label}`,
+    );
+    uploaded[slot.key] = asset.url;
   }
   return uploaded;
 }
@@ -182,16 +178,12 @@ async function uploadReceptionSignatures(
   for (const key of Object.keys(signatures) as SignaturePadKey[]) {
     const source = String(signatures[key] || '');
     if (!source.startsWith('data:image/')) continue;
-    try {
-      const asset = await withTimeout(
-        uploadServiceOrderAsset(plate, 'recepcion', SIGNATURE_UPLOAD_FIELD_BY_KEY[key], source),
-        15000,
-        `subida de firma ${key}`,
-      );
-      uploaded[key] = asset.url;
-    } catch {
-      // Keep local fallback if upload fails.
-    }
+    const asset = await withTimeout(
+      uploadServiceOrderAsset(plate, 'recepcion', SIGNATURE_UPLOAD_FIELD_BY_KEY[key], source),
+      15000,
+      `subida de firma ${key}`,
+    );
+    uploaded[key] = asset.url;
   }
   return uploaded;
 }
@@ -514,35 +506,26 @@ export default function NuevoIngresoPage() {
     setError('');
 
     try {
-      let backend: { vehicle?: { id?: string }; entry?: { id?: string } } | null = null;
-      try {
-        backend = await withTimeout(
-          createIngreso({
-            plate: placa.trim().toUpperCase(),
-            customerName: holderName.trim(),
-            customerPhone: telefono.trim(),
-            customerEmail: email.trim(),
-            vehicleModel: vehiculo.trim(),
-            vehicleColor: color.trim(),
-            receivedBy: recibio.trim(),
-            notes: fallaCliente.trim(),
-            mileageKm: kilometraje.trim() ? Number(kilometraje) : undefined,
-            fuelLevel: fuelLevel.trim(),
-          }),
-          20000,
-          'creación de ingreso',
-        );
-      } catch {
-        backend = null;
-      }
+      const backend = await withTimeout(
+        createIngreso({
+          plate: placa.trim().toUpperCase(),
+          customerName: holderName.trim(),
+          customerPhone: telefono.trim(),
+          customerEmail: email.trim(),
+          vehicleModel: vehiculo.trim(),
+          vehicleColor: color.trim(),
+          receivedBy: recibio.trim(),
+          notes: fallaCliente.trim(),
+          mileageKm: kilometraje.trim() ? Number(kilometraje) : undefined,
+          fuelLevel: fuelLevel.trim(),
+        }),
+        20000,
+        'creación de ingreso',
+      );
 
       const normalizedPlate = placa.trim().toUpperCase();
-      const persistedPhotos = backend
-        ? await withTimeout(uploadReceptionPhotos(normalizedPlate, intakePhotosByZone), 35000, 'subida de evidencias')
-        : intakePhotosByZone;
-      const persistedSignatures = backend
-        ? await withTimeout(uploadReceptionSignatures(normalizedPlate, signaturesByRole), 35000, 'subida de firmas')
-        : signaturesByRole;
+      const persistedPhotos = await withTimeout(uploadReceptionPhotos(normalizedPlate, intakePhotosByZone), 35000, 'subida de evidencias');
+      const persistedSignatures = await withTimeout(uploadReceptionSignatures(normalizedPlate, signaturesByRole), 35000, 'subida de firmas');
       const persistedPhotosForStorage: Record<PhotoSlotKey, string> = {
         superior: keepPersistentAssetValue(persistedPhotos.superior),
         inferior: keepPersistentAssetValue(persistedPhotos.inferior),
@@ -605,7 +588,7 @@ export default function NuevoIngresoPage() {
           : undefined,
       };
 
-      setStepFields(payload.placa, 'recepcion', {
+      const recepcionStepData: Record<string, string> = {
         entry_orderNumber: payload.orderNumber || '',
         entry_fecha: payload.fecha || '',
         entry_expectedDeliveryDate: payload.expectedDeliveryDate || '',
@@ -656,7 +639,9 @@ export default function NuevoIngresoPage() {
         photo_verified_source_trasero: persistedPhotosForStorage.trasero ? 'AUTO' : '',
         firmaClienteEmpresa: persistedSignaturesForStorage.cliente || '',
         firmaTallerRecibe: persistedSignaturesForStorage.taller || '',
-      });
+      };
+      setStepFields(payload.placa, 'recepcion', recepcionStepData);
+      await withTimeout(putStepDataToBackend(payload.placa, 'recepcion', recepcionStepData), 20000, 'persistencia de recepción');
 
       const list = getEntries();
       const next = [payload, ...list];
