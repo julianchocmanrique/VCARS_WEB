@@ -67,6 +67,9 @@ export type Entry = {
   };
 };
 
+let volatileEntries: Entry[] = [];
+let volatileCurrentEntry: Entry | null = null;
+
 function normalizeEntry(value: unknown): Entry | null {
   if (!value || typeof value !== 'object') return null;
   const v = value as Record<string, unknown>;
@@ -158,6 +161,8 @@ export function clearSession(): void {
   removeStorageKey(SESSION_KEY);
   removeStorageKey(PROFILE_KEY);
   removeStorageKey(CLIENT_IDENTITY_KEY);
+  volatileEntries = [];
+  volatileCurrentEntry = null;
 }
 
 export function getRole(): Role {
@@ -167,38 +172,18 @@ export function getRole(): Role {
 }
 
 export function getEntries(): Entry[] {
-  const raw = readJsonStorage<unknown>(ENTRIES_KEY, []);
-  if (!Array.isArray(raw)) return [];
-  const clean = raw.map(normalizeEntry).filter(Boolean) as Entry[];
+  const clean = volatileEntries.map(normalizeEntry).filter(Boolean) as Entry[];
   return clean;
 }
 
 export function setEntries(entries: Entry[]): void {
-  writeJsonStorage(ENTRIES_KEY, entries);
+  volatileEntries = Array.isArray(entries) ? entries : [];
 }
 
 export function getCurrentEntry(): Entry | null {
-  const raw = readJsonStorage<unknown>(CURRENT_ENTRY_KEY, null);
-  return normalizeEntry(raw);
+  return normalizeEntry(volatileCurrentEntry);
 }
 
 export function setCurrentEntry(entry: Entry | null): void {
-  if (!entry) {
-    removeStorageKey(CURRENT_ENTRY_KEY);
-    return;
-  }
-  // Keep current entry lightweight to avoid localStorage quota errors.
-  const lightweight: Entry = {
-    ...entry,
-    intakePhotos: [],
-    intakePhotosByZone: {
-      superior: '',
-      inferior: '',
-      lateralDerecho: '',
-      lateralIzquierdo: '',
-      frontal: '',
-      trasero: '',
-    },
-  };
-  writeJsonStorage(CURRENT_ENTRY_KEY, lightweight);
+  volatileCurrentEntry = entry ? normalizeEntry(entry) : null;
 }

@@ -1,10 +1,10 @@
-import { readJsonStorage, writeJsonStorage } from '@/lib/persistence/jsonStore';
-
 export const ORDER_FORMS_KEY = '@vcars_order_forms';
 
 export type StepFieldMap = Record<string, string>;
 export type FormsByStep = Record<string, StepFieldMap>;
 export type FormsByPlate = Record<string, FormsByStep>;
+
+let volatileOrderForms: FormsByPlate = {};
 
 export function normalizePlateKey(plate: string): string {
   return String(plate || '').trim().toUpperCase();
@@ -40,18 +40,13 @@ function sanitizeFormsByPlate(input: FormsByPlate): { cleaned: FormsByPlate; cha
 
 export class LocalOrderFormsRepository {
   readAll(): FormsByPlate {
-    const raw = readJsonStorage<FormsByPlate>(ORDER_FORMS_KEY, {});
-    const { cleaned, changed } = sanitizeFormsByPlate(raw);
-    if (changed) {
-      // Best effort cleanup of stale oversized payloads (base64 images/signatures).
-      writeJsonStorage(ORDER_FORMS_KEY, cleaned);
-    }
+    const { cleaned } = sanitizeFormsByPlate(volatileOrderForms);
     return cleaned;
   }
 
   writeAll(value: FormsByPlate): void {
     const { cleaned } = sanitizeFormsByPlate(value || {});
-    writeJsonStorage(ORDER_FORMS_KEY, cleaned);
+    volatileOrderForms = cleaned;
   }
 
   getPlateForms(plate: string): FormsByStep {
