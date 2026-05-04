@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useState } from 'react';
-import { DEMO_USERS, signIn } from '@/lib/auth';
+import { signIn } from '@/lib/auth';
 import { getSession } from '@/lib/storage';
 import { FlowHeader } from '@/components/FlowHeader';
 import { ActionButton, type ActionButtonState } from '@/components/ui/ActionButton';
@@ -83,25 +83,6 @@ export default function LoginPage() {
             {loading ? 'Validando...' : 'Ingresar'}
           </ActionButton>
 
-          <div className="vc-chip-row">
-            {DEMO_USERS.map((u) => (
-              <button
-                key={u.id}
-                className="vc-chip"
-                onClick={() => {
-                  setUsername(u.username);
-                  setPassword(u.password);
-                  setFeedback(null);
-                  setSubmitState('idle');
-                }}
-                type="button"
-              >
-                {u.username}
-              </button>
-            ))}
-          </div>
-
-          <p className="vc-hint">Credenciales locales temporales: 1 administrador, 1 tecnico y 2 clientes (congreso/alcaldia).</p>
         </form>
       </section>
     </main>

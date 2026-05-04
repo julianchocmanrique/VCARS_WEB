@@ -1,17 +1,7 @@
-import { applyDemoEntries } from './demoData';
-import { ensureDemoFormsSeed } from './orderForms';
 import { clearSession, getEntries, setCurrentEntry, setEntries, setSession, type Role, type Session } from './storage';
 import { setClientIdentity } from './clientIdentity';
 import { getApiBaseUrlCandidates } from './env';
 const PERSONAL_CLIENT_PLATE = 'BCD246';
-
-export const DEMO_USERS = [
-  { id: 'u_admin_david', username: 'david@vcars.com', password: '1111', role: 'administrativo' as Role },
-  { id: 'u_tech_julian', username: 'julian@vcars.com', password: '2222', role: 'tecnico' as Role },
-  { id: 'u_client_congreso', username: 'congreso@gobierno.com', password: '3333', role: 'cliente' as Role },
-  { id: 'u_client_alcaldia', username: 'alcaldia@alcaldia.com', password: '4444', role: 'cliente' as Role },
-  { id: 'u_client_juli', username: 'juli@gm.com', password: '5555', role: 'cliente' as Role },
-];
 
 function roleFromApi(role?: string): Role {
   if (role === 'TECH') return 'tecnico';
@@ -52,40 +42,9 @@ function applyClientIdentity(username: string): void {
   }
 }
 
-function ensureDemoEntriesFor(session: Session): void {
-  const local = getEntries();
-  const list = applyDemoEntries(local);
-  setEntries(list);
-  ensureDemoFormsSeed();
-
-  let current = list[0] || null;
-  if (session.role === 'cliente') {
-    const u = String(session.username || '').trim().toLowerCase();
-    if (u === 'juli@gm.com') {
-      current = list.find((item) => String(item.placa || '').toUpperCase() === PERSONAL_CLIENT_PLATE) || list[0] || null;
-    } else {
-      const company = companyByUser(session.username);
-      current = list.find((item) => String(item.empresa || '').toLowerCase() === company) || list[0] || null;
-    }
-  }
-
-  setCurrentEntry(current);
-}
-
-function createLocalSession(demo: (typeof DEMO_USERS)[number]): Session {
-  return {
-    userId: demo.id,
-    username: demo.username,
-    role: demo.role,
-    token: null,
-    createdAt: new Date().toISOString(),
-  };
-}
-
 export async function signIn(username: string, password: string): Promise<{ ok: true; session: Session } | { ok: false; error: string }> {
   const u = String(username || '').trim().toLowerCase();
   const p = String(password || '');
-  const demo = DEMO_USERS.find((item) => item.username === u);
 
   try {
     const bases = getApiBaseUrlCandidates();
@@ -109,13 +68,6 @@ export async function signIn(username: string, password: string): Promise<{ ok: 
 
     const json = await res.json().catch(() => null);
     if (!res.ok || !json?.ok) {
-      if (demo && demo.password === p) {
-        const localSession = createLocalSession(demo);
-        setSession(localSession);
-        if (localSession.role === 'cliente') applyClientIdentity(localSession.username);
-        ensureDemoEntriesFor(localSession);
-        return { ok: true, session: localSession };
-      }
       return { ok: false, error: json?.error || 'No se pudo iniciar sesión' };
     }
 
@@ -128,18 +80,12 @@ export async function signIn(username: string, password: string): Promise<{ ok: 
     };
 
     setSession(session);
+    setEntries([]);
+    setCurrentEntry(null);
     if (session.role === 'cliente') applyClientIdentity(session.username);
-    ensureDemoEntriesFor(session);
     return { ok: true, session };
   } catch {
-    if (!demo) return { ok: false, error: 'No se pudo conectar al servidor' };
-    if (demo.password !== p) return { ok: false, error: 'Contraseña incorrecta' };
-
-    const session = createLocalSession(demo);
-    setSession(session);
-    if (session.role === 'cliente') applyClientIdentity(session.username);
-    ensureDemoEntriesFor(session);
-    return { ok: true, session };
+    return { ok: false, error: 'No se pudo conectar al servidor' };
   }
 }
 
