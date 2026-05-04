@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { listVehicles } from '@/lib/api';
-import { getCarPhotoByModel } from '@/lib/carPhoto';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { apiVehicleToEntry } from '@/lib/mapper';
 import { BottomNav } from '@/components/BottomNav';
@@ -371,12 +370,16 @@ export default function IngresoActivoClient() {
               {viewEntries.length ? (
                 viewEntries.map((item, idx) => {
                   const vehicle = splitVehicleLabel(item.vehiculo || `Vehículo ${idx + 1}`);
+                  const realPhoto =
+                    String(item.intakePhotosByZone?.frontal || '').trim() ||
+                    String(item.intakePhotos?.[0] || '').trim() ||
+                    '';
                   return (
                     <VehicleCard
                       key={item.id}
                       href={`/vehiculos/${encodeURIComponent(item.placa)}`}
                       onClick={() => setCurrentEntry(item)}
-                      imageUrl={getCarPhotoByModel(item.vehiculo, item.placa)}
+                      imageUrl={realPhoto}
                       imageAlt={`Foto de ${item.vehiculo || item.placa}`}
                       name={vehicle.name}
                       version={vehicle.version}

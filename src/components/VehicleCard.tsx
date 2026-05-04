@@ -9,7 +9,7 @@ export type VehicleCardVariant = 'default' | 'selected' | 'critical' | 'disabled
 
 type VehicleCardProps = {
   href: string;
-  imageUrl: string;
+  imageUrl?: string;
   imageAlt: string;
   name: string;
   version?: string;
@@ -82,6 +82,7 @@ export function VehicleCard({
   const isDisabled = variant === 'disabled';
   const reveal = vcarsVariants.revealItem(Boolean(reduced));
   const cleanName = name.replace(/\s+(19|20)\d{2}\b/g, "").trim();
+  const hasImage = Boolean(String(imageUrl || '').trim());
 
   return (
     <motion.article
@@ -114,9 +115,17 @@ export function VehicleCard({
             whileHover={isDisabled || reduced ? undefined : { scale: 1.035, y: -2 }}
             transition={vcarsMicroPresets.button.transition}
           >
-            <Image src={imageUrl} alt={imageAlt} fill sizes="(max-width: 700px) 100vw, 420px" className="object-cover object-center" />
-            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(11,11,12,0.02),rgba(11,11,12,0.5))]" />
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgba(255,255,255,0.14),transparent_35%)]" />
+            {hasImage ? (
+              <>
+                <Image src={String(imageUrl)} alt={imageAlt} fill sizes="(max-width: 700px) 100vw, 420px" className="object-cover object-center" />
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(11,11,12,0.02),rgba(11,11,12,0.5))]" />
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgba(255,255,255,0.14),transparent_35%)]" />
+              </>
+            ) : (
+              <div className="absolute inset-0 grid place-items-center text-sm font-semibold text-[#8b92a6]">
+                Sin imagen
+              </div>
+            )}
           </motion.div>
         </div>
 
