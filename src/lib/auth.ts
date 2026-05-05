@@ -42,6 +42,20 @@ function applyClientIdentity(username: string): void {
   }
 }
 
+function pickToken(payload: any): string {
+  return String(
+    payload?.token ||
+    payload?.accessToken ||
+    payload?.data?.token ||
+    payload?.data?.accessToken ||
+    '',
+  ).trim();
+}
+
+function pickUser(payload: any): any {
+  return payload?.user || payload?.data?.user || null;
+}
+
 export async function signIn(username: string, password: string): Promise<{ ok: true; session: Session } | { ok: false; error: string }> {
   const u = String(username || '').trim().toLowerCase();
   const p = String(password || '');
@@ -71,11 +85,17 @@ export async function signIn(username: string, password: string): Promise<{ ok: 
       return { ok: false, error: json?.error || 'No se pudo iniciar sesión' };
     }
 
+    const user = pickUser(json);
+    const token = pickToken(json);
+    if (!token) {
+      return { ok: false, error: 'Login sin token válido. Vuelve a iniciar sesión.' };
+    }
+
     const session: Session = {
-      userId: json.user?.id,
-      username: json.user?.username || u,
-      role: roleFromApi(json.user?.role),
-      token: json.token,
+      userId: user?.id,
+      username: user?.username || u,
+      role: roleFromApi(user?.role),
+      token,
       createdAt: new Date().toISOString(),
     };
 
