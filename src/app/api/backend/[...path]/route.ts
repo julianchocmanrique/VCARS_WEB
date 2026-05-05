@@ -96,7 +96,8 @@ async function forward(req: NextRequest, params: { path: string[] }) {
     const url = joinUrl(base, path, query);
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 1200);
+      // Asset uploads (firmas/fotos) can take several seconds on VPS networks.
+      const timeout = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(url, {
         method,
         headers,
