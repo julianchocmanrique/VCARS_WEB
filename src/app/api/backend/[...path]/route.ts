@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic';
 
 function joinUrl(base: string, path: string, query: string): string {
   const b = String(base || '').replace(/\/+$/, '');
-  const p = String(path || '').replace(/^\/+/, '');
-  return `${b}/${p}${query}`;
+  const p = String(path || '').replace(/^\/+/, '').replace(/\/+$/, '');
+  return p ? `${b}/${p}${query}` : `${b}${query}`;
 }
 
 function parseHost(hostHeader: string | null): string {
@@ -75,7 +75,7 @@ function getBackendCandidates(req: NextRequest): string[] {
 }
 
 async function forward(req: NextRequest, params: { path: string[] }) {
-  const path = (params.path || []).join('/');
+  const path = (params.path || []).filter(Boolean).join('/').replace(/\/+$/, '');
   const query = req.nextUrl.search || '';
   const debug = req.nextUrl.searchParams.get('debug') === '1';
   const method = req.method.toUpperCase();
