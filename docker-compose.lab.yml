@@ -5,7 +5,8 @@ services:
     env_file:
       - .env.lab
     environment:
-      API_PROXY_TARGET: http://vcars-api-api-1:4000
+      NEXT_PUBLIC_API_URL: http://187.124.65.93:4000
+      API_PROXY_TARGET: http://187.124.65.93:4000
     ports:
       - "0.0.0.0:3010:3000"
     networks:
