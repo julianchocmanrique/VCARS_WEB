@@ -1730,6 +1730,236 @@ a { color: inherit; text-decoration: none; }
   word-break: break-word;
 }
 
+.vc-kicker {
+  margin: 0 0 4px;
+  color: var(--vc-muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.vc-icon-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(46, 50, 64, 0.88);
+  border-radius: 999px;
+  background: rgba(23, 25, 33, 0.9);
+  color: var(--vc-text);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.vc-icon-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(59, 168, 240, 0.5);
+  background: rgba(31, 95, 159, 0.18);
+}
+
+.vc-icon-btn--danger {
+  color: #fecaca;
+}
+
+.vc-icon-btn--danger:hover {
+  border-color: rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.vc-quote-card {
+  padding: 16px;
+  border-color: rgba(47, 126, 232, 0.42);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(59, 168, 240, 0.08) inset;
+}
+
+.vc-quote-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.vc-quote-head h3 {
+  margin: 0;
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.15;
+}
+
+.vc-quote-total-pill {
+  min-width: 180px;
+  border: 1px solid rgba(59, 168, 240, 0.35);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(31, 95, 159, 0.24), rgba(23, 25, 33, 0.92));
+  padding: 10px 14px;
+  text-align: right;
+}
+
+.vc-quote-total-pill span {
+  display: block;
+  color: var(--vc-muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.vc-quote-total-pill strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--vc-text);
+  font-size: 22px;
+}
+
+.vc-quote-tabs {
+  margin: 0 0 14px;
+}
+
+.vc-quote-table-wrap {
+  border-color: rgba(47, 126, 232, 0.34);
+  border-radius: 16px;
+  background: rgba(8, 10, 18, 0.34);
+  scrollbar-color: rgba(59, 168, 240, 0.45) rgba(15, 17, 24, 0.9);
+  scrollbar-width: thin;
+}
+
+.vc-quote-table-wrap::-webkit-scrollbar {
+  height: 10px;
+}
+
+.vc-quote-table-wrap::-webkit-scrollbar-track {
+  background: rgba(15, 17, 24, 0.9);
+  border-radius: 999px;
+}
+
+.vc-quote-table-wrap::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, rgba(47, 126, 232, 0.72), rgba(59, 168, 240, 0.72));
+  border: 2px solid rgba(15, 17, 24, 0.9);
+  border-radius: 999px;
+}
+
+.vc-quote-table {
+  min-width: 1320px;
+  table-layout: fixed;
+}
+
+.vc-quote-client-table {
+  min-width: 760px;
+}
+
+.vc-quote-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(23, 25, 33, 0.98), rgba(15, 17, 24, 0.98));
+  color: #7cc0ff;
+  font-size: 12px;
+  line-height: 1.25;
+  vertical-align: bottom;
+  white-space: normal;
+}
+
+.vc-quote-table td {
+  background: rgba(10, 12, 20, 0.62);
+  vertical-align: middle;
+}
+
+.vc-quote-table tbody tr:hover td {
+  background: rgba(31, 95, 159, 0.12);
+}
+
+.vc-quote-table td input {
+  height: 38px;
+  border-color: rgba(47, 126, 232, 0.28);
+  border-radius: 10px;
+  background: rgba(15, 17, 24, 0.94);
+  font-size: 13px;
+}
+
+.vc-quote-table td input:focus {
+  border-color: rgba(59, 168, 240, 0.75);
+  box-shadow: 0 0 0 3px rgba(47, 126, 232, 0.18);
+  outline: none;
+}
+
+.vc-quote-money {
+  color: var(--vc-text);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.vc-quote-row-total {
+  color: #dbeafe;
+}
+
+.vc-quote-col-system {
+  width: 130px;
+}
+
+.vc-quote-col-work {
+  width: 210px;
+}
+
+.vc-quote-col-money {
+  width: 116px;
+}
+
+.vc-quote-col-unit {
+  width: 82px;
+}
+
+.vc-quote-col-readonly {
+  width: 120px;
+}
+
+.vc-quote-col-action {
+  width: 58px;
+}
+
+.vc-quote-add-btn {
+  width: auto;
+  min-height: 44px;
+  margin-top: 12px;
+  padding-inline: 18px;
+}
+
+.vc-quote-summary {
+  margin-top: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, auto);
+  gap: 10px;
+}
+
+.vc-quote-summary span,
+.vc-quote-summary strong {
+  border: 1px solid rgba(46, 50, 64, 0.75);
+  background: rgba(15, 17, 24, 0.76);
+}
+
+.vc-quote-summary span {
+  border-right: 0;
+  border-radius: 12px 0 0 12px;
+  padding: 10px 12px;
+  color: var(--vc-muted);
+  font-weight: 800;
+}
+
+.vc-quote-summary strong {
+  border-left: 0;
+  border-radius: 0 12px 12px 0;
+  padding: 10px 12px;
+  color: var(--vc-text);
+  font-size: 16px;
+}
+
+.vc-quote-summary--client {
+  grid-template-columns: minmax(0, 1fr) minmax(120px, auto);
+}
+
 .vc-photo-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2439,12 +2669,90 @@ button.vc-nav-tab:active {
 }
 
 .vc-quote-mobile-card {
-  border: 1px solid rgba(31, 95, 159, 0.24);
-  border-radius: 12px;
-  padding: 10px;
-  background: rgba(18, 18, 20, 0.74);
+  border: 1px solid rgba(47, 126, 232, 0.36);
+  border-radius: 16px;
+  padding: 12px;
+  background: linear-gradient(160deg, rgba(18, 18, 20, 0.94), rgba(10, 12, 20, 0.94));
   display: grid;
+  gap: 12px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.vc-quote-mobile-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.vc-quote-mobile-head strong {
+  color: var(--vc-text);
+  font-size: 15px;
+}
+
+.vc-quote-mobile-head span {
+  color: #dbeafe;
+  font-size: 16px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.vc-quote-field {
+  display: grid;
+  gap: 6px;
+}
+
+.vc-quote-field--wide {
+  grid-column: 1 / -1;
+}
+
+.vc-quote-field span {
+  color: var(--vc-muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.vc-quote-field input {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  border: 1px solid rgba(47, 126, 232, 0.3);
+  border-radius: 12px;
+  background: rgba(8, 10, 18, 0.72);
+  color: var(--vc-text);
+  padding: 8px 10px;
+  font-size: 14px;
+  outline: none;
+}
+
+.vc-quote-field input:focus {
+  border-color: rgba(59, 168, 240, 0.78);
+  box-shadow: 0 0 0 3px rgba(47, 126, 232, 0.18);
+}
+
+.vc-quote-mobile-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.vc-quote-mobile-metrics span {
+  border: 1px solid rgba(46, 50, 64, 0.74);
+  border-radius: 12px;
+  background: rgba(15, 17, 24, 0.76);
+  color: var(--vc-muted);
+  padding: 9px 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.vc-quote-mobile-metrics strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--vc-text);
+  font-size: 15px;
 }
 
 .vc-grid-2--mobile {
@@ -2452,7 +2760,7 @@ button.vc-nav-tab:active {
   gap: 8px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 980px) {
   .vc-table-wrap--desktop {
     display: none;
   }
@@ -2461,13 +2769,45 @@ button.vc-nav-tab:active {
     display: grid;
     gap: 10px;
   }
+}
+
+@media (max-width: 700px) {
+  .vc-quote-card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .vc-quote-head {
+    display: grid;
+    gap: 10px;
+  }
+
+  .vc-quote-total-pill {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .vc-quote-tabs {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
 
   .vc-grid-2--mobile {
     grid-template-columns: 1fr;
   }
 
-  .vc-quote-mobile-card .vc-label {
-    margin-top: 2px;
+  .vc-quote-summary {
+    grid-template-columns: minmax(0, 1fr) minmax(104px, auto);
+  }
+
+  .vc-quote-summary span,
+  .vc-quote-summary strong {
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+
+  .vc-quote-mobile-metrics {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -2570,5 +2910,23 @@ button.vc-nav-tab:active {
 
   .vc-head-sub.vc-head-sub-inline {
     font-size: 11px;
+  }
+}
+
+/* Cotización responsive: override final para ganar sobre reglas generales de tabla. */
+.vc-quote-table th,
+.vc-quote-table td {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+@media (max-width: 980px) {
+  .vc-table-wrap--desktop.vc-quote-table-wrap {
+    display: none !important;
+  }
+
+  .vc-quote-mobile-list {
+    display: grid !important;
+    gap: 10px;
   }
 }

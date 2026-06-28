@@ -761,6 +761,21 @@ export default function OrdenServicioPage() {
     });
   }
 
+  function updateQuoteDraftRow(idx: number, patch: Partial<QuoteDraftRow>) {
+    const next = [...quoteDraftRows];
+    next[idx] = { ...next[idx], ...patch };
+    setQuoteDraftRows(next);
+  }
+
+  function removeQuoteDraftRow(idx: number) {
+    const next = quoteDraftRows.filter((_, i) => i !== idx);
+    setQuoteDraftRows(next.length ? next : [{ ...DEFAULT_QUOTE_ROW }]);
+  }
+
+  function addQuoteDraftRow() {
+    setQuoteDraftRows([...quoteDraftRows, { ...DEFAULT_QUOTE_ROW }]);
+  }
+
   function setExpenseRows(rows: ExpenseRow[]) {
     const operario = rows.reduce((acc, row) => acc + toNumberSafe(row.operario), 0);
     const costo = rows.reduce((acc, row) => acc + toNumberSafe(row.costo), 0);
@@ -1638,9 +1653,18 @@ export default function OrdenServicioPage() {
               ) : null}
 
               {currentKey === 'cotizacion_formal' ? (
-                <div className="vc-card" style={{ padding: 12 }}>
-                  <h3 style={{ marginBottom: 8 }}>Formato de cotización</h3>
-                  <div className="vc-chip-row" style={{ marginBottom: 10 }}>
+                <div className="vc-card vc-quote-card">
+                  <div className="vc-quote-head">
+                    <div>
+                      <p className="vc-kicker">Formato financiero</p>
+                      <h3>Formato de cotización</h3>
+                    </div>
+                    <div className="vc-quote-total-pill">
+                      <span>Total cliente</span>
+                      <strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionTotal || '0'))}</strong>
+                    </div>
+                  </div>
+                  <div className="vc-chip-row vc-quote-tabs">
                     <button
                       type="button"
                       className={`vc-chip ${quoteViewMode === 'borrador' ? 'is-active' : ''}`}
@@ -1659,8 +1683,23 @@ export default function OrdenServicioPage() {
 
                   {quoteViewMode === 'borrador' ? (
                     <>
-                      <div className="vc-table-wrap vc-table-wrap--desktop">
-                        <table className="vc-table">
+                      <div className="vc-table-wrap vc-table-wrap--desktop vc-quote-table-wrap">
+                        <table className="vc-table vc-quote-table">
+                          <colgroup>
+                            <col className="vc-quote-col-system" />
+                            <col className="vc-quote-col-work" />
+                            <col className="vc-quote-col-money" />
+                            <col className="vc-quote-col-unit" />
+                            <col className="vc-quote-col-readonly" />
+                            <col className="vc-quote-col-money" />
+                            <col className="vc-quote-col-money" />
+                            <col className="vc-quote-col-money" />
+                            <col className="vc-quote-col-money" />
+                            <col className="vc-quote-col-money" />
+                            <col className="vc-quote-col-unit" />
+                            <col className="vc-quote-col-readonly" />
+                            {editable ? <col className="vc-quote-col-action" /> : null}
+                          </colgroup>
                           <thead>
                             <tr>
                               <th>Sistema</th>
@@ -1681,64 +1720,21 @@ export default function OrdenServicioPage() {
                           <tbody>
                             {quoteDraftRows.map((row, idx) => (
                               <tr key={`qd-${idx}`}>
-                                <td><input disabled={!editable} value={row.sistema} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], sistema: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td><input disabled={!editable} value={row.trabajo} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], trabajo: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td><input disabled={!editable} value={row.precioSinIva} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], precioSinIva: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td><input disabled={!editable} value={row.unidad} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], unidad: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td>${asMoney(toNumberSafe(row.valorCliente))}</td>
-                                <td><input disabled={!editable} value={row.repuesto} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], repuesto: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td><input disabled={!editable} value={row.moTaller} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], moTaller: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td><input disabled={!editable} value={row.tempario} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], tempario: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td><input disabled={!editable} value={row.utilidad} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], utilidad: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td><input disabled={!editable} value={row.precioClienteUnd} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], precioClienteUnd: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td><input disabled={!editable} value={row.unidadCliente} onChange={(e) => {
-                                  const next = [...quoteDraftRows];
-                                  next[idx] = { ...next[idx], unidadCliente: e.target.value };
-                                  setQuoteDraftRows(next);
-                                }} /></td>
-                                <td>${asMoney(toNumberSafe(row.totalCliente))}</td>
+                                <td><input disabled={!editable} value={row.sistema} placeholder="Sistema" onChange={(e) => updateQuoteDraftRow(idx, { sistema: e.target.value })} /></td>
+                                <td><input disabled={!editable} value={row.trabajo} placeholder="Trabajo o repuesto" onChange={(e) => updateQuoteDraftRow(idx, { trabajo: e.target.value })} /></td>
+                                <td><input disabled={!editable} inputMode="numeric" value={row.precioSinIva} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { precioSinIva: e.target.value })} /></td>
+                                <td><input disabled={!editable} inputMode="numeric" value={row.unidad} placeholder="1" onChange={(e) => updateQuoteDraftRow(idx, { unidad: e.target.value })} /></td>
+                                <td className="vc-quote-money">${asMoney(toNumberSafe(row.valorCliente))}</td>
+                                <td><input disabled={!editable} inputMode="numeric" value={row.repuesto} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { repuesto: e.target.value })} /></td>
+                                <td><input disabled={!editable} inputMode="numeric" value={row.moTaller} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { moTaller: e.target.value })} /></td>
+                                <td><input disabled={!editable} inputMode="numeric" value={row.tempario} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { tempario: e.target.value })} /></td>
+                                <td><input disabled={!editable} inputMode="numeric" value={row.utilidad} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { utilidad: e.target.value })} /></td>
+                                <td><input disabled={!editable} inputMode="numeric" value={row.precioClienteUnd} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { precioClienteUnd: e.target.value })} /></td>
+                                <td><input disabled={!editable} inputMode="numeric" value={row.unidadCliente} placeholder="1" onChange={(e) => updateQuoteDraftRow(idx, { unidadCliente: e.target.value })} /></td>
+                                <td className="vc-quote-money vc-quote-row-total">${asMoney(toNumberSafe(row.totalCliente))}</td>
                                 {editable ? (
                                   <td>
-                                    <button type="button" className="vc-btn" onClick={() => {
-                                      const next = quoteDraftRows.filter((_, i) => i !== idx);
-                                      setQuoteDraftRows(next.length ? next : [{ ...DEFAULT_QUOTE_ROW }]);
-                                    }}>-</button>
+                                    <button type="button" className="vc-icon-btn vc-icon-btn--danger" aria-label="Quitar item" onClick={() => removeQuoteDraftRow(idx)}>x</button>
                                   </td>
                                 ) : null}
                               </tr>
@@ -1747,11 +1743,71 @@ export default function OrdenServicioPage() {
                         </table>
                       </div>
 
+                      <div className="vc-quote-mobile-list">
+                        {quoteDraftRows.map((row, idx) => (
+                          <article className="vc-quote-mobile-card" key={`qdm-${idx}`}>
+                            <div className="vc-quote-mobile-head">
+                              <strong>Ítem {idx + 1}</strong>
+                              <span>${asMoney(toNumberSafe(row.totalCliente))}</span>
+                              {editable ? (
+                                <button type="button" className="vc-icon-btn vc-icon-btn--danger" aria-label="Quitar item" onClick={() => removeQuoteDraftRow(idx)}>x</button>
+                              ) : null}
+                            </div>
+                            <div className="vc-grid-2 vc-grid-2--mobile">
+                              <label className="vc-quote-field">
+                                <span>Sistema</span>
+                                <input disabled={!editable} value={row.sistema} placeholder="Motor, frenos..." onChange={(e) => updateQuoteDraftRow(idx, { sistema: e.target.value })} />
+                              </label>
+                              <label className="vc-quote-field vc-quote-field--wide">
+                                <span>Trabajo o repuesto</span>
+                                <input disabled={!editable} value={row.trabajo} placeholder="Descripción del trabajo" onChange={(e) => updateQuoteDraftRow(idx, { trabajo: e.target.value })} />
+                              </label>
+                              <label className="vc-quote-field">
+                                <span>Precio sin IVA</span>
+                                <input disabled={!editable} inputMode="numeric" value={row.precioSinIva} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { precioSinIva: e.target.value })} />
+                              </label>
+                              <label className="vc-quote-field">
+                                <span>Unidad</span>
+                                <input disabled={!editable} inputMode="numeric" value={row.unidad} placeholder="1" onChange={(e) => updateQuoteDraftRow(idx, { unidad: e.target.value })} />
+                              </label>
+                              <label className="vc-quote-field">
+                                <span>Repuesto</span>
+                                <input disabled={!editable} inputMode="numeric" value={row.repuesto} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { repuesto: e.target.value })} />
+                              </label>
+                              <label className="vc-quote-field">
+                                <span>MO taller</span>
+                                <input disabled={!editable} inputMode="numeric" value={row.moTaller} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { moTaller: e.target.value })} />
+                              </label>
+                              <label className="vc-quote-field">
+                                <span>Tempario</span>
+                                <input disabled={!editable} inputMode="numeric" value={row.tempario} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { tempario: e.target.value })} />
+                              </label>
+                              <label className="vc-quote-field">
+                                <span>Utilidad</span>
+                                <input disabled={!editable} inputMode="numeric" value={row.utilidad} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { utilidad: e.target.value })} />
+                              </label>
+                              <label className="vc-quote-field">
+                                <span>% x und cliente</span>
+                                <input disabled={!editable} inputMode="numeric" value={row.precioClienteUnd} placeholder="0" onChange={(e) => updateQuoteDraftRow(idx, { precioClienteUnd: e.target.value })} />
+                              </label>
+                              <label className="vc-quote-field">
+                                <span>Unidad cliente</span>
+                                <input disabled={!editable} inputMode="numeric" value={row.unidadCliente} placeholder="1" onChange={(e) => updateQuoteDraftRow(idx, { unidadCliente: e.target.value })} />
+                              </label>
+                            </div>
+                            <div className="vc-quote-mobile-metrics">
+                              <span>Valor cliente <strong>${asMoney(toNumberSafe(row.valorCliente))}</strong></span>
+                              <span>Total <strong>${asMoney(toNumberSafe(row.totalCliente))}</strong></span>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+
                       {editable ? (
-                        <button type="button" className="vc-btn" onClick={() => setQuoteDraftRows([...quoteDraftRows, { ...DEFAULT_QUOTE_ROW }])}>+ Agregar ítem borrador</button>
+                        <button type="button" className="vc-btn vc-quote-add-btn" onClick={addQuoteDraftRow}>+ Agregar ítem borrador</button>
                       ) : null}
 
-                      <div className="vc-summary-grid" style={{ marginTop: 8 }}>
+                      <div className="vc-summary-grid vc-quote-summary">
                         <span>Total valor cliente</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.draftTotalValorCliente || '0'))}</strong>
                         <span>Total repuesto</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.draftTotalRepuesto || '0'))}</strong>
                         <span>Total MO taller</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.draftTotalMoTaller || '0'))}</strong>
@@ -1762,8 +1818,8 @@ export default function OrdenServicioPage() {
                     </>
                   ) : (
                     <>
-                      <div className="vc-table-wrap">
-                        <table className="vc-table">
+                      <div className="vc-table-wrap vc-quote-table-wrap">
+                        <table className="vc-table vc-quote-table vc-quote-client-table">
                           <thead>
                             <tr>
                               <th>Sistema</th>
@@ -1787,7 +1843,7 @@ export default function OrdenServicioPage() {
                         </table>
                       </div>
 
-                      <div className="vc-summary-grid" style={{ marginTop: 8 }}>
+                      <div className="vc-summary-grid vc-quote-summary vc-quote-summary--client">
                         <span>Subtotal</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionSubtotal || '0'))}</strong>
                         <span>IVA 19%</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionIva || '0'))}</strong>
                         <span>Total</span><strong>${asMoney(toNumberSafe(formsByStep.cotizacion_formal?.cotizacionTotal || '0'))}</strong>
