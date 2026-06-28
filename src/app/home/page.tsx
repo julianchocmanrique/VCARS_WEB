@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { listVehicles } from '@/lib/api';
-import { signOut } from '@/lib/auth';
 import { apiVehicleToEntry } from '@/lib/mapper';
 import { applyDemoEntries } from '@/lib/demoData';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
@@ -348,10 +347,6 @@ export default function HomePage() {
           secondaryCtaHref="/ingreso-activo"
           activeCount={summary.active}
           totalCount={summary.total}
-          onSignOut={() => {
-            signOut();
-            router.replace('/login');
-          }}
         />
       ) : (
         <HeroPanelSkeleton />

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { InitialLoaderGate } from '@/components/InitialLoaderGate';
+import { SessionControl } from '@/components/SessionControl';
 import { PageTransitionShell } from '@/components/transitions/PageTransitionShell';
 
 const inter = Inter({
@@ -33,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               (function () {
                 try {
                   var BUILD_KEY = '@vcars_web_build_version';
-                  var BUILD_VALUE = '2026-06-28-doc-forms-hotfix-6';
+                  var BUILD_VALUE = '2026-06-28-session-control-7';
                   var prev = localStorage.getItem(BUILD_KEY);
                   if (prev === BUILD_VALUE) return;
 
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <InitialLoaderGate>
+          <SessionControl />
           <PageTransitionShell>{children}</PageTransitionShell>
         </InitialLoaderGate>
       </body>

@@ -18,7 +18,6 @@ type HeroVcarsProps = {
   secondaryCtaHref: string;
   activeCount: number;
   totalCount: number;
-  onSignOut: () => void;
 };
 
 export function HeroVcars({
@@ -31,7 +30,6 @@ export function HeroVcars({
   secondaryCtaHref,
   activeCount,
   totalCount,
-  onSignOut,
 }: HeroVcarsProps) {
   const reduced = useReducedMotion();
   const container = vcarsVariants.revealContainer(Boolean(reduced));
@@ -92,22 +90,11 @@ export function HeroVcars({
             <span className="text-sm font-black tracking-[0.22em] text-[#f0f4ff]">VCARS</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {hasCopy ? (
-              <span className="hidden rounded-full border border-[rgba(58,61,66,0.9)] bg-[rgba(18,18,20,0.85)] px-4 py-2 text-xs font-semibold text-[#d1d5db] md:inline-flex">
-                {roleLabel}
-              </span>
-            ) : null}
-            <motion.button
-              onClick={onSignOut}
-              className="rounded-full border border-[rgba(46,50,64,0.8)] bg-[rgba(23,25,33,0.72)] px-4 py-2 text-xs font-semibold text-[#c4cad8] backdrop-blur-sm transition hover:border-[rgba(47,126,232,0.5)] hover:text-[#f0f4ff]"
-              whileHover={vcarsMicroMotion.whileHover}
-              whileTap={vcarsMicroMotion.whileTap}
-              transition={vcarsMicroMotion.transition}
-            >
-              Salir
-            </motion.button>
-          </div>
+          {hasCopy ? (
+            <span className="hidden rounded-full border border-[rgba(58,61,66,0.9)] bg-[rgba(18,18,20,0.85)] px-4 py-2 text-xs font-semibold text-[#d1d5db] md:inline-flex">
+              {roleLabel}
+            </span>
+          ) : null}
         </div>
 
         <div className={`grid items-center ${hasCopy ? 'gap-7 md:grid-cols-[1.05fr_1fr] md:gap-8' : 'gap-4 md:grid-cols-[0.92fr_1.08fr] md:gap-5'}`}>
