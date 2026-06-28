@@ -64,8 +64,8 @@ VCARS WEB está implementado en **Next.js** y enfocado en replicar la experienci
 
 ### 5.1 Administrador
 
-- Usuario: `david@vcars.com`
-- Contraseña: `1111`
+- Usuario: `admin`
+- Contraseña: `1234`
 - Alcance:
   - acceso total a todos los vehículos y procesos
   - visualiza y gestiona todas las etapas
@@ -73,30 +73,27 @@ VCARS WEB está implementado en **Next.js** y enfocado en replicar la experienci
 
 ### 5.2 Técnico
 
-- Usuario: `julian@vcars.com`
-- Contraseña: `2222`
+- Usuario: `tecnico`
+- Contraseña: `1234`
 - Alcance:
   - ve y actualiza la operación técnica
   - diligencia formularios internos del taller
   - avanza estados según ejecución operativa
 
-### 5.3 Cliente empresa (cuentas corporativas)
+### 5.3 Cliente
 
-- `congreso@gobierno.com` / `3333`
-- `alcaldia@alcaldia.com` / `4444`
+- Usuario: `cliente`
+- Contraseña: `1234`
 - Alcance:
-  - solo visualiza los vehículos asociados a su empresa
+  - visualiza vehículos asociados a la identidad demo de cliente
   - ve avance de su proceso en tiempo real (modo lectura)
   - solo puede autorizar cuando el flujo llega al paso de autorización
   - no ve cotización interna del taller
 
-### 5.4 Cliente particular
+### 5.4 Perfiles cliente heredados
 
-- `juli@gm.com` / `5555`
-- Alcance:
-  - ve únicamente su vehículo
-  - seguimiento por etapa en modo cliente
-  - puede autorizar/rechazar cuando corresponda
+- Los perfiles `congreso@gobierno.com`, `alcaldia@alcaldia.com` y `juli@gm.com` son compatibilidad heredada del frontend.
+- En el backend remoto actual no se siembran como usuarios de prueba.
 
 ---
 

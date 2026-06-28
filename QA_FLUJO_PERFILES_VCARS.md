@@ -15,6 +15,7 @@ Verificar que cada perfil:
 ## 2. Entorno de prueba
 
 - URL local: `http://localhost:3000`
+- URL remoto: `http://187.124.65.93/vcars/`
 - Pantallas recomendadas:
 1. Desktop (>= 1366px)
 2. Mobile M (375px)
@@ -31,36 +32,28 @@ Verificar que cada perfil:
 ## 3. Credenciales oficiales de prueba
 
 ### Administrativo
-- Usuario: `david@vcars.com`
-- Contraseña: `1111`
+- Usuario: `admin`
+- Contraseña: `1234`
 
 ### Técnico
-- Usuario: `julian@vcars.com`
-- Contraseña: `2222`
+- Usuario: `tecnico`
+- Contraseña: `1234`
 
-### Cliente empresa (Congreso)
-- Usuario: `congreso@gobierno.com`
-- Contraseña: `3333`
+### Cliente demo
+- Usuario: `cliente`
+- Contraseña: `1234`
 
-### Cliente empresa (Alcaldía)
-- Usuario: `alcaldia@alcaldia.com`
-- Contraseña: `4444`
-
-### Cliente particular (1 vehículo)
-- Usuario: `juli@gm.com`
-- Contraseña: `5555`
-- Vehículo esperado: `BCD246`
+> Nota: los perfiles `congreso@gobierno.com`, `alcaldia@alcaldia.com` y `juli@gm.com` pertenecen al modo heredado del frontend. No están activos como usuarios seed del backend remoto actual.
 
 ---
 
 ## 4. Inventario esperado de vehículos
 
-Total sistema esperado: **15** vehículos.
+El inventario del backend remoto es dinámico y depende de las órdenes creadas en el ambiente.
 
-- Cliente particular (`juli@gm.com`): **1** vehículo (`BCD246`)
-- Empresa Congreso: **7** vehículos
-- Empresa Alcaldía: **7** vehículos
-- Administrativo y Técnico: deben ver los **15**
+- Administrativo y Técnico: deben ver el inventario completo retornado por el backend.
+- Cliente demo: debe ver solo el subconjunto permitido por su identidad de cliente.
+- Orden de verificación creada el 2026-06-28: `QA5963` (`Mazda CX-30 Grand Touring`).
 
 ---
 
@@ -90,7 +83,7 @@ Flujo base:
 
 ## 6. Flujo de prueba detallado por perfil
 
-## 6.1 Perfil Administrativo (`david@vcars.com`)
+## 6.1 Perfil Administrativo (`admin`)
 
 ### Paso A - Login
 - Ir a `/login`
@@ -114,7 +107,7 @@ Evidencia:
 ### Paso C - Proceso (listado)
 - Ir a `/ingreso-activo`
 - Validar:
-1. total de tarjetas = 15,
+1. el total de tarjetas coincide con el inventario retornado por backend,
 2. filtros operativos,
 3. navegación a detalle por tarjeta.
 
@@ -140,7 +133,7 @@ Evidencia:
 
 ---
 
-## 6.2 Perfil Técnico (`julian@vcars.com`)
+## 6.2 Perfil Técnico (`tecnico`)
 
 ### Paso A - Login
 - Resultado esperado: entra a `/home` como `Tecnico`.
@@ -149,7 +142,7 @@ Evidencia:
 - [ ] Pantallazo `06-tecnico-login-ok.png`
 
 ### Paso B - Home y Proceso
-- Validar que ve todo el parque (15).
+- Validar que ve todo el parque retornado por backend.
 
 Evidencia:
 - [ ] Pantallazo `07-tecnico-home.png`
@@ -165,27 +158,27 @@ Evidencia:
 
 ---
 
-## 6.3 Cliente Empresa Congreso (`congreso@gobierno.com`)
+## 6.3 Cliente demo (`cliente`)
 
 ### Paso A - Login
 - Resultado esperado: perfil `Cliente`.
 
 Evidencia:
-- [ ] Pantallazo `10-cliente-congreso-login.png`
+- [ ] Pantallazo `10-cliente-demo-login.png`
 
 ### Paso B - Home
-- Debe ver solo vehículos de su empresa.
+- Debe ver solo vehículos permitidos para la identidad demo de cliente.
 
 Evidencia:
-- [ ] Pantallazo `11-cliente-congreso-home.png`
+- [ ] Pantallazo `11-cliente-demo-home.png`
 
 ### Paso C - Proceso (listado)
 - En `/ingreso-activo`:
-1. solo tarjetas de `congreso@gobierno.com`,
-2. no ver vehículos de alcaldía ni cliente particular.
+1. solo tarjetas permitidas para el cliente demo,
+2. no ver herramientas de edición administrativas.
 
 Evidencia:
-- [ ] Pantallazo `12-cliente-congreso-listado.png`
+- [ ] Pantallazo `12-cliente-demo-listado.png`
 
 ### Paso D - Detalle de vehículo
 - En `/vehiculos/[placa]` validar:
@@ -194,7 +187,7 @@ Evidencia:
 3. si cotización cliente no está cargada: mensaje "En proceso".
 
 Evidencia:
-- [ ] Pantallazo `13-cliente-congreso-detalle.png`
+- [ ] Pantallazo `13-cliente-demo-detalle.png`
 
 ### Paso E - Autorización cliente
 - Si está en paso de aprobación:
@@ -203,44 +196,17 @@ Evidencia:
 3. queda registrada fecha/hora de decisión.
 
 Evidencia:
-- [ ] Pantallazo `14-cliente-congreso-aprobacion.png`
+- [ ] Pantallazo `14-cliente-demo-aprobacion.png`
 
 ---
 
-## 6.4 Cliente Empresa Alcaldía (`alcaldia@alcaldia.com`)
+## 6.4 Perfiles cliente heredados
 
-Repetir exactamente el flujo del cliente Congreso, esperando solo datos de Alcaldía.
+Los perfiles corporativos y particulares antiguos no forman parte del seed actual del backend remoto. Solo se deben ejecutar si el ambiente confirma esos usuarios:
 
-Evidencia:
-- [ ] Pantallazo `15-cliente-alcaldia-login.png`
-- [ ] Pantallazo `16-cliente-alcaldia-listado.png`
-- [ ] Pantallazo `17-cliente-alcaldia-detalle.png`
-- [ ] Pantallazo `18-cliente-alcaldia-aprobacion.png`
-
----
-
-## 6.5 Cliente Particular (`juli@gm.com`)
-
-### Paso A - Login
-- Debe entrar como cliente particular.
-
-Evidencia:
-- [ ] Pantallazo `19-cliente-juli-login.png`
-
-### Paso B - Home y Proceso
-- Debe ver **solo 1 vehículo** (`BCD246`).
-
-Evidencia:
-- [ ] Pantallazo `20-cliente-juli-home.png`
-- [ ] Pantallazo `21-cliente-juli-listado-unico.png`
-
-### Paso C - Detalle y aprobación
-- Validar mismo patrón de cliente:
-1. solo información permitida,
-2. autorización solo cuando aplique.
-
-Evidencia:
-- [ ] Pantallazo `22-cliente-juli-detalle.png`
+- `congreso@gobierno.com`
+- `alcaldia@alcaldia.com`
+- `juli@gm.com`
 
 ---
 
@@ -315,18 +281,19 @@ Se considera **GO** cuando:
 > Tipo de prueba aplicada en este informe: **validación funcional por reglas de código + rutas**.
 > Nota: para cierre final productivo, completar evidencias visuales del punto 6 con pantallazos reales en navegador.
 
-### 11.1 Resultado - Administrativo (`david@vcars.com`)
+### 11.1 Resultado - Administrativo (`admin`)
 
 1. Login redirige a `/home`: **Cumple**
 2. Visualiza Home con panel completo: **Cumple**
-3. Ve listado de proceso con total completo: **Cumple**
+3. Ve listado de proceso con el inventario de backend: **Cumple**
 4. Puede abrir detalle de vehículo y timeline completa: **Cumple**
 5. Puede editar todos los pasos en orden de servicio: **Cumple**
 
 Observación:
 - Administrativo tiene permisos globales (`canEditStep => true`).
+- En remoto se validó creación real de `QA5963`.
 
-### 11.2 Resultado - Técnico (`julian@vcars.com`)
+### 11.2 Resultado - Técnico (`tecnico`)
 
 1. Login técnico y acceso a `/home`: **Cumple**
 2. Visualiza parque completo de vehículos: **Cumple**
@@ -337,11 +304,11 @@ Observación:
 Observación:
 - Restricción aplicada correctamente por regla de negocio.
 
-### 11.3 Resultado - Cliente empresa Congreso (`congreso@gobierno.com`)
+### 11.3 Resultado - Cliente demo (`cliente`)
 
 1. Login cliente a `/home`: **Cumple**
-2. Filtrado por identidad (solo sus vehículos): **Cumple**
-3. No debe ver vehículos de Alcaldía o cliente particular: **Cumple**
+2. Filtrado por identidad demo: **Cumple**
+3. No debe ver herramientas administrativas de edición: **Cumple**
 4. En detalle no ve cotización interna: **Cumple**
 5. Ve cotización al cliente solo cuando existe información cargada: **Cumple**
 6. Puede autorizar/no autorizar en paso de aprobación: **Cumple**
@@ -350,26 +317,14 @@ Observación:
 Observación:
 - El mensaje “En proceso” aparece cuando la cotización no está lista.
 
-### 11.4 Resultado - Cliente empresa Alcaldía (`alcaldia@alcaldia.com`)
+### 11.4 Resultado - Perfiles heredados
 
-1. Login cliente a `/home`: **Cumple**
-2. Filtrado por identidad (solo sus vehículos): **Cumple**
-3. No debe ver vehículos de Congreso o cliente particular: **Cumple**
-4. Restricciones de edición iguales al cliente empresa: **Cumple**
-5. Autorización en paso correspondiente: **Cumple**
+1. `congreso@gobierno.com`: **No aplica en backend remoto actual**
+2. `alcaldia@alcaldia.com`: **No aplica en backend remoto actual**
+3. `juli@gm.com`: **No aplica en backend remoto actual**
 
 Observación:
-- Comportamiento equivalente a Congreso con dataset diferente.
-
-### 11.5 Resultado - Cliente particular (`juli@gm.com`)
-
-1. Login cliente particular: **Cumple**
-2. Debe quedar limitado a placa `BCD246`: **Cumple**
-3. Home y proceso muestran solo su vehículo: **Cumple**
-4. Solo puede actuar en aprobación cuando aplique: **Cumple**
-
-Observación:
-- La asignación de cliente personal con 1 placa está forzada en autenticación.
+- Se mantienen como compatibilidad heredada de frontend, pero no deben incluirse en el cierre QA del ambiente remoto salvo que el backend confirme esos usuarios.
 
 ---
 
@@ -379,7 +334,7 @@ Estado global por reglas funcionales: **Cumple**
 
 Checklist de cumplimiento actual:
 1. Segmentación por rol: **OK**
-2. Segmentación por cliente/empresa: **OK**
+2. Segmentación por cliente demo: **OK**
 3. Restricción de edición por etapa: **OK**
 4. Flujo de autorización cliente: **OK**
 5. Carga de fotos por ángulos en recepción: **OK**
@@ -389,4 +344,3 @@ Pendiente para cierre QA final (manual visual):
 1. Capturar pantallazos de evidencia de todos los pasos del punto 6.
 2. Ejecutar corrida en mobile 320/375 y registrar si hay cortes visuales.
 3. Verificar en entorno online además de localhost.
-

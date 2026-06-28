@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               (function () {
                 try {
                   var BUILD_KEY = '@vcars_web_build_version';
-                  var BUILD_VALUE = '2026-04-27-hotfix-1';
+                  var BUILD_VALUE = '2026-06-28-auth-hotfix-2';
                   var prev = localStorage.getItem(BUILD_KEY);
                   if (prev === BUILD_VALUE) return;
 
@@ -41,6 +41,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   localStorage.removeItem('@vcars_entries');
                   localStorage.removeItem('@vcars_current_entry');
                   localStorage.removeItem('@vcars_order_forms');
+                  localStorage.removeItem('@vcars_session');
+                  localStorage.removeItem('@vcars_profile');
+                  localStorage.removeItem('@vcars_client_identity');
 
                   var href = window.location.href || '';
                   var hasFlag = href.indexOf('_vcars_refresh=1') !== -1;

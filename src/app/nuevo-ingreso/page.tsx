@@ -9,7 +9,7 @@ import { ActionFeedback, type ActionFeedbackType } from '@/components/ui/ActionF
 import { createIngreso } from '@/lib/api';
 import { putStepDataToBackend, uploadServiceOrderAsset } from '@/lib/orderFormsBackend';
 import { setStepFields } from '@/lib/orderForms';
-import { getEntries, setCurrentEntry, setEntries, type Entry } from '@/lib/storage';
+import { clearSession, getEntries, getSession, setCurrentEntry, setEntries, type Entry } from '@/lib/storage';
 
 type HolderType = 'cliente' | 'empresa';
 type InventoryValue = 'S' | 'N' | 'C' | 'I' | '';
@@ -126,6 +126,15 @@ function normalizeFuelLevel(raw?: string): FuelLevelValue {
   if (value === 'EMPTY') return 'E';
   if (value === 'FULL') return 'F';
   return '1/2';
+}
+
+function normalizeSubmitError(err: unknown): { isAuthError: boolean; message: string } {
+  const raw = err instanceof Error ? err.message : 'No se pudo guardar la orden de servicio.';
+  const isAuthError = raw.trim().toLowerCase() === 'no autorizado';
+  return {
+    isAuthError,
+    message: isAuthError ? 'Tu sesión venció o no es válida. Inicia sesión nuevamente para guardar la orden.' : raw,
+  };
 }
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -257,6 +266,12 @@ export default function NuevoIngresoPage() {
   const [error, setError] = useState('');
   const [submitState, setSubmitState] = useState<ActionButtonState>('idle');
   const [feedback, setFeedback] = useState<FeedbackState>(null);
+
+  useEffect(() => {
+    if (!getSession()) {
+      router.replace('/login');
+    }
+  }, [router]);
 
   const holderLabel = useMemo(() => (holderType === 'empresa' ? 'Responsable / representante' : 'Propietario'), [holderType]);
   const vehiculo = useMemo(() => [marca.trim(), modelo.trim()].filter(Boolean).join(' '), [marca, modelo]);
@@ -652,10 +667,14 @@ export default function NuevoIngresoPage() {
 
       setTimeout(() => router.push('/ingreso-activo'), 260);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo guardar la orden de servicio.';
+      const { isAuthError, message } = normalizeSubmitError(err);
       setError(message);
       setSubmitState('error');
       setFeedback({ type: 'error', message });
+      if (isAuthError) {
+        clearSession();
+        setTimeout(() => router.replace('/login'), 1200);
+      }
     } finally {
       setSaving(false);
     }
@@ -1108,12 +1127,10 @@ export default function NuevoIngresoPage() {
             </div>
           </div>
 
-          <ActionFeedback show={Boolean(error)} type="error" message={error} />
-
           <ActionFeedback
-            show={Boolean(feedback)}
+            show={Boolean(feedback || error)}
             type={feedback?.type || 'info'}
-            message={feedback?.message || ''}
+            message={feedback?.message || error || ''}
           />
 
           <ActionButton type="submit" variant="primary" state={submitState} disabled={saving}>

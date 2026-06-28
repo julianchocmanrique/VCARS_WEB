@@ -1,19 +1,31 @@
-import { clearSession, getEntries, setCurrentEntry, setEntries, setSession, type Role, type Session } from './storage';
+import { clearSession, setCurrentEntry, setEntries, setSession, type Role, type Session } from './storage';
 import { setClientIdentity } from './clientIdentity';
 import { getApiBaseUrlCandidates } from './env';
 const PERSONAL_CLIENT_PLATE = 'BCD246';
+
+type LoginUser = {
+  id?: string;
+  username?: string;
+  role?: string;
+};
+
+type LoginPayload = {
+  ok?: boolean;
+  token?: string;
+  accessToken?: string;
+  user?: LoginUser;
+  data?: {
+    token?: string;
+    accessToken?: string;
+    user?: LoginUser;
+  };
+  error?: string;
+};
 
 function roleFromApi(role?: string): Role {
   if (role === 'TECH') return 'tecnico';
   if (role === 'CLIENT') return 'cliente';
   return 'administrativo';
-}
-
-function companyByUser(username: string): string {
-  const u = String(username || '').trim().toLowerCase();
-  if (u === 'alcaldia@alcaldia.com') return 'alcaldia@alcaldia.com';
-  if (u === 'congreso@gobierno.com') return 'congreso@gobierno.com';
-  return '';
 }
 
 function applyClientIdentity(username: string): void {
@@ -39,10 +51,17 @@ function applyClientIdentity(username: string): void {
       companyName: 'Juli',
       plates: [PERSONAL_CLIENT_PLATE],
     });
+  } else if (u === 'cliente') {
+    setClientIdentity({
+      type: 'empresa',
+      name: 'Cliente demo',
+      companyName: 'congreso@gobierno.com',
+      plates: [],
+    });
   }
 }
 
-function pickToken(payload: any): string {
+function pickToken(payload: LoginPayload | null): string {
   return String(
     payload?.token ||
     payload?.accessToken ||
@@ -52,7 +71,7 @@ function pickToken(payload: any): string {
   ).trim();
 }
 
-function pickUser(payload: any): any {
+function pickUser(payload: LoginPayload | null): LoginUser | null {
   return payload?.user || payload?.data?.user || null;
 }
 
@@ -80,7 +99,7 @@ export async function signIn(username: string, password: string): Promise<{ ok: 
     }
     if (!res) throw new Error('No se pudo conectar al servidor');
 
-    const json = await res.json().catch(() => null);
+    const json = await res.json().catch(() => null) as LoginPayload | null;
     if (!res.ok || !json?.ok) {
       return { ok: false, error: json?.error || 'No se pudo iniciar sesión' };
     }

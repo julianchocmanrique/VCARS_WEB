@@ -27,6 +27,9 @@ const iconMap: Record<ActionFeedbackType, string> = {
 };
 
 export function ActionFeedback({ show, type, message, compact = false }: ActionFeedbackProps) {
+  const normalizedMessage = String(message || '').trim().toLowerCase();
+  if (normalizedMessage === 'no autorizado') return null;
+
   return (
     <AnimatePresence>
       {show ? (

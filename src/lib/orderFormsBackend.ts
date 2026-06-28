@@ -17,7 +17,7 @@ function authHeaders(): Record<string, string> {
 
 async function parseJsonOrThrow<T>(res: Response): Promise<T> {
   const text = await res.text();
-  let json: any = null;
+  let json: Record<string, unknown> | null = null;
   try {
     json = text ? JSON.parse(text) : null;
   } catch {
@@ -46,7 +46,7 @@ async function fetchWithApiFallback(path: string, init: RequestInit): Promise<Re
 export async function fetchFormsByPlateFromBackend(plate: string): Promise<FormsByStep> {
   const p = String(plate || '').trim().toUpperCase();
   if (!p) return {};
-  const res = await fetchWithApiFallback(`service-orders/${encodeURIComponent(p)}/forms`, {
+  const res = await fetchWithApiFallback(`service-orders/${encodeURIComponent(p)}/forms/`, {
     method: 'GET',
     headers: authHeaders(),
     cache: 'no-store',
@@ -58,7 +58,7 @@ export async function fetchFormsByPlateFromBackend(plate: string): Promise<Forms
 export async function putFormsByPlateToBackend(plate: string, formsByStep: FormsByStep): Promise<void> {
   const p = String(plate || '').trim().toUpperCase();
   if (!p) return;
-  const res = await fetchWithApiFallback(`service-orders/${encodeURIComponent(p)}/forms`, {
+  const res = await fetchWithApiFallback(`service-orders/${encodeURIComponent(p)}/forms/`, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ formsByStep }),
@@ -70,7 +70,7 @@ export async function putFormsByPlateToBackend(plate: string, formsByStep: Forms
 export async function putStepDataToBackend(plate: string, stepKey: string, stepData: Record<string, string>): Promise<void> {
   const p = String(plate || '').trim().toUpperCase();
   if (!p || !stepKey) return;
-  const res = await fetchWithApiFallback(`service-orders/${encodeURIComponent(p)}/forms/${encodeURIComponent(stepKey)}`, {
+  const res = await fetchWithApiFallback(`service-orders/${encodeURIComponent(p)}/forms/${encodeURIComponent(stepKey)}/`, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ stepData }),
@@ -90,7 +90,7 @@ export async function uploadServiceOrderAsset(
     throw new Error('Parámetros de carga inválidos');
   }
 
-  const res = await fetchWithApiFallback(`service-orders/${encodeURIComponent(p)}/assets`, {
+  const res = await fetchWithApiFallback(`service-orders/${encodeURIComponent(p)}/assets/`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ stepKey, fieldKey, dataUrl }),
