@@ -47,11 +47,13 @@ function getRouteGateways(): string[] {
 
 function getBackendCandidates(req: NextRequest): string[] {
   const host = parseHost(req.headers.get('host'));
-  const fromEnv = String(process.env.API_PROXY_TARGET || process.env.NEXT_PUBLIC_API_URL || '').trim();
+  const publicApi = String(process.env.NEXT_PUBLIC_API_URL || '').trim();
+  const proxyTarget = String(process.env.API_PROXY_TARGET || '').trim();
   const gateways = getRouteGateways();
   const list = [
-    fromEnv,
+    publicApi,
     `http://${host}:4000`,
+    proxyTarget,
     `http://${host}:4010`,
     ...gateways.map((ip) => `http://${ip}:4000`),
     ...gateways.map((ip) => `http://${ip}:4010`),
@@ -91,13 +93,13 @@ async function forward(req: NextRequest, params: { path: string[] }) {
 
   const rawBody = method === 'GET' || method === 'HEAD' ? null : await req.text();
   let lastError = '';
+  const candidateTimeoutMs = path.includes('/assets') ? 12000 : 3500;
 
   for (const base of candidates) {
     const url = joinUrl(base, path, query);
     try {
       const controller = new AbortController();
-      // Asset uploads (firmas/fotos) can take several seconds on VPS networks.
-      const timeout = setTimeout(() => controller.abort(), 15000);
+      const timeout = setTimeout(() => controller.abort(), candidateTimeoutMs);
       const res = await fetch(url, {
         method,
         headers,

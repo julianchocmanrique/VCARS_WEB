@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               (function () {
                 try {
                   var BUILD_KEY = '@vcars_web_build_version';
-                  var BUILD_VALUE = '2026-06-28-auth-hotfix-2';
+                  var BUILD_VALUE = '2026-06-28-proxy-hotfix-3';
                   var prev = localStorage.getItem(BUILD_KEY);
                   if (prev === BUILD_VALUE) return;
 
