@@ -17,8 +17,25 @@ const INVENTORY_ITEMS = [
   'radio', 'cds', 'encendedor', 'ceniceros', 'reloj', 'cinturon', 'tapetes', 'parasoles', 'forros',
   'lucesTecho', 'espejos', 'chapas', 'kitCarretera', 'llantaRepuesto', 'herramienta', 'gatoPalanca',
   'llaveros', 'pernos', 'senales', 'antena', 'plumillas', 'exploradoras', 'tercerStop', 'tapaGasolina',
-  'copasRuedas', 'manijas', 'elevavidrios', 'controlRemoto', 'lavaVidrio', 'tapaPanel', 'controlAA', 'tarjetaPropiedad',
+  'copasRuedas', 'manijas', 'emblemas', 'llaves', 'elevavidrios', 'controlRemoto', 'lavaVidrio', 'tapaPanel', 'controlAA', 'tarjetaPropiedad',
 ];
+
+const INVENTORY_LABELS: Record<string, string> = {
+  cds: "CD's",
+  cinturon: 'Cinturón de seguridad',
+  lucesTecho: 'Luces techo',
+  kitCarretera: 'Kit carretera',
+  llantaRepuesto: 'Llanta repuesto',
+  gatoPalanca: 'Gato-palanca',
+  senales: 'Señales',
+  tercerStop: 'Tercer stop',
+  tapaGasolina: 'Tapa gasolina',
+  copasRuedas: 'Copas ruedas',
+  controlRemoto: 'Control remoto',
+  lavaVidrio: 'Llavero',
+  controlAA: 'Control A/A',
+  tarjetaPropiedad: 'Tarjeta de propiedad',
+};
 
 const PHOTO_SLOTS = [
   { key: 'superior', label: 'Superior' },
@@ -145,7 +162,7 @@ export function getMissingRequiredFields(stepKey: string, formsByStep: FormsBySt
     }
 
     INVENTORY_ITEMS.forEach((item) => {
-      if (!hasValue(inventory[item])) missing.push(`Inventario: ${item}`);
+      if (!hasValue(inventory[item])) missing.push(`Inventario: ${INVENTORY_LABELS[item] || item}`);
     });
 
     PHOTO_SLOTS.forEach((slot) => {

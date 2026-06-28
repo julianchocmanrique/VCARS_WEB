@@ -61,8 +61,10 @@ const INVENTORY_ITEMS = [
   { key: 'tapaGasolina', label: 'Tapa gasolina' },
   { key: 'copasRuedas', label: 'Copas ruedas' },
   { key: 'manijas', label: 'Manijas' },
+  { key: 'emblemas', label: 'Emblemas' },
+  { key: 'llaves', label: 'Llaves' },
   { key: 'controlRemoto', label: 'Control remoto' },
-  { key: 'lavaVidrio', label: 'Llavero/lava vidrio' },
+  { key: 'lavaVidrio', label: 'Llavero' },
   { key: 'tarjetaPropiedad', label: 'Tarjeta de propiedad' },
 ] as const;
 

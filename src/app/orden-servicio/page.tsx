@@ -154,8 +154,45 @@ const INVENTORY_ITEMS = [
   'radio', 'cds', 'encendedor', 'ceniceros', 'reloj', 'cinturon', 'tapetes', 'parasoles', 'forros',
   'lucesTecho', 'espejos', 'chapas', 'kitCarretera', 'llantaRepuesto', 'herramienta', 'gatoPalanca',
   'llaveros', 'pernos', 'senales', 'antena', 'plumillas', 'exploradoras', 'tercerStop', 'tapaGasolina',
-  'copasRuedas', 'manijas', 'elevavidrios', 'controlRemoto', 'lavaVidrio', 'tapaPanel', 'controlAA', 'tarjetaPropiedad',
+  'copasRuedas', 'manijas', 'emblemas', 'llaves', 'elevavidrios', 'controlRemoto', 'lavaVidrio', 'tapaPanel', 'controlAA', 'tarjetaPropiedad',
 ];
+
+const INVENTORY_LABELS: Record<string, string> = {
+  radio: 'Radio',
+  cds: "CD's",
+  encendedor: 'Encendedor',
+  ceniceros: 'Ceniceros',
+  reloj: 'Reloj',
+  cinturon: 'Cinturón de seguridad',
+  tapetes: 'Tapetes',
+  parasoles: 'Parasoles',
+  forros: 'Forros',
+  lucesTecho: 'Luces techo',
+  espejos: 'Espejos',
+  chapas: 'Chapas',
+  kitCarretera: 'Kit carretera',
+  llantaRepuesto: 'Llanta repuesto',
+  herramienta: 'Herramienta',
+  gatoPalanca: 'Gato-palanca',
+  llaveros: 'Llaveros',
+  pernos: 'Pernos',
+  senales: 'Señales',
+  antena: 'Antena',
+  plumillas: 'Plumillas',
+  exploradoras: 'Exploradoras',
+  tercerStop: 'Tercer stop',
+  tapaGasolina: 'Tapa gasolina',
+  copasRuedas: 'Copas ruedas',
+  manijas: 'Manijas',
+  emblemas: 'Emblemas',
+  llaves: 'Llaves',
+  elevavidrios: 'Elevavidrios',
+  controlRemoto: 'Control remoto',
+  lavaVidrio: 'Llavero',
+  tapaPanel: 'Tapa panel',
+  controlAA: 'Control A/A',
+  tarjetaPropiedad: 'Tarjeta de propiedad',
+};
 
 const FUEL_LEVELS = [
   { value: 'E', label: 'E', ratio: 0 },
@@ -784,6 +821,21 @@ export default function OrdenServicioPage() {
       expenseOperarioTotal: String(operario),
       expenseCostoTotal: String(costo),
     });
+  }
+
+  function updateExpenseRow(idx: number, patch: Partial<ExpenseRow>) {
+    const next = [...expenseRows];
+    next[idx] = { ...next[idx], ...patch };
+    setExpenseRows(next);
+  }
+
+  function removeExpenseRow(idx: number) {
+    const next = expenseRows.filter((_, i) => i !== idx);
+    setExpenseRows(next.length ? next : [{ actividad: '', tercero: '', cantidad: '1', operario: '', costo: '' }]);
+  }
+
+  function addExpenseRow() {
+    setExpenseRows([...expenseRows, { actividad: '', tercero: '', cantidad: '1', operario: '', costo: '' }]);
   }
 
   function setInventoryValue(item: string, value: InventoryValue) {
@@ -1501,10 +1553,10 @@ export default function OrdenServicioPage() {
                           }}
                           disabled={!editable}
                           onClick={() => setInventoryValue(item, nextInventoryValue(inventory[item] || ''))}
-                          aria-label={`Cambiar estado de ${item}`}
+                          aria-label={`Cambiar estado de ${INVENTORY_LABELS[item] || item}`}
                           title="Click para cambiar entre -, S, N, C, I"
                         >
-                          <span className="vc-os-inventory-item-label">{item}</span>
+                          <span className="vc-os-inventory-item-label">{INVENTORY_LABELS[item] || item}</span>
                           <strong className="vc-os-inventory-item-value">{inventory[item] || '-'}</strong>
                         </button>
                       ))}
@@ -1854,10 +1906,20 @@ export default function OrdenServicioPage() {
               ) : null}
 
               {currentKey === 'trabajo' ? (
-                <div className="vc-card" style={{ padding: 12 }}>
-                  <h3 style={{ marginBottom: 8 }}>Formato de gastos</h3>
-                  <div className="vc-table-wrap">
-                    <table className="vc-table">
+                <div className="vc-card vc-expense-card">
+                  <div className="vc-quote-head">
+                    <div>
+                      <p className="vc-kicker">Control de ejecución</p>
+                      <h3>Formato de gastos</h3>
+                    </div>
+                    <div className="vc-quote-total-pill">
+                      <span>Total costo</span>
+                      <strong>${asMoney(toNumberSafe(formsByStep.trabajo?.expenseCostoTotal || '0'))}</strong>
+                    </div>
+                  </div>
+
+                  <div className="vc-table-wrap vc-table-wrap--desktop vc-expense-table-wrap">
+                    <table className="vc-table vc-expense-table">
                       <thead>
                         <tr>
                           <th>Actividad</th>
@@ -1871,37 +1933,14 @@ export default function OrdenServicioPage() {
                       <tbody>
                         {expenseRows.map((row, idx) => (
                           <tr key={`g-${idx}`}>
-                            <td><input disabled={!editable} value={row.actividad} onChange={(e) => {
-                              const next = [...expenseRows];
-                              next[idx] = { ...next[idx], actividad: e.target.value };
-                              setExpenseRows(next);
-                            }} /></td>
-                            <td><input disabled={!editable} value={row.tercero} onChange={(e) => {
-                              const next = [...expenseRows];
-                              next[idx] = { ...next[idx], tercero: e.target.value };
-                              setExpenseRows(next);
-                            }} /></td>
-                            <td><input disabled={!editable} value={row.cantidad} onChange={(e) => {
-                              const next = [...expenseRows];
-                              next[idx] = { ...next[idx], cantidad: e.target.value };
-                              setExpenseRows(next);
-                            }} /></td>
-                            <td><input disabled={!editable} value={row.operario} onChange={(e) => {
-                              const next = [...expenseRows];
-                              next[idx] = { ...next[idx], operario: e.target.value };
-                              setExpenseRows(next);
-                            }} /></td>
-                            <td><input disabled={!editable} value={row.costo} onChange={(e) => {
-                              const next = [...expenseRows];
-                              next[idx] = { ...next[idx], costo: e.target.value };
-                              setExpenseRows(next);
-                            }} /></td>
+                            <td><input disabled={!editable} value={row.actividad} placeholder="Actividad" onChange={(e) => updateExpenseRow(idx, { actividad: e.target.value })} /></td>
+                            <td><input disabled={!editable} value={row.tercero} placeholder="Tercero" onChange={(e) => updateExpenseRow(idx, { tercero: e.target.value })} /></td>
+                            <td><input disabled={!editable} inputMode="numeric" value={row.cantidad} placeholder="1" onChange={(e) => updateExpenseRow(idx, { cantidad: e.target.value })} /></td>
+                            <td><input disabled={!editable} inputMode="numeric" value={row.operario} placeholder="0" onChange={(e) => updateExpenseRow(idx, { operario: e.target.value })} /></td>
+                            <td><input disabled={!editable} inputMode="numeric" value={row.costo} placeholder="0" onChange={(e) => updateExpenseRow(idx, { costo: e.target.value })} /></td>
                             {editable ? (
                               <td>
-                                <button type="button" className="vc-btn" onClick={() => {
-                                  const next = expenseRows.filter((_, i) => i !== idx);
-                                  setExpenseRows(next.length ? next : [{ actividad: '', tercero: '', cantidad: '1', operario: '', costo: '' }]);
-                                }}>-</button>
+                                <button type="button" className="vc-icon-btn vc-icon-btn--danger" aria-label="Quitar gasto" onClick={() => removeExpenseRow(idx)}>x</button>
                               </td>
                             ) : null}
                           </tr>
@@ -1910,11 +1949,47 @@ export default function OrdenServicioPage() {
                     </table>
                   </div>
 
+                  <div className="vc-expense-mobile-list">
+                    {expenseRows.map((row, idx) => (
+                      <article className="vc-quote-mobile-card" key={`gm-${idx}`}>
+                        <div className="vc-quote-mobile-head">
+                          <strong>Gasto {idx + 1}</strong>
+                          <span>${asMoney(toNumberSafe(row.costo))}</span>
+                          {editable ? (
+                            <button type="button" className="vc-icon-btn vc-icon-btn--danger" aria-label="Quitar gasto" onClick={() => removeExpenseRow(idx)}>x</button>
+                          ) : null}
+                        </div>
+                        <div className="vc-grid-2 vc-grid-2--mobile">
+                          <label className="vc-quote-field vc-quote-field--wide">
+                            <span>Actividad</span>
+                            <input disabled={!editable} value={row.actividad} placeholder="Actividad realizada" onChange={(e) => updateExpenseRow(idx, { actividad: e.target.value })} />
+                          </label>
+                          <label className="vc-quote-field">
+                            <span>Tercero</span>
+                            <input disabled={!editable} value={row.tercero} placeholder="Proveedor / No" onChange={(e) => updateExpenseRow(idx, { tercero: e.target.value })} />
+                          </label>
+                          <label className="vc-quote-field">
+                            <span>Cantidad</span>
+                            <input disabled={!editable} inputMode="numeric" value={row.cantidad} placeholder="1" onChange={(e) => updateExpenseRow(idx, { cantidad: e.target.value })} />
+                          </label>
+                          <label className="vc-quote-field">
+                            <span>Operario</span>
+                            <input disabled={!editable} inputMode="numeric" value={row.operario} placeholder="0" onChange={(e) => updateExpenseRow(idx, { operario: e.target.value })} />
+                          </label>
+                          <label className="vc-quote-field">
+                            <span>Costo</span>
+                            <input disabled={!editable} inputMode="numeric" value={row.costo} placeholder="0" onChange={(e) => updateExpenseRow(idx, { costo: e.target.value })} />
+                          </label>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+
                   {editable ? (
-                    <button type="button" className="vc-btn" onClick={() => setExpenseRows([...expenseRows, { actividad: '', tercero: '', cantidad: '1', operario: '', costo: '' }])}>+ Agregar gasto</button>
+                    <button type="button" className="vc-btn vc-quote-add-btn" onClick={addExpenseRow}>+ Agregar gasto</button>
                   ) : null}
 
-                  <div className="vc-summary-grid" style={{ marginTop: 8 }}>
+                  <div className="vc-summary-grid vc-quote-summary">
                     <span>Total operario</span><strong>${asMoney(toNumberSafe(formsByStep.trabajo?.expenseOperarioTotal || '0'))}</strong>
                     <span>Total costo</span><strong>${asMoney(toNumberSafe(formsByStep.trabajo?.expenseCostoTotal || '0'))}</strong>
                   </div>

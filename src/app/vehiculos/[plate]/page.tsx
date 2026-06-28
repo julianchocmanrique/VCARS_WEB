@@ -606,8 +606,24 @@ export default function VehiculoDetallePage() {
             'radio', 'cds', 'encendedor', 'ceniceros', 'reloj', 'cinturon', 'tapetes', 'parasoles',
             'forros', 'lucesTecho', 'espejos', 'chapas', 'kitCarretera', 'llantaRepuesto', 'herramienta', 'gatoPalanca',
             'llaveros', 'pernos', 'senales', 'antena', 'plumillas', 'exploradoras', 'tercerStop', 'tapaGasolina',
-            'copasRuedas', 'manijas', 'elevavidrios', 'controlRemoto', 'lavaVidrio', 'tapaPanel', 'controlAA', 'tarjetaPropiedad',
+            'copasRuedas', 'manijas', 'emblemas', 'llaves', 'elevavidrios', 'controlRemoto', 'lavaVidrio', 'tapaPanel', 'controlAA', 'tarjetaPropiedad',
           ];
+          const invLabels: Record<string, string> = {
+            cds: "CD's",
+            cinturon: 'Cinturón de seguridad',
+            lucesTecho: 'Luces techo',
+            kitCarretera: 'Kit carretera',
+            llantaRepuesto: 'Llanta repuesto',
+            gatoPalanca: 'Gato-palanca',
+            senales: 'Señales',
+            tercerStop: 'Tercer stop',
+            tapaGasolina: 'Tapa gasolina',
+            copasRuedas: 'Copas ruedas',
+            controlRemoto: 'Control remoto',
+            lavaVidrio: 'Llavero',
+            controlAA: 'Control A/A',
+            tarjetaPropiedad: 'Tarjeta de propiedad',
+          };
           const invStartY = 173;
           const colW = (pageWidth - 34) / 4;
           invItems.forEach((key, idx) => {
@@ -615,7 +631,7 @@ export default function VehiculoDetallePage() {
             const row = Math.floor(idx / 4);
             const x = 16 + col * colW;
             const yy = invStartY + row * 6.3;
-            const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+            const label = invLabels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
             const value = asText(inventory[key]) || '-';
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(7.5);

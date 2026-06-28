@@ -1960,6 +1960,52 @@ a { color: inherit; text-decoration: none; }
   grid-template-columns: minmax(0, 1fr) minmax(120px, auto);
 }
 
+.vc-expense-card {
+  padding: 16px;
+  border-color: rgba(47, 126, 232, 0.34);
+}
+
+.vc-expense-table-wrap {
+  border-color: rgba(47, 126, 232, 0.3);
+  border-radius: 16px;
+  background: rgba(8, 10, 18, 0.34);
+  scrollbar-color: rgba(59, 168, 240, 0.45) rgba(15, 17, 24, 0.9);
+  scrollbar-width: thin;
+}
+
+.vc-expense-table {
+  min-width: 760px;
+}
+
+.vc-expense-table th {
+  background: linear-gradient(180deg, rgba(23, 25, 33, 0.98), rgba(15, 17, 24, 0.98));
+  color: #7cc0ff;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.vc-expense-table td {
+  background: rgba(10, 12, 20, 0.62);
+}
+
+.vc-expense-table td input {
+  height: 38px;
+  border-color: rgba(47, 126, 232, 0.28);
+  border-radius: 10px;
+  background: rgba(15, 17, 24, 0.94);
+  font-size: 13px;
+}
+
+.vc-expense-table td input:focus {
+  border-color: rgba(59, 168, 240, 0.75);
+  box-shadow: 0 0 0 3px rgba(47, 126, 232, 0.18);
+  outline: none;
+}
+
+.vc-expense-mobile-list {
+  display: none;
+}
+
 .vc-photo-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2925,7 +2971,16 @@ button.vc-nav-tab:active {
     display: none !important;
   }
 
+  .vc-table-wrap--desktop.vc-expense-table-wrap {
+    display: none !important;
+  }
+
   .vc-quote-mobile-list {
+    display: grid !important;
+    gap: 10px;
+  }
+
+  .vc-expense-mobile-list {
     display: grid !important;
     gap: 10px;
   }
