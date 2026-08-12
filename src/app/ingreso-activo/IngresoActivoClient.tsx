@@ -14,6 +14,8 @@ import { PremiumDrawer } from '@/components/navigation/PremiumDrawer';
 import { PremiumTabs, type TabItem } from '@/components/navigation/PremiumTabs';
 import { SectionTransition } from '@/components/transitions/SectionTransition';
 import { VehicleCardsSkeleton } from '@/components/skeletons';
+import { getVehicleEvidencePhoto } from '@/lib/carPhoto';
+import { getFormsForPlate, hydrateFormsForPlate } from '@/lib/orderForms';
 import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 
 type ProcessFilter = 'all' | 'active' | 'done' | 'critical';
@@ -61,6 +63,60 @@ function splitVehicleLabel(raw?: string): { name: string; version: string } {
     name: parts.slice(0, 2).join(' '),
     version: parts.slice(2).join(' '),
   };
+}
+
+function resolveEntryProcessPhoto(entry: Entry): string {
+  const forms = getFormsForPlate(entry.placa);
+  const reception = forms.recepcion || {};
+  const zones = entry.intakePhotosByZone || {};
+  const uploadedPhoto =
+    String(zones.frontal || '').trim() ||
+    String(reception.photo_frontal || '').trim() ||
+    String(zones.lateralDerecho || '').trim() ||
+    String(reception.photo_lateralDerecho || '').trim() ||
+    String(zones.lateralIzquierdo || '').trim() ||
+    String(reception.photo_lateralIzquierdo || '').trim() ||
+    String(zones.superior || '').trim() ||
+    String(reception.photo_superior || '').trim() ||
+    String(zones.trasero || '').trim() ||
+    String(reception.photo_trasero || '').trim() ||
+    String(zones.inferior || '').trim() ||
+    String(reception.photo_inferior || '').trim() ||
+    String(entry.intakePhotos?.[0] || '').trim();
+
+  return (
+    uploadedPhoto ||
+    getVehicleEvidencePhoto(entry.vehiculo || entry.modelo || entry.marca || '', entry.placa, entry.color, 'frontal')
+  );
+}
+
+async function enrichEntriesWithReceptionPhotos(entries: Entry[]): Promise<Entry[]> {
+  return Promise.all(entries.map(async (entry) => {
+    try {
+      const forms = await hydrateFormsForPlate(entry.placa);
+      const reception = forms.recepcion || {};
+      const currentZones = entry.intakePhotosByZone || {};
+      const nextZones = {
+        superior: String(currentZones.superior || reception.photo_superior || ''),
+        inferior: String(currentZones.inferior || reception.photo_inferior || ''),
+        lateralDerecho: String(currentZones.lateralDerecho || reception.photo_lateralDerecho || ''),
+        lateralIzquierdo: String(currentZones.lateralIzquierdo || reception.photo_lateralIzquierdo || ''),
+        frontal: String(currentZones.frontal || reception.photo_frontal || ''),
+        trasero: String(currentZones.trasero || reception.photo_trasero || ''),
+      };
+      const intakePhotos = [
+        nextZones.superior,
+        nextZones.inferior,
+        nextZones.lateralDerecho,
+        nextZones.lateralIzquierdo,
+        nextZones.frontal,
+        nextZones.trasero,
+      ].filter(Boolean);
+      return { ...entry, intakePhotosByZone: nextZones, intakePhotos: intakePhotos.length ? intakePhotos : entry.intakePhotos };
+    } catch {
+      return entry;
+    }
+  }));
 }
 
 function statusLabel(entry: Entry): string {
@@ -148,11 +204,18 @@ export default function IngresoActivoClient() {
       setEntriesState(localEntries);
     });
 
+    void enrichEntriesWithReceptionPhotos(localEntries).then((withPhotos) => {
+      const normalized = sortByRecent(withPhotos.map(normalize));
+      setEntries(normalized);
+      setEntriesState(normalized);
+    });
+
     (async () => {
       try {
         const vehicles = await listVehicles({ take: 50 });
         const mapped = vehicles.map(apiVehicleToEntry).filter(Boolean) as Entry[];
-        const normalized = sortByRecent(mapped.map(normalize));
+        const withPhotos = await enrichEntriesWithReceptionPhotos(mapped.map(normalize));
+        const normalized = sortByRecent(withPhotos.map(normalize));
         setEntries(normalized);
         setEntriesState(normalized);
         setWarning('');
@@ -370,10 +433,7 @@ export default function IngresoActivoClient() {
               {viewEntries.length ? (
                 viewEntries.map((item, idx) => {
                   const vehicle = splitVehicleLabel(item.vehiculo || `Vehículo ${idx + 1}`);
-                  const realPhoto =
-                    String(item.intakePhotosByZone?.frontal || '').trim() ||
-                    String(item.intakePhotos?.[0] || '').trim() ||
-                    '';
+                  const realPhoto = resolveEntryProcessPhoto(item);
                   return (
                     <VehicleCard
                       key={item.id}

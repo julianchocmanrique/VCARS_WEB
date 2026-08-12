@@ -72,6 +72,7 @@ type PhotoSlotKey = (typeof PHOTO_SLOTS)[number]['key'];
 type DateFieldKey = 'entryDate' | 'expectedDeliveryDate' | 'soatExpiry' | 'rtmExpiry';
 type FuelLevelValue = (typeof FUEL_LEVELS)[number]['value'];
 type SignaturePadKey = 'cliente' | 'taller';
+type NewIngresoBlock = 'controlCliente' | 'facturacion' | 'vehiculoRecepcion' | 'inventario' | 'evidencias' | 'firmas';
 
 const EMPTY_INTAKE_PHOTOS: Record<PhotoSlotKey, string> = {
   superior: '',
@@ -268,6 +269,14 @@ export default function NuevoIngresoPage() {
   const [error, setError] = useState('');
   const [submitState, setSubmitState] = useState<ActionButtonState>('idle');
   const [feedback, setFeedback] = useState<FeedbackState>(null);
+  const [openBlocks, setOpenBlocks] = useState<Record<NewIngresoBlock, boolean>>({
+    controlCliente: true,
+    facturacion: false,
+    vehiculoRecepcion: false,
+    inventario: false,
+    evidencias: false,
+    firmas: false,
+  });
 
   useEffect(() => {
     if (!getSession()) {
@@ -321,6 +330,10 @@ export default function NuevoIngresoPage() {
 
   function setInventoryValue(itemKey: string, value: InventoryValue) {
     setInventarioAccesorios((prev) => ({ ...prev, [itemKey]: value }));
+  }
+
+  function toggleBlock(key: NewIngresoBlock) {
+    setOpenBlocks((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
   function registerDateInputRef(key: DateFieldKey, node: HTMLInputElement | null) {
@@ -691,7 +704,13 @@ export default function NuevoIngresoPage() {
         <FlowHeader subtitle="Nueva orden de servicio" />
 
         <form className="vc-form-card" onSubmit={onSubmit}>
-          <h3 style={{ margin: '0 0 8px' }}>Control de orden</h3>
+          <div className="vc-os-sections">
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('controlCliente')} aria-expanded={openBlocks.controlCliente}>
+            <span>Control de orden y cliente</span>
+            <span>{openBlocks.controlCliente ? '−' : '+'}</span>
+          </button>
+          {openBlocks.controlCliente ? (
+            <>
           <div className="vc-grid-2">
             <div>
               <label className="vc-label">No. orden *</label>
@@ -801,8 +820,15 @@ export default function NuevoIngresoPage() {
               </div>
             </div>
           </div>
+            </>
+          ) : null}
 
-          <h3 style={{ margin: '14px 0 8px' }}>Facturación</h3>
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('facturacion')} aria-expanded={openBlocks.facturacion}>
+            <span>Facturación</span>
+            <span>{openBlocks.facturacion ? '−' : '+'}</span>
+          </button>
+          {openBlocks.facturacion ? (
+            <>
           <div className="vc-grid-2">
             <div>
               <label className="vc-label">Factura a nombre de</label>
@@ -868,8 +894,15 @@ export default function NuevoIngresoPage() {
               )}
             </div>
           </div>
+            </>
+          ) : null}
 
-          <h3 style={{ margin: '14px 0 8px' }}>Información del vehículo</h3>
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('vehiculoRecepcion')} aria-expanded={openBlocks.vehiculoRecepcion}>
+            <span>Información del vehículo y recepción</span>
+            <span>{openBlocks.vehiculoRecepcion ? '−' : '+'}</span>
+          </button>
+          {openBlocks.vehiculoRecepcion ? (
+            <>
           <div className="vc-grid-2">
             <div>
               <label className="vc-label">Marca *</label>
@@ -1009,8 +1042,15 @@ export default function NuevoIngresoPage() {
               </div>
             </div>
           </div>
+            </>
+          ) : null}
 
-          <h3 style={{ margin: '14px 0 8px' }}>Inventario de accesorios</h3>
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('inventario')} aria-expanded={openBlocks.inventario}>
+            <span>Inventario de accesorios</span>
+            <span>{openBlocks.inventario ? '−' : '+'}</span>
+          </button>
+          {openBlocks.inventario ? (
+            <>
           <p className="vc-subtitle-small" style={{ marginTop: 0 }}>
             S: Sí / N: No / C: Completo / I: Incompleto
           </p>
@@ -1038,8 +1078,15 @@ export default function NuevoIngresoPage() {
               </button>
             ))}
           </div>
+            </>
+          ) : null}
 
-          <h3 style={{ margin: '14px 0 8px' }}>Evidencias de recepción (imágenes)</h3>
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('evidencias')} aria-expanded={openBlocks.evidencias}>
+            <span>Evidencias de recepción (imágenes)</span>
+            <span>{openBlocks.evidencias ? '−' : '+'}</span>
+          </button>
+          {openBlocks.evidencias ? (
+            <>
           <label className="vc-label">Carga una foto por cada ángulo (máx. 3MB por imagen)</label>
           <div className="vc-photo-grid" style={{ marginTop: 10 }}>
             {PHOTO_SLOTS.map((slot) => {
@@ -1080,8 +1127,14 @@ export default function NuevoIngresoPage() {
               );
             })}
           </div>
+            </>
+          ) : null}
 
-          <h3 style={{ margin: '14px 0 8px' }}>Firmas</h3>
+          <button type="button" className="vc-accordion-toggle" onClick={() => toggleBlock('firmas')} aria-expanded={openBlocks.firmas}>
+            <span>Firmas</span>
+            <span>{openBlocks.firmas ? '−' : '+'}</span>
+          </button>
+          {openBlocks.firmas ? (
           <div className="vc-grid-2">
             <div>
               <label className="vc-label">Firma cliente / empresa</label>
@@ -1127,6 +1180,8 @@ export default function NuevoIngresoPage() {
                 {signatureSavedAt.taller ? <p className="vc-subtitle-small">Guardada: {signatureSavedAt.taller}</p> : null}
               </div>
             </div>
+          </div>
+          ) : null}
           </div>
 
           <ActionFeedback
