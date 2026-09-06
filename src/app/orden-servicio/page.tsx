@@ -5,8 +5,8 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
-import { getFormsForPlate, getRoleSteps, hydrateFormsForPlate, setStepField, setStepFields } from '@/lib/orderForms';
-import { uploadServiceOrderAsset } from '@/lib/orderFormsBackend';
+import { canEditStep, getFormsForPlate, getRoleSteps, hydrateFormsForPlate, setStepField, setStepFields } from '@/lib/orderForms';
+import { resolveServiceOrderAssetUrl, uploadServiceOrderAsset } from '@/lib/orderFormsBackend';
 import { getMissingRequiredFields } from '@/lib/orderStepValidation';
 import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 
@@ -485,7 +485,7 @@ export default function OrdenServicioPage() {
   const current = steps[stepPos] || steps[0];
   const currentKey = current?.key || '';
   const fields = useMemo(() => STEP_FIELDS[currentKey] || [], [currentKey]);
-  const editable = true;
+  const editable = Boolean(currentKey) && canEditStep(role, currentKey);
   const stepValues = formsByStep[currentKey] || {};
   const hasStepData = fields.some((field) => String(stepValues[field.key] || '').trim().length > 0);
   const showPendingForClient = role === 'cliente' && !editable && !hasStepData;
@@ -523,11 +523,13 @@ export default function OrdenServicioPage() {
   }, [formsByStep.recepcion?.inventarioAccesorios]);
   const persistedEntryForPlate = useMemo(
     () => getEntries().find((item) => String(item.placa || '').toUpperCase() === plate) || null,
-    [plate, formsByStep, entryRefreshTick],
+    // Reading local intake changes is intentionally driven by this explicit refresh counter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [plate, entryRefreshTick],
   );
   useEffect(() => {
-    setEntryForPlate(persistedEntryForPlate);
-  }, [persistedEntryForPlate?.id, persistedEntryForPlate?.updatedAt, plate]);
+    queueMicrotask(() => setEntryForPlate(persistedEntryForPlate));
+  }, [persistedEntryForPlate]);
   const selectedFuelLevel = fuelLevelUi;
   const fuelNeedleAngle = useMemo(() => {
     const match = FUEL_LEVELS.find((item) => item.value === selectedFuelLevel);
@@ -536,28 +538,28 @@ export default function OrdenServicioPage() {
   }, [selectedFuelLevel]);
 
   useEffect(() => {
-    setFuelLevelUi(normalizeFuelLevel(entryForPlate?.fuelLevel || ''));
+    queueMicrotask(() => setFuelLevelUi(normalizeFuelLevel(entryForPlate?.fuelLevel || '')));
   }, [entryForPlate?.fuelLevel, plate]);
 
   useEffect(() => {
     if (currentKey !== 'cotizacion_formal') return;
     if (role === 'cliente') {
-      setQuoteViewMode('cotizacion');
+      queueMicrotask(() => setQuoteViewMode('cotizacion'));
       return;
     }
-    setQuoteViewMode((prev) => prev || 'borrador');
+    queueMicrotask(() => setQuoteViewMode((prev) => prev || 'borrador'));
   }, [currentKey, role]);
 
   const receptionPhotos = useMemo(() => {
     const fromForms = formsByStep.recepcion || {};
     const fromEntry = getEntries().find((item) => String(item.placa || '').toUpperCase() === plate)?.intakePhotosByZone || {};
     return {
-      superior: String(fromForms.photo_superior || fromEntry.superior || ''),
-      inferior: String(fromForms.photo_inferior || fromEntry.inferior || ''),
-      lateralDerecho: String(fromForms.photo_lateralDerecho || fromEntry.lateralDerecho || ''),
-      lateralIzquierdo: String(fromForms.photo_lateralIzquierdo || fromEntry.lateralIzquierdo || ''),
-      frontal: String(fromForms.photo_frontal || fromEntry.frontal || ''),
-      trasero: String(fromForms.photo_trasero || fromEntry.trasero || ''),
+      superior: resolveServiceOrderAssetUrl(String(fromForms.photo_superior || fromEntry.superior || '')),
+      inferior: resolveServiceOrderAssetUrl(String(fromForms.photo_inferior || fromEntry.inferior || '')),
+      lateralDerecho: resolveServiceOrderAssetUrl(String(fromForms.photo_lateralDerecho || fromEntry.lateralDerecho || '')),
+      lateralIzquierdo: resolveServiceOrderAssetUrl(String(fromForms.photo_lateralIzquierdo || fromEntry.lateralIzquierdo || '')),
+      frontal: resolveServiceOrderAssetUrl(String(fromForms.photo_frontal || fromEntry.frontal || '')),
+      trasero: resolveServiceOrderAssetUrl(String(fromForms.photo_trasero || fromEntry.trasero || '')),
     } as Record<PhotoSlotKey, string>;
   }, [formsByStep.recepcion, plate]);
 
@@ -623,6 +625,8 @@ export default function OrdenServicioPage() {
 
   useEffect(() => {
     repaintSignaturesWithRetry();
+  // The helper reads current canvas refs after an accordion animation completes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentKey, openReceptionBlocks.firmas]);
 
   useEffect(() => {
@@ -630,6 +634,8 @@ export default function OrdenServicioPage() {
     const onResize = () => repaintSignaturesWithRetry();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+    // The handler deliberately retains the retry helper for the mounted signature canvases.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentKey, openReceptionBlocks.firmas]);
 
   function registerSignatureCanvasRef(key: SignaturePadKey, node: HTMLCanvasElement | null) {
@@ -849,6 +855,8 @@ export default function OrdenServicioPage() {
     const hasLegacy = String(formsByStep.cotizacion_formal?.quoteItems || '').trim().length > 0;
     if (hasDraft || !hasLegacy) return;
     setQuoteDraftRows(quoteDraftRows);
+    // This migration effect only hydrates legacy quotation data when the formal step opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentKey, formsByStep.cotizacion_formal?.quoteDraftItems, formsByStep.cotizacion_formal?.quoteItems, quoteDraftRows]);
 
   function toEntryReceptionPatch(patch: Partial<Entry>): Record<string, string> {
@@ -935,9 +943,12 @@ export default function OrdenServicioPage() {
     if (!Object.keys(recoveredPatch).length) return;
 
     const current = entryForPlate || getCurrentEntry();
-    const hasDiff = Object.entries(recoveredPatch).some(([key, value]) => String((current as any)?.[key] || '') !== String(value || ''));
+    const currentRecord = current as Record<string, unknown> | null;
+    const hasDiff = Object.entries(recoveredPatch).some(([key, value]) => String(currentRecord?.[key] || '') !== String(value || ''));
     if (!hasDiff) return;
-    applyEntryPatchLocal(recoveredPatch);
+    queueMicrotask(() => applyEntryPatchLocal(recoveredPatch));
+    // Local intake reconciliation intentionally runs only for persisted reception changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formsByStep.recepcion, plate]);
 
   async function onPickReceptionPhoto(slot: PhotoSlotKey, file?: File) {
@@ -956,8 +967,8 @@ export default function OrdenServicioPage() {
       const uploaded = await uploadServiceOrderAsset(plate, 'recepcion', `photo_${slot}`, encoded);
       syncStepPatch('recepcion', {
         ['photo_' + slot]: uploaded.url,
-        ['photo_verified_' + slot]: 'SI',
-        ['photo_verified_source_' + slot]: 'AUTO',
+        ['photo_verified_' + slot]: '',
+        ['photo_verified_source_' + slot]: '',
       });
       syncEntryReceptionPhotos(slot, uploaded.url);
       setUploadError('');
@@ -973,6 +984,13 @@ export default function OrdenServicioPage() {
       ['photo_verified_source_' + slot]: '',
     });
     syncEntryReceptionPhotos(slot, '');
+  }
+
+  function confirmReceptionPhoto(slot: PhotoSlotKey) {
+    syncStepPatch('recepcion', {
+      ['photo_verified_' + slot]: 'SI',
+      ['photo_verified_source_' + slot]: 'MANUAL',
+    });
   }
 
   function toggleReceptionBlock(key: keyof typeof openReceptionBlocks) {
@@ -1000,22 +1018,35 @@ export default function OrdenServicioPage() {
       return;
     }
     setValidationError('');
-    setStepPos((s) => Math.min(Math.max(steps.length - 1, 0), s + 1));
+    const isLastStep = stepPos >= steps.length - 1;
+    if (isLastStep) {
+      syncEntryPatch({ stepIndex: current.index, paso: current.title });
+      router.push(`/vehiculos/${encodeURIComponent(plate)}`);
+      return;
+    }
+    const nextStep = steps[stepPos + 1];
+    if (nextStep) {
+      syncEntryPatch({ stepIndex: nextStep.index, paso: nextStep.title });
+      router.push(`/orden-servicio?startStep=${nextStep.index}&plate=${encodeURIComponent(plate)}`);
+    }
   }
 
   function handleStepTabClick(nextIndex: number) {
     if (nextIndex <= stepPos) {
       setValidationError('');
-      setStepPos(nextIndex);
+      const nextStep = steps[nextIndex];
+      if (nextStep) router.push(`/orden-servicio?startStep=${nextStep.index}&plate=${encodeURIComponent(plate)}`);
       return;
     }
-    const missing = validateCurrentStep();
-    if (missing.length) {
-      setValidationError(buildMissingFieldsMessage(missing));
+    const blockedStep = steps.slice(stepPos, nextIndex).find((step) => getMissingRequiredFields(step.key, formsByStep, entryForPlate).length > 0);
+    if (blockedStep) {
+      const missing = getMissingRequiredFields(blockedStep.key, formsByStep, entryForPlate);
+      setValidationError(`${blockedStep.title}: ${buildMissingFieldsMessage(missing)}`);
       return;
     }
     setValidationError('');
-    setStepPos(nextIndex);
+    const nextStep = steps[nextIndex];
+    if (nextStep) router.push(`/orden-servicio?startStep=${nextStep.index}&plate=${encodeURIComponent(plate)}`);
   }
 
   return (
@@ -1605,32 +1636,45 @@ export default function OrdenServicioPage() {
                               {src ? (
                                 <>
                                   <div className="vc-photo-guide-wrap">
+                                    {/* The guide is a local SVG/asset rendered at a variable crop. */}
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                       src={PHOTO_GUIDE_TEMPLATE}
                                       alt={`Guía ${slot.label}`}
                                       className="vc-photo-guide-overlay"
                                       style={{ objectPosition: guide.objectPosition, transform: `scale(${guide.scale})` }}
                                     />
+                                    {/* Intake images can be data URLs or authenticated API resources. */}
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img src={src} alt={'Foto ' + slot.label} className="vc-photo-preview vc-photo-preview-guided" />
                                   </div>
                                   <div className="vc-photo-verify-row">
                                     <span className={`vc-btn ${verified ? 'vc-btn-verified' : ''}`}>
-                                      {verified ? 'Foto verificada' : 'Verificando...'}
+                                      {verified ? 'Foto confirmada' : 'Pendiente confirmar'}
                                     </span>
                                     <span className={`vc-photo-verify-text ${verified ? 'is-ok' : 'is-warn'}`}>
                                       {verified
-                                        ? `${verifiedSource === 'AUTO' ? 'Verificación automática' : 'Verificación'}: coincide con ${slot.label}`
-                                        : `Pendiente validar ${slot.label}`}
+                                        ? `${verifiedSource === 'MANUAL' ? 'Confirmada por recepción' : 'Confirmación registrada'}: ${slot.label}`
+                                        : `Confirma que corresponde a la vista ${slot.label}`}
                                     </span>
                                   </div>
                                   {editable ? (
-                                    <button type="button" className="vc-btn" style={{ marginTop: 6 }} onClick={() => removeReceptionPhoto(slot.key)}>
-                                      Quitar
-                                    </button>
+                                    <div className="vc-inline-actions" style={{ marginTop: 6 }}>
+                                      {!verified ? (
+                                        <button type="button" className="vc-btn" onClick={() => confirmReceptionPhoto(slot.key)}>
+                                          Confirmar ángulo
+                                        </button>
+                                      ) : null}
+                                      <button type="button" className="vc-btn" onClick={() => removeReceptionPhoto(slot.key)}>
+                                        Quitar
+                                      </button>
+                                    </div>
                                   ) : null}
                                 </>
                               ) : (
                                 <div className="vc-photo-empty vc-photo-empty-guide">
+                                  {/* The guide is a local SVG/asset rendered at a variable crop. */}
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={PHOTO_GUIDE_TEMPLATE}
                                     alt={`Guía ${slot.label}`}
@@ -1999,13 +2043,14 @@ export default function OrdenServicioPage() {
           )}
 
           <div className="vc-wizard-actions">
-            <button
-              className="vc-btn"
-              disabled={stepPos === 0}
-              onClick={() => {
-                setValidationError('');
-                setStepPos((s) => Math.max(0, s - 1));
-              }}
+              <button
+                className="vc-btn"
+                disabled={stepPos === 0}
+                onClick={() => {
+                  setValidationError('');
+                  const previousStep = steps[Math.max(0, stepPos - 1)];
+                  if (previousStep) router.push(`/orden-servicio?startStep=${previousStep.index}&plate=${encodeURIComponent(plate)}`);
+                }}
             >
               Anterior
             </button>

@@ -1,5 +1,6 @@
 import type { Role } from './storage';
 import { VCARS_PROCESS, type ProcessStep } from './process';
+import { readJsonStorage, writeJsonStorage } from '@/lib/persistence/jsonStore';
 import {
   localOrderFormsRepository,
   normalizePlateKey,
@@ -17,6 +18,91 @@ function normalizePlate(plate: string): string {
 }
 
 const stepSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const PENDING_STEP_SYNC_KEY = '@vcars_pending_step_sync';
+
+type PendingStepSync = {
+  plate: string;
+  stepKey: string;
+  updatedAt: string;
+};
+
+function syncId(plate: string, stepKey: string): string {
+  return `${normalizePlate(plate)}::${stepKey}`;
+}
+
+function readPendingStepSyncs(): PendingStepSync[] {
+  const value = readJsonStorage<unknown>(PENDING_STEP_SYNC_KEY, []);
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => ({
+      plate: normalizePlate(String((item as PendingStepSync)?.plate || '')),
+      stepKey: String((item as PendingStepSync)?.stepKey || '').trim(),
+      updatedAt: String((item as PendingStepSync)?.updatedAt || ''),
+    }))
+    .filter((item) => Boolean(item.plate && item.stepKey));
+}
+
+function notifySyncQueueChange(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('vcars:sync-queue-change'));
+}
+
+function writePendingStepSyncs(items: PendingStepSync[]): void {
+  writeJsonStorage(PENDING_STEP_SYNC_KEY, items);
+  notifySyncQueueChange();
+}
+
+function markStepPending(plate: string, stepKey: string): void {
+  const item: PendingStepSync = { plate: normalizePlate(plate), stepKey, updatedAt: new Date().toISOString() };
+  const current = readPendingStepSyncs().filter((entry) => syncId(entry.plate, entry.stepKey) !== syncId(item.plate, item.stepKey));
+  writePendingStepSyncs([...current, item]);
+}
+
+function clearStepPending(plate: string, stepKey: string): void {
+  const next = readPendingStepSyncs().filter((entry) => syncId(entry.plate, entry.stepKey) !== syncId(plate, stepKey));
+  writePendingStepSyncs(next);
+}
+
+export function getPendingSyncCount(): number {
+  return readPendingStepSyncs().length;
+}
+
+let pendingFlush: Promise<number> | null = null;
+
+export function flushPendingStepSyncs(): Promise<number> {
+  if (pendingFlush) return pendingFlush;
+  pendingFlush = (async () => {
+    const pending = readPendingStepSyncs();
+    const remaining: PendingStepSync[] = [];
+    let synced = 0;
+    for (const item of pending) {
+      const forms = localOrderFormsRepository.getPlateForms(item.plate);
+      const stepData = forms[item.stepKey];
+      if (!stepData) continue;
+      try {
+        await putStepDataToBackend(item.plate, item.stepKey, stepData);
+        synced += 1;
+      } catch {
+        remaining.push(item);
+      }
+    }
+    writePendingStepSyncs(remaining);
+    return synced;
+  })().finally(() => {
+    pendingFlush = null;
+  });
+  return pendingFlush;
+}
+
+function mergeFormsByStep(local: FormsByStep, remote: FormsByStep): FormsByStep {
+  const stepKeys = new Set([...Object.keys(local || {}), ...Object.keys(remote || {})]);
+  return Array.from(stepKeys).reduce<FormsByStep>((result, stepKey) => {
+    result[stepKey] = {
+      ...(local[stepKey] || {}),
+      ...(remote[stepKey] || {}),
+    };
+    return result;
+  }, {});
+}
 
 function scheduleStepSync(plate: string, stepKey: string, stepData: Record<string, string>): void {
   if (typeof window === 'undefined') return;
@@ -25,9 +111,9 @@ function scheduleStepSync(plate: string, stepKey: string, stepData: Record<strin
   if (current) clearTimeout(current);
   const timer = setTimeout(() => {
     stepSyncTimers.delete(key);
-    void putStepDataToBackend(plate, stepKey, stepData).catch(() => {
-      // silent fallback: local cache is already updated
-    });
+    void putStepDataToBackend(plate, stepKey, stepData)
+      .then(() => clearStepPending(plate, stepKey))
+      .catch(() => markStepPending(plate, stepKey));
   }, 240);
   stepSyncTimers.set(key, timer);
 }
@@ -58,7 +144,7 @@ export async function hydrateFormsForPlate(plate: string): Promise<FormsByStep> 
   try {
     const remote = await fetchFormsByPlateFromBackend(key);
     if (Object.keys(remote).length > 0) {
-      const merged = { ...localPlate, ...remote };
+      const merged = mergeFormsByStep(localPlate, remote);
       localOrderFormsRepository.writeAll({
         ...localAll,
         [key]: merged,

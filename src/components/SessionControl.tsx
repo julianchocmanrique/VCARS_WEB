@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getSession, type Session } from '@/lib/storage';
 import { signOut } from '@/lib/auth';
+import { flushPendingStepSyncs, getPendingSyncCount } from '@/lib/orderForms';
 
 const ROLE_LABEL: Record<string, string> = {
   administrativo: 'Administrativo',
@@ -19,14 +20,50 @@ export function SessionControl() {
   const router = useRouter();
   const pathname = usePathname() || '';
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
-  const [session, setSessionState] = useState<Session | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
 
   useEffect(() => {
-    setMounted(true);
-    setSessionState(getSession());
-  }, [pathname]);
+    const refreshSession = () => setSession(getSession());
+    queueMicrotask(() => {
+      refreshSession();
+      setMounted(true);
+    });
+    window.addEventListener('storage', refreshSession);
+    return () => window.removeEventListener('storage', refreshSession);
+  }, []);
+
+  useEffect(() => {
+    function onSessionExpired() {
+      setOpen(false);
+      setSession(null);
+      signOut();
+      router.replace('/login');
+    }
+    window.addEventListener('vcars:session-expired', onSessionExpired);
+    return () => window.removeEventListener('vcars:session-expired', onSessionExpired);
+  }, [router]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function syncPending() {
+      setPendingSyncCount(getPendingSyncCount());
+      await flushPendingStepSyncs();
+      if (!cancelled) setPendingSyncCount(getPendingSyncCount());
+    }
+    function onOnline() { void syncPending(); }
+    function onQueueChange() { setPendingSyncCount(getPendingSyncCount()); }
+    void syncPending();
+    window.addEventListener('online', onOnline);
+    window.addEventListener('vcars:sync-queue-change', onQueueChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('vcars:sync-queue-change', onQueueChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -46,7 +83,6 @@ export function SessionControl() {
   function goLogin() {
     setOpen(false);
     signOut();
-    setSessionState(null);
     router.replace('/login');
   }
 
@@ -72,6 +108,9 @@ export function SessionControl() {
             <span>Sesión activa</span>
             <strong>{roleLabel}</strong>
           </div>
+          {pendingSyncCount ? (
+            <p className="vc-session-sync-status">{pendingSyncCount} cambio{pendingSyncCount === 1 ? '' : 's'} pendiente{pendingSyncCount === 1 ? '' : 's'} de sincronizar</p>
+          ) : null}
           <button type="button" role="menuitem" onClick={goLogin}>
             Cambiar usuario
           </button>

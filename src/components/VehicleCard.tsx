@@ -1,7 +1,7 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
+import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { vcarsComponentPresets, vcarsMicroPresets, vcarsVariants } from '@/motion/variants';
 
@@ -10,6 +10,7 @@ export type VehicleCardVariant = 'default' | 'selected' | 'critical' | 'disabled
 type VehicleCardProps = {
   href: string;
   imageUrl?: string;
+  fallbackImageUrl?: string;
   imageAlt: string;
   name: string;
   version?: string;
@@ -70,6 +71,7 @@ const cardStyles: Record<
 export function VehicleCard({
   href,
   imageUrl,
+  fallbackImageUrl,
   imageAlt,
   name,
   process,
@@ -82,7 +84,9 @@ export function VehicleCard({
   const isDisabled = variant === 'disabled';
   const reveal = vcarsVariants.revealItem(Boolean(reduced));
   const cleanName = name.replace(/\s+(19|20)\d{2}\b/g, "").trim();
-  const hasImage = Boolean(String(imageUrl || '').trim());
+  const [useFallbackImage, setUseFallbackImage] = useState(false);
+  const displayedImageUrl = useFallbackImage ? fallbackImageUrl : imageUrl;
+  const hasImage = Boolean(String(displayedImageUrl || '').trim());
 
   return (
     <motion.article
@@ -117,7 +121,18 @@ export function VehicleCard({
           >
             {hasImage ? (
               <>
-                <Image src={String(imageUrl)} alt={imageAlt} fill sizes="(max-width: 700px) 100vw, 420px" className="object-cover object-center" />
+                {/* The card handles API images, generated data URLs, and a local fallback. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={String(displayedImageUrl)}
+                  alt={imageAlt}
+                  loading="lazy"
+                  decoding="async"
+                  onError={() => {
+                    if (fallbackImageUrl && !useFallbackImage) setUseFallbackImage(true);
+                  }}
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                />
                 <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(11,11,12,0.02),rgba(11,11,12,0.5))]" />
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_18%,rgba(255,255,255,0.14),transparent_35%)]" />
               </>

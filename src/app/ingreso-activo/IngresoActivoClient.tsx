@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { listVehicles } from '@/lib/api';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
-import { apiVehicleToEntry } from '@/lib/mapper';
+import { apiVehicleToEntry, mergeEntryWithBackend, mergeEntryWithReceptionForm } from '@/lib/mapper';
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { VehicleCard, type VehicleCardVariant } from '@/components/VehicleCard';
@@ -14,8 +14,11 @@ import { PremiumDrawer } from '@/components/navigation/PremiumDrawer';
 import { PremiumTabs, type TabItem } from '@/components/navigation/PremiumTabs';
 import { SectionTransition } from '@/components/transitions/SectionTransition';
 import { VehicleCardsSkeleton } from '@/components/skeletons';
-import { getVehicleEvidencePhoto } from '@/lib/carPhoto';
+import { getCarPhotoByModel } from '@/lib/carPhoto';
 import { getFormsForPlate, hydrateFormsForPlate } from '@/lib/orderForms';
+import { resolveServiceOrderAssetUrl } from '@/lib/orderFormsBackend';
+import { getMissingRequiredFields } from '@/lib/orderStepValidation';
+import { VCARS_PROCESS } from '@/lib/process';
 import { getCurrentEntry, getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 
 type ProcessFilter = 'all' | 'active' | 'done' | 'critical';
@@ -84,10 +87,7 @@ function resolveEntryProcessPhoto(entry: Entry): string {
     String(reception.photo_inferior || '').trim() ||
     String(entry.intakePhotos?.[0] || '').trim();
 
-  return (
-    uploadedPhoto ||
-    getVehicleEvidencePhoto(entry.vehiculo || entry.modelo || entry.marca || '', entry.placa, entry.color, 'frontal')
-  );
+  return resolveServiceOrderAssetUrl(uploadedPhoto);
 }
 
 async function enrichEntriesWithReceptionPhotos(entries: Entry[]): Promise<Entry[]> {
@@ -95,7 +95,8 @@ async function enrichEntriesWithReceptionPhotos(entries: Entry[]): Promise<Entry
     try {
       const forms = await hydrateFormsForPlate(entry.placa);
       const reception = forms.recepcion || {};
-      const currentZones = entry.intakePhotosByZone || {};
+      const hydratedEntry = mergeEntryWithReceptionForm(entry, reception);
+      const currentZones = hydratedEntry.intakePhotosByZone || {};
       const nextZones = {
         superior: String(currentZones.superior || reception.photo_superior || ''),
         inferior: String(currentZones.inferior || reception.photo_inferior || ''),
@@ -112,7 +113,17 @@ async function enrichEntriesWithReceptionPhotos(entries: Entry[]): Promise<Entry
         nextZones.frontal,
         nextZones.trasero,
       ].filter(Boolean);
-      return { ...entry, intakePhotosByZone: nextZones, intakePhotos: intakePhotos.length ? intakePhotos : entry.intakePhotos };
+      const approval = String(forms.aprobacion?.decisionCliente || '').trim().toLowerCase();
+      const firstPending = VCARS_PROCESS.find((step) => getMissingRequiredFields(step.key, forms, hydratedEntry).length > 0);
+      const currentStep = firstPending || VCARS_PROCESS[VCARS_PROCESS.length - 1];
+      return {
+        ...hydratedEntry,
+        intakePhotosByZone: nextZones,
+        intakePhotos: intakePhotos.length ? intakePhotos : hydratedEntry.intakePhotos,
+        paso: currentStep?.title || hydratedEntry.paso,
+        stepIndex: currentStep ? VCARS_PROCESS.indexOf(currentStep) : hydratedEntry.stepIndex,
+        status: approval === 'no aprobado' ? 'cancelled' : firstPending ? 'active' : 'done',
+      };
     } catch {
       return entry;
     }
@@ -213,7 +224,13 @@ export default function IngresoActivoClient() {
     (async () => {
       try {
         const vehicles = await listVehicles({ take: 50 });
-        const mapped = vehicles.map(apiVehicleToEntry).filter(Boolean) as Entry[];
+        const localByPlate = new Map(getEntries().map((entry) => [String(entry.placa || '').toUpperCase(), entry]));
+        const mapped = vehicles.reduce<Entry[]>((result, vehicle) => {
+          const entry = apiVehicleToEntry(vehicle);
+          if (!entry) return result;
+          result.push(mergeEntryWithBackend(localByPlate.get(String(entry.placa || '').toUpperCase()), entry));
+          return result;
+        }, []);
         const withPhotos = await enrichEntriesWithReceptionPhotos(mapped.map(normalize));
         const normalized = sortByRecent(withPhotos.map(normalize));
         setEntries(normalized);
@@ -433,13 +450,15 @@ export default function IngresoActivoClient() {
               {viewEntries.length ? (
                 viewEntries.map((item, idx) => {
                   const vehicle = splitVehicleLabel(item.vehiculo || `Vehículo ${idx + 1}`);
-                  const realPhoto = resolveEntryProcessPhoto(item);
+                  const evidencePhoto = resolveEntryProcessPhoto(item);
+                  const referencePhoto = getCarPhotoByModel(item.vehiculo || item.modelo || item.marca || '', item.placa);
                   return (
                     <VehicleCard
                       key={item.id}
                       href={`/vehiculos/${encodeURIComponent(item.placa)}`}
                       onClick={() => setCurrentEntry(item)}
-                      imageUrl={realPhoto}
+                      imageUrl={evidencePhoto || referencePhoto}
+                      fallbackImageUrl={referencePhoto}
                       imageAlt={`Foto de ${item.vehiculo || item.placa}`}
                       name={vehicle.name}
                       version={vehicle.version}

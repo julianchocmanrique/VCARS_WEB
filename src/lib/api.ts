@@ -1,8 +1,25 @@
-import { getSession } from './storage';
+import { clearSession, getSession } from './storage';
 import { getApiBaseUrlCandidates } from './env';
 
 function joinUrl(base: string, path: string): string {
   return `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
+}
+
+const API_REQUEST_TIMEOUT_MS = 12_000;
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function expireClientSession(): void {
+  clearSession();
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('vcars:session-expired'));
 }
 
 function buildQuery(params: Record<string, string | number | undefined | null>): string {
@@ -23,7 +40,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
   for (const base of bases) {
     try {
-      const candidateRes = await fetch(joinUrl(base, path), {
+      const candidateRes = await fetchWithTimeout(joinUrl(base, path), {
         ...init,
         headers: {
           Accept: 'application/json',
@@ -53,6 +70,8 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
     const suffix = networkSuffix || serverSuffix;
     throw new Error(`No se pudo conectar al backend${suffix}`);
   }
+
+  if (res.status === 401) expireClientSession();
 
   const text = await res.text();
   let json: Record<string, unknown> | null = null;
@@ -154,6 +173,7 @@ export async function createIngreso(payload: {
   customerName: string;
   customerPhone?: string;
   customerEmail?: string;
+  vehicleBrand?: string;
   vehicleModel?: string;
   vehicleColor?: string;
   receivedBy?: string;
@@ -163,6 +183,7 @@ export async function createIngreso(payload: {
 }) {
   const vehicle = await createVehicle({
     plate: payload.plate,
+    brand: payload.vehicleBrand || '',
     model: payload.vehicleModel || '',
     color: payload.vehicleColor || '',
     customer: {

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { listVehicles } from '@/lib/api';
-import { apiVehicleToEntry } from '@/lib/mapper';
+import { apiVehicleToEntry, mergeEntryWithBackend } from '@/lib/mapper';
 import { applyDemoEntries } from '@/lib/demoData';
 import { getClientIdentity, isEntryAllowed } from '@/lib/clientIdentity';
 import { ensureDemoFormsSeed } from '@/lib/orderForms';
@@ -149,7 +149,13 @@ export default function HomePage() {
     (async () => {
       try {
         const vehicles = await listVehicles({ take: 50 });
-        const mapped = vehicles.map(apiVehicleToEntry).filter(Boolean) as Entry[];
+        const localByPlate = new Map(getEntries().map((entry) => [String(entry.placa || '').toUpperCase(), entry]));
+        const mapped = vehicles.reduce<Entry[]>((result, vehicle) => {
+          const entry = apiVehicleToEntry(vehicle);
+          if (!entry) return result;
+          result.push(mergeEntryWithBackend(localByPlate.get(String(entry.placa || '').toUpperCase()), entry));
+          return result;
+        }, []);
         const merged = applyDemoEntries(mapped);
         setEntries(merged);
         setEntriesState(merged);
@@ -304,6 +310,15 @@ export default function HomePage() {
     });
   }, [scopedEntries]);
 
+  const workshopStats = useMemo(() => {
+    const occupied = workshopAssignments.filter((slot) => slot.occupied).length;
+    return {
+      occupied,
+      available: workshopAssignments.length - occupied,
+      total: workshopAssignments.length,
+    };
+  }, [workshopAssignments]);
+
   const effectiveSelectedWorkshopSlot = useMemo(() => {
     if (!workshopAssignments.length) return '';
     const exists = workshopAssignments.some((slot) => slot.key === selectedWorkshopSlot);
@@ -414,104 +429,133 @@ export default function HomePage() {
           <motion.section variants={sectionItem} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.25 }} className="vc-section vc-section-tight">
             <h2 className="vc-section-title">Mapa de taller</h2>
             {bootReady ? (
-              <div className="vc-secondary-card" style={{ padding: 12 }}>
-                <div className="grid gap-3 md:grid-cols-[1.2fr_0.8fr]">
-                  <div
-                    className="relative overflow-hidden rounded-2xl border border-[rgba(62,129,194,0.35)] bg-[#0a0f18]"
-                    style={{
-                      minHeight: 420,
-                      backgroundImage: [
-                        'linear-gradient(180deg, rgba(8,14,24,0.92), rgba(6,11,18,0.96))',
-                        'linear-gradient(90deg, rgba(37,99,167,0.09) 1px, transparent 1px)',
-                        'linear-gradient(0deg, rgba(37,99,167,0.09) 1px, transparent 1px)',
-                      ].join(','),
-                      backgroundSize: '100% 100%, 28px 28px, 28px 28px',
-                    }}
-                  >
-                    <div className="absolute inset-[3%] rounded-2xl border border-[rgba(185,220,255,0.2)]" />
+              <div className="vc-workshop-card">
+                <div className="vc-workshop-toolbar">
+                  <div>
+                    <p className="vc-workshop-eyebrow">Control de operaciones</p>
+                    <h3>Distribución del taller</h3>
+                    <p>Selecciona un puesto para revisar su estado y la orden asociada.</p>
+                  </div>
+                  <div className="vc-workshop-stat-list" aria-label="Resumen de puestos">
+                    <span className="vc-workshop-stat is-occupied"><strong>{workshopStats.occupied}</strong> ocupados</span>
+                    <span className="vc-workshop-stat"><strong>{workshopStats.available}</strong> disponibles</span>
+                    <span className="vc-workshop-total">{workshopStats.total} puestos</span>
+                  </div>
+                </div>
 
-                    <div className="absolute left-[6%] top-[10%] h-[72%] w-[44%] rounded-xl border border-[rgba(125,211,252,0.28)]">
-                      <div className="absolute left-1/2 top-0 h-full w-[1px] -translate-x-1/2 bg-[rgba(125,211,252,0.25)]" />
-                      <div className="absolute left-0 top-1/4 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
-                      <div className="absolute left-0 top-2/4 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
-                      <div className="absolute left-0 top-3/4 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
+                <div className="vc-workshop-layout">
+                  <div className="vc-workshop-floor" aria-label="Plano de puestos del taller">
+                    <div className="vc-workshop-zone vc-workshop-service-zone">
+                      <div className="vc-workshop-zone-heading">
+                        <span>Bahías de servicio</span>
+                        <small>Elevadores 01 - 08</small>
+                      </div>
+                      <div className="vc-workshop-bay-grid">
+                        {workshopAssignments.slice(0, 8).map((slot) => (
+                          <button
+                            key={slot.key}
+                            type="button"
+                            className={`vc-workshop-slot ${slot.occupied ? 'is-occupied' : ''} ${slot.key === effectiveSelectedWorkshopSlot ? 'is-selected' : ''}`}
+                            onClick={() => setSelectedWorkshopSlot(slot.key)}
+                            aria-pressed={slot.key === effectiveSelectedWorkshopSlot}
+                          >
+                            <span className="vc-workshop-slot-topline">
+                              <span className="vc-workshop-slot-number">{slot.label.replace('Puesto ', '')}</span>
+                              <span className="vc-workshop-slot-state">{slot.occupied ? 'Ocupado' : 'Libre'}</span>
+                            </span>
+                            <strong>{slot.entry?.placa || 'Disponible'}</strong>
+                            <span>{slot.entry?.vehiculo || 'Listo para recibir'}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="absolute left-[56%] top-[10%] h-[72%] w-[12%] rounded-xl border border-[rgba(125,211,252,0.28)] bg-[rgba(19,34,53,0.2)]">
-                      <div className="absolute left-1/2 top-[8%] h-[84%] w-[1px] -translate-x-1/2 border-l border-dashed border-[rgba(125,211,252,0.28)]" />
-                      <p className="absolute left-1/2 top-[18%] -translate-x-1/2 text-xs text-[#d7ecff]">↑</p>
-                      <p className="absolute left-1/2 bottom-[18%] -translate-x-1/2 text-xs text-[#d7ecff]">↓</p>
+                    <div className="vc-workshop-lane" aria-hidden="true">
+                      <span>Circulación</span>
+                      <div className="vc-workshop-lane-line" />
+                      <div className="vc-workshop-lane-arrow">↑</div>
+                      <div className="vc-workshop-lane-arrow">↓</div>
                     </div>
 
-                    <div className="absolute left-[70%] top-[10%] h-[72%] w-[22%] rounded-xl border border-[rgba(125,211,252,0.28)]">
-                      <div className="absolute left-0 top-1/5 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
-                      <div className="absolute left-0 top-2/5 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
-                      <div className="absolute left-0 top-3/5 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
-                      <div className="absolute left-0 top-4/5 h-[1px] w-full bg-[rgba(125,211,252,0.25)]" />
+                    <div className="vc-workshop-side">
+                      <div className="vc-workshop-zone vc-workshop-quick-zone">
+                        <div className="vc-workshop-zone-heading">
+                          <span>Zona técnica</span>
+                          <small>Diagnóstico rápido</small>
+                        </div>
+                        <div className="vc-workshop-quick-grid">
+                          {workshopAssignments.slice(8).map((slot) => (
+                            <button
+                              key={slot.key}
+                              type="button"
+                              className={`vc-workshop-slot vc-workshop-slot-compact ${slot.occupied ? 'is-occupied' : ''} ${slot.key === effectiveSelectedWorkshopSlot ? 'is-selected' : ''}`}
+                              onClick={() => setSelectedWorkshopSlot(slot.key)}
+                              aria-pressed={slot.key === effectiveSelectedWorkshopSlot}
+                            >
+                              <span className="vc-workshop-slot-topline">
+                                <span className="vc-workshop-slot-number">{slot.label.replace('Puesto ', '')}</span>
+                                <span className="vc-workshop-slot-state">{slot.occupied ? 'Ocupado' : 'Libre'}</span>
+                              </span>
+                              <strong>{slot.entry?.placa || 'Disponible'}</strong>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="vc-workshop-office">
+                        <span className="vc-workshop-office-icon">◆</span>
+                        <div><strong>Oficina de servicio</strong><small>Coordinación y entrega</small></div>
+                      </div>
                     </div>
 
-                    <div className="absolute left-[70%] top-[82%] h-[10%] w-[22%] rounded-xl border border-[rgba(125,211,252,0.28)] bg-[rgba(19,34,53,0.35)] p-1.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Oficina</p>
+                    <div className="vc-workshop-reception">
+                      <span className="vc-workshop-reception-icon">↗</span>
+                      <div><strong>Ingreso y recepción</strong><small>Validación documental y entrega de vehículo</small></div>
+                      <span className="vc-workshop-reception-status">Operativo</span>
                     </div>
-
-                    <div className="absolute left-[6%] bottom-[5%] h-[10%] w-[62%] rounded-xl border border-[rgba(125,211,252,0.28)] bg-[rgba(19,34,53,0.35)] p-1.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#b8dfff]">Ingreso y recepción</p>
-                    </div>
-
-                    {workshopAssignments.map((slot) => (
-                      <button
-                        key={slot.key}
-                        type="button"
-                        className="absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border px-2 py-1 text-left shadow-[0_8px_20px_rgba(0,0,0,0.35)]"
-                        style={{
-                          left: `${slot.leftPct}%`,
-                          top: `${slot.topPct}%`,
-                          minWidth: 108,
-                          borderColor: slot.occupied ? 'rgba(90,197,136,0.65)' : 'rgba(107,114,128,0.65)',
-                          background: slot.key === effectiveSelectedWorkshopSlot
-                            ? 'linear-gradient(180deg, rgba(43,112,184,0.95), rgba(17,44,79,0.95))'
-                            : 'linear-gradient(180deg, rgba(15,29,48,0.96), rgba(11,20,33,0.96))',
-                          color: '#e6eef9',
-                          backdropFilter: 'blur(2px)',
-                        }}
-                        onClick={() => setSelectedWorkshopSlot(slot.key)}
-                      >
-                        <p className="text-[11px] font-semibold">{slot.label}</p>
-                        <p className="text-[10px] opacity-90">{slot.entry?.placa || 'Puesto vacío'}</p>
-                      </button>
-                    ))}
                   </div>
 
-                  <div className="rounded-2xl border border-[rgba(62,129,194,0.35)] bg-[rgba(10,15,24,0.86)] p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#9fb9d8]">Detalle del puesto</p>
+                  <aside className="vc-workshop-detail" aria-live="polite">
+                    <div className="vc-workshop-detail-heading">
+                      <div>
+                        <p>Detalle del puesto</p>
+                        <h3>{selectedWorkshopInfo?.label || 'Sin selección'}</h3>
+                      </div>
+                      <span className={`vc-workshop-detail-badge ${selectedWorkshopInfo?.entry ? 'is-occupied' : ''}`}>
+                        {selectedWorkshopInfo?.entry ? 'Ocupado' : 'Disponible'}
+                      </span>
+                    </div>
+
                     {selectedWorkshopInfo ? (
                       selectedWorkshopInfo.entry ? (
-                        <div className="mt-2 space-y-2 text-sm text-[#dce8f8]">
-                          <p><strong>{selectedWorkshopInfo.label}</strong></p>
-                          <p>Vehículo: <strong>{selectedWorkshopInfo.entry.vehiculo || '-'}</strong></p>
-                          <p>Placa: <strong>{selectedWorkshopInfo.entry.placa}</strong></p>
-                          <p>Cliente: <strong>{selectedWorkshopInfo.entry.cliente || '-'}</strong></p>
-                          <p>Proceso: <strong>{selectedWorkshopInfo.entry.paso || 'Orden de servicio'}</strong></p>
-                          <p>Tiempo en taller: <strong>{elapsedLabel(selectedWorkshopInfo.entry.fecha || selectedWorkshopInfo.entry.updatedAt)}</strong></p>
-                          <p>Estado: <strong>Ocupado</strong></p>
+                        <>
+                          <div className="vc-workshop-vehicle-summary">
+                            <span>Vehículo asignado</span>
+                            <strong>{selectedWorkshopInfo.entry.vehiculo || 'Vehículo sin referencia'}</strong>
+                            <b>{selectedWorkshopInfo.entry.placa}</b>
+                          </div>
+                          <dl className="vc-workshop-detail-list">
+                            <div><dt>Cliente</dt><dd>{selectedWorkshopInfo.entry.cliente || '-'}</dd></div>
+                            <div><dt>Proceso actual</dt><dd>{selectedWorkshopInfo.entry.paso || 'Orden de servicio'}</dd></div>
+                            <div><dt>Tiempo en taller</dt><dd>{elapsedLabel(selectedWorkshopInfo.entry.fecha || selectedWorkshopInfo.entry.updatedAt)}</dd></div>
+                          </dl>
                           <Link
                             href={`/vehiculos/${encodeURIComponent(selectedWorkshopInfo.entry.placa)}`}
-                            className="inline-flex rounded-lg border border-[rgba(95,158,220,0.45)] bg-[rgba(18,27,40,0.52)] px-3 py-1.5 text-xs font-semibold text-[#dff1ff] hover:bg-[rgba(37,75,126,0.55)]"
+                            className="vc-workshop-detail-action"
                           >
-                            Ver vehículo
+                            Abrir orden del vehículo <span>→</span>
                           </Link>
-                        </div>
+                        </>
                       ) : (
-                        <div className="mt-2 space-y-2 text-sm text-[#dce8f8]">
-                          <p><strong>{selectedWorkshopInfo.label}</strong></p>
-                          <p>Estado: <strong>Puesto vacío</strong></p>
-                          <p>Proceso: <strong>Disponible</strong></p>
+                        <div className="vc-workshop-empty-state">
+                          <span>+</span>
+                          <strong>Este puesto está disponible</strong>
+                          <p>Queda listo para asignar a un vehículo que ingrese al taller.</p>
                         </div>
                       )
                     ) : (
-                      <p className="mt-2 text-sm text-[#dce8f8]">Sin información de puestos.</p>
+                      <p className="vc-workshop-no-selection">Sin información de puestos.</p>
                     )}
-                  </div>
+                  </aside>
                 </div>
               </div>
             ) : (

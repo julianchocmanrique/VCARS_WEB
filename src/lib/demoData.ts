@@ -1,6 +1,5 @@
 import { VCARS_PROCESS } from './process';
 import type { Entry } from './storage';
-import { getVehicleEvidencePhoto } from './carPhoto';
 
 type DemoVehicle = {
   placa: string;
@@ -34,12 +33,6 @@ const DEMO_VEHICLES: DemoVehicle[] = [
   { placa: 'KIA889', vehiculo: 'Kia Rio', cliente: 'Fernanda Lopez', telefono: '3134567890', empresa: 'alcaldia@alcaldia.com', stepIndex: 1, status: 'active' },
   { placa: 'HYU330', vehiculo: 'Hyundai Tucson', cliente: 'Jorge Medina', telefono: '3145678901', empresa: 'alcaldia@alcaldia.com', stepIndex: 2, status: 'active' },
 ];
-
-type PhotoZone = 'superior' | 'inferior' | 'lateralDerecho' | 'lateralIzquierdo' | 'frontal' | 'trasero';
-
-function zonePhoto(model: string, plate: string, color: string, zone: PhotoZone): string {
-  return getVehicleEvidencePhoto(model, plate, color, zone);
-}
 
 function toIsoDaysAgo(daysAgo: number): string {
   const now = new Date();
@@ -134,12 +127,12 @@ export function getDemoEntries(): Entry[] {
   return DEMO_VEHICLES.map((item, index) => {
     const createdAt = toIsoDaysAgo(12 - index);
     const intakePhotosByZone = {
-      superior: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'superior'),
-      inferior: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'inferior'),
-      lateralDerecho: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'lateralDerecho'),
-      lateralIzquierdo: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'lateralIzquierdo'),
-      frontal: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'frontal'),
-      trasero: zonePhoto(item.vehiculo, item.placa, ['Negro', 'Blanco', 'Rojo', 'Gris'][index % 4], 'trasero'),
+      superior: '',
+      inferior: '',
+      lateralDerecho: '',
+      lateralIzquierdo: '',
+      frontal: '',
+      trasero: '',
     };
 
     return {

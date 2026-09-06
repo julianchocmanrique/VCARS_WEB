@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getVehicleByPlate } from '@/lib/api';
 import { getClientIdentity, isEntryAllowed, setClientIdentity } from '@/lib/clientIdentity';
-import { apiVehicleToEntry } from '@/lib/mapper';
+import { apiVehicleToEntry, mergeEntryWithBackend } from '@/lib/mapper';
 import { BottomNav } from '@/components/BottomNav';
 import { BrandPill } from '@/components/BrandPill';
 import { getEntries, getRole, getSession, setEntries, type Entry } from '@/lib/storage';
@@ -42,7 +42,9 @@ export default function MisVehiculosPage() {
             allowedPlates.map(async (plate) => {
               try {
                 const vehicle = await getVehicleByPlate(plate);
-                return apiVehicleToEntry(vehicle);
+                const remote = apiVehicleToEntry(vehicle);
+                const local = getEntries().find((entry) => normalizePlate(entry.placa) === plate);
+                return remote ? mergeEntryWithBackend(local, remote) : null;
               } catch {
                 return null;
               }

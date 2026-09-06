@@ -164,40 +164,62 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
   });
 }
 
+type AssetUploadResult<T> = {
+  values: T;
+  failedLabels: string[];
+};
+
 async function uploadReceptionPhotos(
   plate: string,
   photosByZone: Record<PhotoSlotKey, string>,
-): Promise<Record<PhotoSlotKey, string>> {
+): Promise<AssetUploadResult<Record<PhotoSlotKey, string>>> {
   const uploaded: Record<PhotoSlotKey, string> = { ...photosByZone };
-  for (const slot of PHOTO_SLOTS) {
+  const failedLabels: string[] = [];
+
+  await Promise.all(PHOTO_SLOTS.map(async (slot) => {
     const source = String(photosByZone[slot.key] || '');
-    if (!source.startsWith('data:image/')) continue;
-    const asset = await withTimeout(
-      uploadServiceOrderAsset(plate, 'recepcion', `photo_${slot.key}`, source),
-      15000,
-      `subida de foto ${slot.label}`,
-    );
-    uploaded[slot.key] = asset.url;
-  }
-  return uploaded;
+    if (!source.startsWith('data:image/')) return;
+    try {
+      const asset = await withTimeout(
+        uploadServiceOrderAsset(plate, 'recepcion', `photo_${slot.key}`, source),
+        15000,
+        `subida de foto ${slot.label}`,
+      );
+      uploaded[slot.key] = asset.url;
+    } catch {
+      // Keep the order; this photo can be uploaded again from its labeled slot.
+      uploaded[slot.key] = '';
+      failedLabels.push(slot.label);
+    }
+  }));
+
+  return { values: uploaded, failedLabels };
 }
 
 async function uploadReceptionSignatures(
   plate: string,
   signatures: Record<SignaturePadKey, string>,
-): Promise<Record<SignaturePadKey, string>> {
+): Promise<AssetUploadResult<Record<SignaturePadKey, string>>> {
   const uploaded = { ...signatures };
-  for (const key of Object.keys(signatures) as SignaturePadKey[]) {
+  const failedLabels: string[] = [];
+
+  await Promise.all((Object.keys(signatures) as SignaturePadKey[]).map(async (key) => {
     const source = String(signatures[key] || '');
-    if (!source.startsWith('data:image/')) continue;
-    const asset = await withTimeout(
-      uploadServiceOrderAsset(plate, 'recepcion', SIGNATURE_UPLOAD_FIELD_BY_KEY[key], source),
-      15000,
-      `subida de firma ${key}`,
-    );
-    uploaded[key] = asset.url;
-  }
-  return uploaded;
+    if (!source.startsWith('data:image/')) return;
+    try {
+      const asset = await withTimeout(
+        uploadServiceOrderAsset(plate, 'recepcion', SIGNATURE_UPLOAD_FIELD_BY_KEY[key], source),
+        15000,
+        `subida de firma ${key}`,
+      );
+      uploaded[key] = asset.url;
+    } catch {
+      uploaded[key] = '';
+      failedLabels.push(key === 'cliente' ? 'firma del cliente' : 'firma del taller');
+    }
+  }));
+
+  return { values: uploaded, failedLabels };
 }
 
 export default function NuevoIngresoPage() {
@@ -391,6 +413,8 @@ export default function NuevoIngresoPage() {
 
   useEffect(() => {
     repaintSignaturesWithRetry();
+  // The canvas callback deliberately reads the latest mounted refs after layout.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signaturesByRole.cliente, signaturesByRole.taller]);
 
   useEffect(() => {
@@ -398,6 +422,8 @@ export default function NuevoIngresoPage() {
     const onResize = () => repaintSignaturesWithRetry();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
+    // The resize handler intentionally calls the current canvas retry helper.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function registerSignatureCanvasRef(key: SignaturePadKey, node: HTMLCanvasElement | null) {
@@ -542,7 +568,8 @@ export default function NuevoIngresoPage() {
           customerName: holderName.trim(),
           customerPhone: telefono.trim(),
           customerEmail: email.trim(),
-          vehicleModel: vehiculo.trim(),
+          vehicleBrand: marca.trim(),
+          vehicleModel: modelo.trim() || vehiculo.trim(),
           vehicleColor: color.trim(),
           receivedBy: recibio.trim(),
           notes: fallaCliente.trim(),
@@ -554,8 +581,10 @@ export default function NuevoIngresoPage() {
       );
 
       const normalizedPlate = placa.trim().toUpperCase();
-      const persistedPhotos = await withTimeout(uploadReceptionPhotos(normalizedPlate, intakePhotosByZone), 35000, 'subida de evidencias');
-      const persistedSignatures = await withTimeout(uploadReceptionSignatures(normalizedPlate, signaturesByRole), 35000, 'subida de firmas');
+      const photoUpload = await uploadReceptionPhotos(normalizedPlate, intakePhotosByZone);
+      const signatureUpload = await uploadReceptionSignatures(normalizedPlate, signaturesByRole);
+      const persistedPhotos = photoUpload.values;
+      const persistedSignatures = signatureUpload.values;
       const persistedPhotosForStorage: Record<PhotoSlotKey, string> = {
         superior: keepPersistentAssetValue(persistedPhotos.superior),
         inferior: keepPersistentAssetValue(persistedPhotos.inferior),
@@ -655,30 +684,45 @@ export default function NuevoIngresoPage() {
         photo_lateralIzquierdo: persistedPhotosForStorage.lateralIzquierdo || '',
         photo_frontal: persistedPhotosForStorage.frontal || '',
         photo_trasero: persistedPhotosForStorage.trasero || '',
-        photo_verified_superior: persistedPhotosForStorage.superior ? 'SI' : '',
-        photo_verified_inferior: persistedPhotosForStorage.inferior ? 'SI' : '',
-        photo_verified_lateralDerecho: persistedPhotosForStorage.lateralDerecho ? 'SI' : '',
-        photo_verified_lateralIzquierdo: persistedPhotosForStorage.lateralIzquierdo ? 'SI' : '',
-        photo_verified_frontal: persistedPhotosForStorage.frontal ? 'SI' : '',
-        photo_verified_trasero: persistedPhotosForStorage.trasero ? 'SI' : '',
-        photo_verified_source_superior: persistedPhotosForStorage.superior ? 'AUTO' : '',
-        photo_verified_source_inferior: persistedPhotosForStorage.inferior ? 'AUTO' : '',
-        photo_verified_source_lateralDerecho: persistedPhotosForStorage.lateralDerecho ? 'AUTO' : '',
-        photo_verified_source_lateralIzquierdo: persistedPhotosForStorage.lateralIzquierdo ? 'AUTO' : '',
-        photo_verified_source_frontal: persistedPhotosForStorage.frontal ? 'AUTO' : '',
-        photo_verified_source_trasero: persistedPhotosForStorage.trasero ? 'AUTO' : '',
+        // A file upload cannot prove its angle. The receiver confirms each photo in the order.
+        photo_verified_superior: '',
+        photo_verified_inferior: '',
+        photo_verified_lateralDerecho: '',
+        photo_verified_lateralIzquierdo: '',
+        photo_verified_frontal: '',
+        photo_verified_trasero: '',
+        photo_verified_source_superior: '',
+        photo_verified_source_inferior: '',
+        photo_verified_source_lateralDerecho: '',
+        photo_verified_source_lateralIzquierdo: '',
+        photo_verified_source_frontal: '',
+        photo_verified_source_trasero: '',
         firmaClienteEmpresa: persistedSignaturesForStorage.cliente || '',
         firmaTallerRecibe: persistedSignaturesForStorage.taller || '',
       };
       setStepFields(payload.placa, 'recepcion', recepcionStepData);
-      await withTimeout(putStepDataToBackend(payload.placa, 'recepcion', recepcionStepData), 20000, 'persistencia de recepción');
+      let formSyncPending = false;
+      try {
+        await withTimeout(putStepDataToBackend(payload.placa, 'recepcion', recepcionStepData), 20000, 'persistencia de recepción');
+      } catch {
+        // Keep the recovered order locally; the queued sync can complete on the next connection.
+        formSyncPending = true;
+      }
 
       const list = getEntries();
       const next = [payload, ...list];
       setEntries(next);
       setCurrentEntry(payload);
       setSubmitState('success');
-      setFeedback({ type: 'success', message: `Orden de servicio ${payload.placa} guardada correctamente.` });
+      const pendingAssets = [...photoUpload.failedLabels, ...signatureUpload.failedLabels];
+      const pendingNotes = [
+        pendingAssets.length ? `Pendiente volver a subir: ${pendingAssets.join(', ')}.` : '',
+        formSyncPending ? 'La recepción quedó guardada localmente y se reintentará al recuperar conexión.' : '',
+      ].filter(Boolean);
+      setFeedback({
+        type: 'success',
+        message: `Orden de servicio ${payload.placa} guardada correctamente.${pendingNotes.length ? ` ${pendingNotes.join(' ')}` : ''}`,
+      });
 
       setTimeout(() => router.push('/ingreso-activo'), 260);
     } catch (err) {
@@ -1108,6 +1152,8 @@ export default function NuevoIngresoPage() {
                   </label>
                   {src ? (
                     <>
+                      {/* User-selected data URLs and API URLs cannot use Next's static image optimizer. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt={`Foto ${slot.label}`} className="vc-photo-preview" />
                       <ActionButton
                         type="button"

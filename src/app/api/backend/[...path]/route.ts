@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFileSync } from 'node:fs';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,68 +8,20 @@ function joinUrl(base: string, path: string, query: string): string {
   return p ? `${b}/${p}${query}` : `${b}${query}`;
 }
 
-function parseHost(hostHeader: string | null): string {
-  const raw = String(hostHeader || '').trim();
-  if (!raw) return '127.0.0.1';
-  return raw.split(':')[0] || '127.0.0.1';
-}
-
-function hexLittleEndianToIpv4(value: string): string | null {
-  const v = String(value || '').trim();
-  if (!/^[0-9a-fA-F]{8}$/.test(v)) return null;
-  const bytes = v.match(/../g);
-  if (!bytes || bytes.length !== 4) return null;
-  const parts = bytes.reverse().map((part) => Number.parseInt(part, 16));
-  if (parts.some((n) => Number.isNaN(n))) return null;
-  return parts.join('.');
-}
-
-function getRouteGateways(): string[] {
-  try {
-    const raw = readFileSync('/proc/net/route', 'utf8');
-    const lines = raw.split('\n').slice(1);
-    const ips = new Set<string>();
-    for (const line of lines) {
-      const cols = line.trim().split(/\s+/);
-      if (cols.length < 3) continue;
-      const destination = cols[1];
-      const gatewayHex = cols[2];
-      if (destination !== '00000000') continue;
-      const ip = hexLittleEndianToIpv4(gatewayHex);
-      if (ip) ips.add(ip);
-    }
-    return Array.from(ips);
-  } catch {
-    return [];
-  }
-}
-
-function getBackendCandidates(req: NextRequest): string[] {
-  const host = parseHost(req.headers.get('host'));
+function getBackendCandidates(): string[] {
   const publicApi = String(process.env.NEXT_PUBLIC_API_URL || '').trim();
   const proxyTarget = String(process.env.API_PROXY_TARGET || '').trim();
-  const gateways = getRouteGateways();
+  // Never derive upstream hosts from untrusted request headers.
   const list = [
-    publicApi,
-    `http://${host}:4000`,
     proxyTarget,
-    `http://${host}:4010`,
-    ...gateways.map((ip) => `http://${ip}:4000`),
-    ...gateways.map((ip) => `http://${ip}:4010`),
-    'http://172.22.0.1:4000',
-    'http://172.22.0.1:4010',
-    'http://172.17.0.1:4000',
-    'http://172.17.0.1:4010',
-    'http://host.docker.internal:4010',
-    'http://host.docker.internal:4000',
-    'http://127.0.0.1:4000',
-    'http://127.0.0.1:4010',
+    publicApi,
+    ...(process.env.NODE_ENV === 'production' ? [] : ['http://127.0.0.1:4000']),
   ].filter(Boolean);
 
   const seen = new Set<string>();
   return list.filter((item) => {
     const key = item.replace(/\/+$/, '');
-    if (!key || seen.has(key)) return false;
+    if (!/^https?:\/\//i.test(key) || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
@@ -79,9 +30,9 @@ function getBackendCandidates(req: NextRequest): string[] {
 async function forward(req: NextRequest, params: { path: string[] }) {
   const path = (params.path || []).filter(Boolean).join('/').replace(/\/+$/, '');
   const query = req.nextUrl.search || '';
-  const debug = req.nextUrl.searchParams.get('debug') === '1';
+  const debug = process.env.NODE_ENV !== 'production' && req.nextUrl.searchParams.get('debug') === '1';
   const method = req.method.toUpperCase();
-  const candidates = getBackendCandidates(req);
+  const candidates = getBackendCandidates();
   const attemptErrors: Array<{ base: string; reason: string }> = [];
 
   const headers = new Headers();
@@ -100,14 +51,18 @@ async function forward(req: NextRequest, params: { path: string[] }) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), candidateTimeoutMs);
-      const res = await fetch(url, {
-        method,
-        headers,
-        body: rawBody,
-        signal: controller.signal,
-        cache: 'no-store',
-      });
-      clearTimeout(timeout);
+      let res: Response;
+      try {
+        res = await fetch(url, {
+          method,
+          headers,
+          body: rawBody,
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
       const text = await res.text();
       const out = new NextResponse(text, { status: res.status });
       const ct = res.headers.get('content-type');

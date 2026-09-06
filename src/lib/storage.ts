@@ -67,8 +67,8 @@ export type Entry = {
   };
 };
 
-let volatileEntries: Entry[] = [];
-let volatileCurrentEntry: Entry | null = null;
+let volatileEntries: Entry[] | null = null;
+let volatileCurrentEntry: Entry | null | undefined;
 
 function normalizeEntry(value: unknown): Entry | null {
   if (!value || typeof value !== 'object') return null;
@@ -161,8 +161,10 @@ export function clearSession(): void {
   removeStorageKey(SESSION_KEY);
   removeStorageKey(PROFILE_KEY);
   removeStorageKey(CLIENT_IDENTITY_KEY);
-  volatileEntries = [];
-  volatileCurrentEntry = null;
+  // Orders are cached separately from the session so a temporary logout or
+  // reload never destroys work that still needs to synchronize with the API.
+  volatileEntries = null;
+  volatileCurrentEntry = undefined;
 }
 
 export function getRole(): Role {
@@ -172,18 +174,35 @@ export function getRole(): Role {
 }
 
 export function getEntries(): Entry[] {
+  if (volatileEntries === null) {
+    const raw = readJsonStorage<unknown>(ENTRIES_KEY, []);
+    volatileEntries = Array.isArray(raw) ? raw : [];
+  }
   const clean = volatileEntries.map(normalizeEntry).filter(Boolean) as Entry[];
   return clean;
 }
 
 export function setEntries(entries: Entry[]): void {
-  volatileEntries = Array.isArray(entries) ? entries : [];
+  const clean = (Array.isArray(entries) ? entries : [])
+    .map(normalizeEntry)
+    .filter(Boolean) as Entry[];
+  volatileEntries = clean;
+  writeJsonStorage(ENTRIES_KEY, clean);
 }
 
 export function getCurrentEntry(): Entry | null {
+  if (volatileCurrentEntry === undefined) {
+    volatileCurrentEntry = normalizeEntry(readJsonStorage<unknown>(CURRENT_ENTRY_KEY, null));
+  }
   return normalizeEntry(volatileCurrentEntry);
 }
 
 export function setCurrentEntry(entry: Entry | null): void {
-  volatileCurrentEntry = entry ? normalizeEntry(entry) : null;
+  const clean = entry ? normalizeEntry(entry) : null;
+  volatileCurrentEntry = clean;
+  if (clean) {
+    writeJsonStorage(CURRENT_ENTRY_KEY, clean);
+  } else {
+    removeStorageKey(CURRENT_ENTRY_KEY);
+  }
 }

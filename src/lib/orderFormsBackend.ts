@@ -2,8 +2,33 @@ import { getSession } from '@/lib/storage';
 import type { FormsByStep } from '@/lib/repositories/orderForms.repository';
 import { getApiBaseUrlCandidates } from '@/lib/env';
 
+const FORM_REQUEST_TIMEOUT_MS = 15_000;
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FORM_REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function joinUrl(base: string, path: string): string {
   return `${String(base).replace(/\/+$/, '')}/${String(path).replace(/^\/+/, '')}`;
+}
+
+export function resolveServiceOrderAssetUrl(value: string): string {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (raw.startsWith('data:image/')) return raw;
+
+  const assetId = raw.match(/\/service-orders\/assets\/([a-f0-9-]+)\/?$/i)?.[1];
+  if (!assetId) return raw;
+
+  const basePath = String(process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\/+$/, '');
+  // Canonical trailing slash avoids a redirect before the browser reads the image.
+  return `${basePath}/api/backend/service-orders/assets/${assetId}/`;
 }
 
 function authHeaders(): Record<string, string> {
@@ -23,6 +48,7 @@ async function parseJsonOrThrow<T>(res: Response): Promise<T> {
   } catch {
     throw new Error(text || `HTTP ${res.status}`);
   }
+  if (res.status === 401 && typeof window !== 'undefined') window.dispatchEvent(new Event('vcars:session-expired'));
   if (!res.ok || json?.ok === false) {
     throw new Error(typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`);
   }
@@ -34,7 +60,7 @@ async function fetchWithApiFallback(path: string, init: RequestInit): Promise<Re
   let lastNetworkError: unknown = null;
   for (const base of bases) {
     try {
-      return await fetch(joinUrl(base, path), init);
+      return await fetchWithTimeout(joinUrl(base, path), init);
     } catch (err) {
       lastNetworkError = err;
     }
@@ -100,7 +126,7 @@ export async function uploadServiceOrderAsset(
   const json = await parseJsonOrThrow<{ ok: true; assetId: string; url: string; mimeType: string; byteSize: number }>(res);
   return {
     assetId: String(json.assetId || ''),
-    url: joinUrl(getApiBaseUrlCandidates()[0] || '', String(json.url || '')),
+    url: resolveServiceOrderAssetUrl(String(json.url || '')),
     mimeType: String(json.mimeType || ''),
     byteSize: Number(json.byteSize || 0),
   };

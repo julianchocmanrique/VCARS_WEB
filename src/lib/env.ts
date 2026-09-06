@@ -13,7 +13,6 @@ export function getApiBaseUrl(): string {
 export function getApiBaseUrlCandidates(): string[] {
   const list: string[] = [];
   const explicit = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL || '');
-  if (explicit) list.push(explicit);
 
   if (typeof window !== 'undefined') {
     const protocol = window.location.protocol || 'http:';
@@ -21,8 +20,11 @@ export function getApiBaseUrlCandidates(): string[] {
     const origin = window.location.origin || `${protocol}//${hostname}`;
     const sameOriginProxy = `${origin}${String(BASE_PATH).replace(/\/+$/, '')}/api/backend`;
 
-    // Prefer the same-origin proxy first to avoid cross-port drift between LAB/PROD.
+    // Keep browser traffic on the current host. This avoids CORS/image failures
+    // when the UI is opened from a different machine in the local network.
     list.push(sameOriginProxy);
+
+    if (explicit) list.push(explicit);
 
     // Raw port fallbacks are only helpful for local development.
     const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
@@ -31,6 +33,8 @@ export function getApiBaseUrlCandidates(): string[] {
       list.push(`${protocol}//${hostname}:4010`);
     }
   }
+
+  if (typeof window === 'undefined' && explicit) list.push(explicit);
 
   list.push(DEFAULT_API_URL);
 

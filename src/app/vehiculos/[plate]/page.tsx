@@ -4,16 +4,16 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { getVehicleByPlate } from '@/lib/api';
-import { apiVehicleToEntry } from '@/lib/mapper';
+import { apiVehicleToEntry, mergeEntryWithBackend, mergeEntryWithReceptionForm } from '@/lib/mapper';
 import { applyDemoEntries } from '@/lib/demoData';
 import { getClientIdentity } from '@/lib/clientIdentity';
 import { BottomNav } from '@/components/BottomNav';
 import { FlowHeader } from '@/components/FlowHeader';
 import { getEntries, getRole, getSession, setCurrentEntry, setEntries, type Entry, type Role } from '@/lib/storage';
 import { ensureDemoFormsSeed, getFormsForPlate, getRoleSteps, hydrateFormsForPlate, isClientQuoteReady, setStepFields } from '@/lib/orderForms';
+import { resolveServiceOrderAssetUrl } from '@/lib/orderFormsBackend';
 import { isStepComplete } from '@/lib/orderStepValidation';
 import { normalizeStepTitle, stepIndexFromTitle } from '@/lib/process';
-import { getVehicleEvidencePhoto } from '@/lib/carPhoto';
 
 const PHOTO_SLOTS = [
   { key: 'superior', label: 'Superior' },
@@ -35,25 +35,6 @@ function normalizeLegacyStepLabel(label?: string): string {
   if (normalized === 'recepcion') return 'Orden de servicio';
   if (normalized === 'recepcion (orden de servicio)') return 'Orden de servicio';
   return raw;
-}
-
-function evidenceImageStyle(zone: (typeof PHOTO_SLOTS)[number]['key']): React.CSSProperties {
-  switch (zone) {
-    case 'superior':
-      return { objectPosition: '50% 8%', transform: 'scale(1.6)' };
-    case 'inferior':
-      return { objectPosition: '50% 95%', transform: 'scale(1.6)' };
-    case 'lateralDerecho':
-      return { objectPosition: '72% 58%', transform: 'scale(1.25)' };
-    case 'lateralIzquierdo':
-      return { objectPosition: '28% 58%', transform: 'scale(1.25)' };
-    case 'frontal':
-      return { objectPosition: '24% 62%', transform: 'scale(1.45)' };
-    case 'trasero':
-      return { objectPosition: '80% 62%', transform: 'scale(1.45)' };
-    default:
-      return {};
-  }
 }
 
 export default function VehiculoDetallePage() {
@@ -95,7 +76,10 @@ export default function VehiculoDetallePage() {
       setVehicle(next);
       setStepIndex(typeof found.stepIndex === 'number' ? found.stepIndex : stepIndexFromTitle(normalizedStep));
     });
-    void hydrateFormsForPlate(plate).then((fresh) => setFormsByStep(fresh));
+    void hydrateFormsForPlate(plate).then((fresh) => {
+      setFormsByStep(fresh);
+      setVehicle((current) => current ? mergeEntryWithReceptionForm(current, fresh.recepcion) : current);
+    });
 
     (async () => {
       try {
@@ -105,7 +89,7 @@ export default function VehiculoDetallePage() {
 
         const normalizedStep = normalizeStepTitle(mapped.paso);
         const localBase = getEntries().find((item) => String(item.placa || '').toUpperCase() === plate) || null;
-        const next = { ...localBase, ...mapped, paso: normalizedStep };
+        const next = { ...mergeEntryWithBackend(localBase, mapped), paso: normalizedStep };
         setVehicle(next);
         setStepIndex(stepIndexFromTitle(normalizedStep));
 
@@ -116,7 +100,10 @@ export default function VehiculoDetallePage() {
         setEntries(updated);
         setCurrentEntry(next);
         setFormsByStep(getFormsForPlate(plate));
-        void hydrateFormsForPlate(plate).then((fresh) => setFormsByStep(fresh));
+        void hydrateFormsForPlate(plate).then((fresh) => {
+          setFormsByStep(fresh);
+          setVehicle((current) => current ? mergeEntryWithReceptionForm(current, fresh.recepcion) : current);
+        });
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'No se pudo cargar el vehículo';
         const lowered = msg.toLowerCase();
@@ -134,71 +121,36 @@ export default function VehiculoDetallePage() {
   }, [role]);
 
   const visibleSteps = useMemo(() => getRoleSteps(role, formsByStep), [role, formsByStep]);
-  const visibleIndices = visibleSteps.map((s) => s.index);
-  const displayCurrentIndex = (() => {
-    if (visibleIndices.includes(stepIndex)) return visibleIndices.indexOf(stepIndex);
-    const prev = visibleIndices.filter((idx) => idx <= stepIndex).pop();
-    return prev !== undefined ? visibleIndices.indexOf(prev) : 0;
-  })();
-
-  const currentVisibleStep = visibleSteps[Math.max(0, displayCurrentIndex)];
-  const continueHref = `/orden-servicio?startStep=${currentVisibleStep?.index ?? stepIndex}&plate=${encodeURIComponent(plate)}`;
-
   const quoteReady = isClientQuoteReady(formsByStep);
   const approvalIndex = stepIndexFromTitle('Autorización del cliente');
-  const finishIndex = stepIndexFromTitle('Entrega / Cierre (Admin)');
   const clientCanAuthorize = role === 'cliente' && quoteReady && stepIndex >= approvalIndex;
 
   const quoteData = formsByStep.cotizacion_formal || {};
   const approvalData = formsByStep.aprobacion || {};
   const receptionData = formsByStep.recepcion || {};
-  const entregaData = formsByStep.entrega || {};
   const stepCompletionByKey = useMemo(() => {
     return Object.fromEntries(
       visibleSteps.map((step) => [step.key, isStepComplete(step.key, formsByStep, vehicle)]),
     ) as Record<string, boolean>;
   }, [visibleSteps, formsByStep, vehicle]);
-  const allVisibleStepsComplete = visibleSteps.length > 0 && visibleSteps.every((step) => stepCompletionByKey[step.key]);
-  const normalizedStatus = String(vehicle?.status || '').toLowerCase();
-  const isServiceOrderComplete = stepIndex >= finishIndex
-    || normalizedStatus === 'done'
-    || normalizedStatus === 'completed'
-    || normalizedStatus === 'finalizado'
-    || normalizedStatus === 'cerrado'
-    || normalizedStatus === 'closed'
-    || normalizedStatus === 'entregado'
-    || Boolean(entregaData.fechaEntregaReal)
-    || Boolean(entregaData.firmaRecibe)
-    || allVisibleStepsComplete;
+  const activeStepIndex = useMemo(() => {
+    const firstPending = visibleSteps.find((step) => !stepCompletionByKey[step.key]);
+    return firstPending?.index ?? visibleSteps[visibleSteps.length - 1]?.index ?? stepIndex;
+  }, [stepCompletionByKey, stepIndex, visibleSteps]);
+  const continueHref = `/orden-servicio?startStep=${activeStepIndex}&plate=${encodeURIComponent(plate)}`;
   const intakePhotosByZone = useMemo(() => {
     const zone = vehicle?.intakePhotosByZone || {};
     const legacy = vehicle?.intakePhotos || [];
-    const plateSeed = vehicle?.placa || plate;
-    const modelSeed = vehicle?.vehiculo || '';
-    const colorSeed = vehicle?.color || '';
-
-    const current = {
-      superior: String(zone.superior || legacy[0] || ''),
-      inferior: String(zone.inferior || legacy[1] || ''),
-      lateralDerecho: String(zone.lateralDerecho || legacy[2] || ''),
-      lateralIzquierdo: String(zone.lateralIzquierdo || legacy[3] || ''),
-      frontal: String(zone.frontal || legacy[4] || ''),
-      trasero: String(zone.trasero || legacy[5] || ''),
-    };
-
-    const values = Object.values(current).filter(Boolean);
-    const allSame = values.length >= 3 && new Set(values).size === 1;
-    if (!allSame) return current;
-
+    const reception = formsByStep.recepcion || {};
     return {
-      superior: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'superior'),
-      inferior: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'inferior'),
-      lateralDerecho: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'lateralDerecho'),
-      lateralIzquierdo: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'lateralIzquierdo'),
-      frontal: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'frontal'),
-      trasero: getVehicleEvidencePhoto(modelSeed, plateSeed, colorSeed, 'trasero'),
+      superior: resolveServiceOrderAssetUrl(String(zone.superior || reception.photo_superior || legacy[0] || '')),
+      inferior: resolveServiceOrderAssetUrl(String(zone.inferior || reception.photo_inferior || legacy[1] || '')),
+      lateralDerecho: resolveServiceOrderAssetUrl(String(zone.lateralDerecho || reception.photo_lateralDerecho || legacy[2] || '')),
+      lateralIzquierdo: resolveServiceOrderAssetUrl(String(zone.lateralIzquierdo || reception.photo_lateralIzquierdo || legacy[3] || '')),
+      frontal: resolveServiceOrderAssetUrl(String(zone.frontal || reception.photo_frontal || legacy[4] || '')),
+      trasero: resolveServiceOrderAssetUrl(String(zone.trasero || reception.photo_trasero || legacy[5] || '')),
     };
-  }, [vehicle, plate]);
+  }, [formsByStep.recepcion, vehicle]);
   const hasIntakePhotos = PHOTO_SLOTS.some((slot) => intakePhotosByZone[slot.key]);
 
   function setApprovalPatch(patch: Record<string, string>) {
@@ -949,11 +901,12 @@ export default function VehiculoDetallePage() {
                     <p className="vc-photo-title">{slot.label}</p>
                     {src ? (
                       <a href={src} target="_blank" rel="noreferrer" className="vc-photo-link">
+                        {/* Evidence URLs may be API resources or user-provided data URLs. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={src}
                           alt={`Evidencia ${slot.label}`}
                           className="vc-photo-preview"
-                          style={evidenceImageStyle(slot.key)}
                         />
                       </a>
                     ) : (

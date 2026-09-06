@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  poweredByHeader: false,
+  compress: true,
 
   // Deploy under http://<host>/vcars
   basePath: "/vcars",
@@ -12,7 +14,21 @@ const nextConfig: NextConfig = {
 
   env: {
     NEXT_PUBLIC_BASE_PATH: "/vcars",
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://187.124.65.93:4000",
+    // Browser traffic uses the same-origin proxy first. Set the real backend
+    // URL only through each deployment environment.
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "",
+  },
+
+  async headers() {
+    return [{
+      source: '/:path*',
+      headers: [
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
+        { key: 'X-Frame-Options', value: 'DENY' },
+        { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
+      ],
+    }];
   },
 };
 

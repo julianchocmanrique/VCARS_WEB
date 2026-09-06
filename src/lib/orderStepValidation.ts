@@ -32,7 +32,7 @@ const INVENTORY_LABELS: Record<string, string> = {
   tapaGasolina: 'Tapa gasolina',
   copasRuedas: 'Copas ruedas',
   controlRemoto: 'Control remoto',
-  lavaVidrio: 'Llavero',
+  lavaVidrio: 'Lavavidrios',
   controlAA: 'Control A/A',
   tarjetaPropiedad: 'Tarjeta de propiedad',
 };

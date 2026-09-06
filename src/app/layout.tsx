@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { InitialLoaderGate } from '@/components/InitialLoaderGate';
 import { SessionControl } from '@/components/SessionControl';
+import { ClientAccessGate } from '@/components/ClientAccessGate';
 import { PageTransitionShell } from '@/components/transitions/PageTransitionShell';
 
 const inter = Inter({
@@ -28,40 +29,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es" className={inter.variable}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function () {
-                try {
-                  var BUILD_KEY = '@vcars_web_build_version';
-                  var BUILD_VALUE = '2026-06-28-session-control-7';
-                  var prev = localStorage.getItem(BUILD_KEY);
-                  if (prev === BUILD_VALUE) return;
-
-                  localStorage.setItem(BUILD_KEY, BUILD_VALUE);
-                  localStorage.removeItem('@vcars_entries');
-                  localStorage.removeItem('@vcars_current_entry');
-                  localStorage.removeItem('@vcars_order_forms');
-                  localStorage.removeItem('@vcars_session');
-                  localStorage.removeItem('@vcars_profile');
-                  localStorage.removeItem('@vcars_client_identity');
-
-                  var href = window.location.href || '';
-                  var hasFlag = href.indexOf('_vcars_refresh=1') !== -1;
-                  if (!hasFlag) {
-                    var sep = href.indexOf('?') === -1 ? '?' : '&';
-                    window.location.replace(href + sep + '_vcars_refresh=1');
-                  }
-                } catch (_) {}
-              })();
-            `,
-          }}
-        />
       </head>
       <body>
         <InitialLoaderGate>
-          <SessionControl />
-          <PageTransitionShell>{children}</PageTransitionShell>
+          <ClientAccessGate>
+            <SessionControl />
+            <PageTransitionShell>{children}</PageTransitionShell>
+          </ClientAccessGate>
         </InitialLoaderGate>
       </body>
     </html>
