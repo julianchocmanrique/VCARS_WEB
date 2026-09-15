@@ -35,31 +35,23 @@ jobs:
           VCARS_PREVIEW_PACKAGE_KEY: ${{ secrets.VCARS_PREVIEW_PACKAGE_KEY }}
           PACKAGE_HASH: ${{ steps.manifest.outputs.sha256 }}
         run: node deploy/preview/decrypt.mjs release.enc release.tar.gz "$PACKAGE_HASH"
-      - name: Transfer release over SSH
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          fingerprint: SHA256:NGtvJn174wF1zFpNQLSnoFrG+ezDvAfzpMq7zPH/F3A
-          source: release.tar.gz,deploy/preview/apply.sh
-          target: /opt/vcars-preview/incoming/${{ github.sha }}
-          timeout: 60s
-          command_timeout: 10m
       - name: Deploy without changing other applications
-        uses: appleboy/ssh-action@v1.2.0
         env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           RELEASE: ${{ steps.manifest.outputs.release }}
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          fingerprint: SHA256:NGtvJn174wF1zFpNQLSnoFrG+ezDvAfzpMq7zPH/F3A
-          envs: RELEASE
-          timeout: 60s
-          command_timeout: 30m
-          script: |
-            bash /opt/vcars-preview/incoming/${{ github.sha }}/deploy/preview/apply.sh /opt/vcars-preview/incoming/${{ github.sha }} "$RELEASE"
+        run: |
+          set -euo pipefail
+          umask 077
+          key="$RUNNER_TEMP/vcars_deploy_key"
+          trap 'rm -f "$key"' EXIT
+          printf '%s\n' "$VPS_SSH_KEY" > "$key"
+          options=(-i "$key" -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=6 -o StrictHostKeyChecking=yes -o HostKeyAlias=vcars-vps -o UserKnownHostsFile="$PWD/deploy/preview/known_hosts")
+          target="/opt/vcars-preview/incoming/$GITHUB_SHA"
+          ssh "${options[@]}" "$VPS_USER@$VPS_HOST" "umask 077; mkdir -p '$target'"
+          scp "${options[@]}" release.tar.gz deploy/preview/apply.sh "$VPS_USER@$VPS_HOST:$target/"
+          ssh "${options[@]}" "$VPS_USER@$VPS_HOST" "bash '$target/apply.sh' '$target' '$RELEASE'"
       - name: Remove runner plaintext archive
         if: always()
         run: rm -f release.tar.gz

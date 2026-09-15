@@ -62,7 +62,7 @@ execFileSync('gh', ['secret', 'set', 'VCARS_PREVIEW_PACKAGE_KEY', '--repo', repo
 run('gh', ['release', 'create', release, encryptedPath, '--repo', repo, '--target', branch, '--prerelease', '--title', 'VCARS private preview update', '--notes', 'Encrypted deployment package. Requires the private deployment key; no plaintext application data is published.']);
 const base = gh([`repos/${repo}/git/ref/heads/${branch}`]).object.sha;
 const tree = gh([`repos/${repo}/git/commits/${base}`]).tree.sha;
-const files = ['.github/workflows/fixed-preview.yml', ...['apply.sh', 'compose.yml', 'decrypt.mjs', 'gateway.mjs', 'nginx.py', 'gateway.test.mjs', 'nginx_test.py'].map(name => 'deploy/preview/' + name), 'tools/publish-preview.mjs'];
+const files = ['.github/workflows/fixed-preview.yml', ...['apply.sh', 'compose.yml', 'decrypt.mjs', 'gateway.mjs', 'nginx.py', 'gateway.test.mjs', 'nginx_test.py', 'known_hosts'].map(name => 'deploy/preview/' + name), 'tools/publish-preview.mjs', 'docs/PUBLICACION_FIJA_VCARS.md'];
 const entries = [];
 for (const name of files) {
   const blob = gh([`repos/${repo}/git/blobs`, '--method', 'POST', '-f', 'encoding=base64', '-f', 'content=' + fs.readFileSync(path.join(root, name)).toString('base64')]);
