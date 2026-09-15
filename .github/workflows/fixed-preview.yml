@@ -1,0 +1,35 @@
+name: VCARS Fixed Preview
+on:
+  push:
+    branches: [codex/vcars-fixed-preview]
+    paths: [.github/workflows/fixed-preview.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect existing hosting without changing it
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          timeout: 45s
+          command_timeout: 5m
+          script: |
+            set -eu
+            echo '--- Capacity ---'
+            df -h /
+            free -h
+            echo '--- Containers ---'
+            docker ps --format '{{.Names}} | {{.Image}} | {{.Ports}}'
+            echo '--- VCARS mounts ---'
+            for name in $(docker ps --format '{{.Names}}' | grep -i vcars); do
+              docker inspect --format '{{.Name}} {{range .Mounts}}{{.Source}} -> {{.Destination}}; {{end}}' "$name"
+            done
+            echo '--- Routing ---'
+            nginx -T 2>&1 | grep -E '^# configuration file|server_name|listen |location |proxy_pass|ssl_certificate ' || true
+            echo '--- Certificates ---'
+            if command -v certbot >/dev/null; then certbot certificates 2>/dev/null | grep -E 'Certificate Name|Domains:|Expiry Date'; fi
