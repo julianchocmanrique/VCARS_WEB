@@ -20,6 +20,8 @@ jobs:
           command_timeout: 5m
           script: |
             set -eu
+            echo '--- Viralco server configuration ---'
+            sed -E '/Authorization|auth_basic_user_file|proxy_set_header.*[Kk]ey/d' /etc/nginx/sites-enabled/viralcoproducciones.conf
             echo '--- Capacity ---'
             df -h /
             free -h
