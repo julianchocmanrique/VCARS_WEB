@@ -1,6 +1,6 @@
 {
-  "release": "vcars-preview-20260915043258225-6d070d",
-  "sha256": "c6302abab570ee12c225fcc06eecf00e65bf093c19cc16f9a841fbce5197d9e7",
+  "release": "vcars-preview-20260915062303663-933ff3",
+  "sha256": "5fe968c7cf008167a293ab7b7aea89e0c9790fc173b082e4f8744d661aa9a65c",
   "origin": "https://www.viralcoproducciones.com",
-  "initializedFromLocal": true
+  "initializedFromLocal": false
 }
