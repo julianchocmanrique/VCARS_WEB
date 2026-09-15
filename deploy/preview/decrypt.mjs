@@ -1,0 +1,11 @@
+import { createDecipheriv, createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+const [input, output, expected] = process.argv.slice(2);
+const bytes = readFileSync(input);
+if (createHash('sha256').update(bytes).digest('hex') !== expected) throw new Error('Package checksum mismatch');
+const key = Buffer.from(process.env.VCARS_PREVIEW_PACKAGE_KEY || '', 'hex');
+if (key.length !== 32) throw new Error('Missing deployment key');
+const decipher = createDecipheriv('aes-256-gcm', key, bytes.subarray(0, 12));
+decipher.setAuthTag(bytes.subarray(12, 28));
+const plain = Buffer.concat([decipher.update(bytes.subarray(28)), decipher.final()]);
+writeFileSync(output, plain, { mode: 0o600 });

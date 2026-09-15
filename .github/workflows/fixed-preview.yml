@@ -2,36 +2,64 @@ name: VCARS Fixed Preview
 on:
   push:
     branches: [codex/vcars-fixed-preview]
-    paths: [.github/workflows/fixed-preview.yml]
+    paths: [deploy/preview/**, .github/workflows/fixed-preview.yml]
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: vcars-fixed-preview
+  cancel-in-progress: false
 jobs:
-  inspect:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-preview]')
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
-      - name: Inspect existing hosting without changing it
-        uses: appleboy/ssh-action@v1.2.0
+      - uses: actions/checkout@v4
+      - name: Validate deployment manifest
+        id: manifest
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const m=JSON.parse(fs.readFileSync('deploy/preview/release.json'));
+          if (!/^vcars-preview-[a-z0-9-]+$/.test(m.release) || !/^[a-f0-9]{64}$/.test(m.sha256)) throw new Error('Invalid release');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `release=${m.release}\nsha256=${m.sha256}\n`);
+          JS
+      - name: Fetch authenticated encrypted package
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE: ${{ steps.manifest.outputs.release }}
+        run: gh release download "$RELEASE" --repo "$GITHUB_REPOSITORY" --pattern release.enc
+      - name: Verify integrity and decrypt privately
+        env:
+          VCARS_PREVIEW_PACKAGE_KEY: ${{ secrets.VCARS_PREVIEW_PACKAGE_KEY }}
+          PACKAGE_HASH: ${{ steps.manifest.outputs.sha256 }}
+        run: node deploy/preview/decrypt.mjs release.enc release.tar.gz "$PACKAGE_HASH"
+      - name: Transfer release over SSH
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          timeout: 45s
-          command_timeout: 5m
+          fingerprint: SHA256:NGtvJn174wF1zFpNQLSnoFrG+ezDvAfzpMq7zPH/F3A
+          source: release.tar.gz,deploy/preview/apply.sh
+          target: /opt/vcars-preview/incoming/${{ github.sha }}
+          timeout: 60s
+          command_timeout: 10m
+      - name: Deploy without changing other applications
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          RELEASE: ${{ steps.manifest.outputs.release }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          fingerprint: SHA256:NGtvJn174wF1zFpNQLSnoFrG+ezDvAfzpMq7zPH/F3A
+          envs: RELEASE
+          timeout: 60s
+          command_timeout: 30m
           script: |
-            set -eu
-            echo '--- Viralco server configuration ---'
-            sed -E '/Authorization|auth_basic_user_file|proxy_set_header.*[Kk]ey/d' /etc/nginx/sites-enabled/viralcoproducciones.conf
-            echo '--- Capacity ---'
-            df -h /
-            free -h
-            echo '--- Containers ---'
-            docker ps --format '{{.Names}} | {{.Image}} | {{.Ports}}'
-            echo '--- VCARS mounts ---'
-            for name in $(docker ps --format '{{.Names}}' | grep -i vcars); do
-              docker inspect --format '{{.Name}} {{range .Mounts}}{{.Source}} -> {{.Destination}}; {{end}}' "$name"
-            done
-            echo '--- Routing ---'
-            nginx -T 2>&1 | grep -E '^# configuration file|server_name|listen |location |proxy_pass|ssl_certificate ' || true
-            echo '--- Certificates ---'
-            if command -v certbot >/dev/null; then certbot certificates 2>/dev/null | grep -E 'Certificate Name|Domains:|Expiry Date'; fi
+            bash /opt/vcars-preview/incoming/${{ github.sha }}/deploy/preview/apply.sh /opt/vcars-preview/incoming/${{ github.sha }} "$RELEASE"
+      - name: Remove runner plaintext archive
+        if: always()
+        run: rm -f release.tar.gz
