@@ -37,3 +37,11 @@ El instalador rechaza rutas VCARS desconocidas o configuraciones ambiguas. Compr
 Una restauracion de datos requiere revision y autorizacion explicita: nunca borrar volumenes ni volver a importar la copia local encima de ordenes guardadas en el servidor.
 
 La disponibilidad depende del servidor y del dominio, no del computador local. La ruta fija evita que cambie la URL, pero no constituye una garantia de disponibilidad absoluta.
+
+## Correo de informes técnicos
+
+La descarga requiere que administración verifique el informe guardado de una orden cerrada. La verificación conserva la versión, usuario y fecha; el adjunto se genera en el servidor y no incluye los costos de cotización.
+
+Para habilitar el envío directo, configurar `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` y `MAIL_FROM` en `/opt/vcars-preview/runtime.env` mediante el canal seguro del servidor. No guardar credenciales en Git ni en paquetes de publicación. El compose de VCARS transmite estas variables únicamente a su API. Puerto 465 utiliza TLS implícito; otros puertos requieren STARTTLS en producción. Sin configuración, la aplicación informa la limitación y permite descargar el PDF verificado para adjuntarlo manualmente.
+
+Los envíos guardan destinatario, responsable y estado. `SENT` significa aceptación del servidor SMTP, no entrega confirmada al buzón. Si aparece `SENDING` o `UNCONFIRMED`, revisar el correo antes de crear otro envío. Repetir la misma solicitud no vuelve a enviar el adjunto.

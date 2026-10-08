@@ -25,6 +25,11 @@ services:
       CORS_ORIGIN: ${PUBLIC_ORIGIN:?Required}
       UPLOAD_DIR: /app/uploads/service-orders
       PORT: '4000'
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-}
     volumes:
       - /opt/vcars-preview/data/uploads:/app/uploads
     depends_on:
