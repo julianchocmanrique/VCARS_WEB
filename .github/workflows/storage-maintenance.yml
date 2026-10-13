@@ -1,0 +1,29 @@
+name: VCARS Storage Maintenance
+on:
+  push:
+    branches: [codex/vcars-fixed-preview]
+    paths: [.github/workflows/storage-maintenance.yml, tools/storage-maintenance.sh]
+permissions:
+  contents: read
+concurrency:
+  group: vcars-fixed-preview
+  cancel-in-progress: false
+jobs:
+  maintenance:
+    if: contains(github.event.head_commit.message, '[storage-maintenance]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scoped VCARS storage maintenance
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key="$RUNNER_TEMP/vcars_maintenance_key"
+          trap 'rm -f "$key"' EXIT
+          printf '%s\n' "$VPS_SSH_KEY" > "$key"
+          ssh -i "$key" -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=30 -o ServerAliveInterval=30 -o ServerAliveCountMax=6 -o StrictHostKeyChecking=yes -o HostKeyAlias=vcars-vps -o UserKnownHostsFile="$PWD/deploy/preview/known_hosts" "$VPS_USER@$VPS_HOST" 'bash -s' < tools/storage-maintenance.sh
