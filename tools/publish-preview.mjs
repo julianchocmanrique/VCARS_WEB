@@ -37,7 +37,7 @@ const copy = (from, to, names) => {
   fs.mkdirSync(to, { recursive: true });
   for (const name of names) fs.cpSync(path.join(from, name), path.join(to, name), { recursive: true, filter: src => !src.endsWith('.DS_Store') && !src.includes('__pycache__') });
 };
-copy(root, path.join(stage, 'web'), ['src', 'public', 'package.json', 'package-lock.json', 'next.config.ts', 'tsconfig.json', 'postcss.config.mjs', 'eslint.config.mjs', 'Dockerfile', '.dockerignore']);
+copy(root, path.join(stage, 'web'), ['src', 'public', 'prepare-ocr.mjs', 'package.json', 'package-lock.json', 'next.config.ts', 'tsconfig.json', 'postcss.config.mjs', 'eslint.config.mjs', 'Dockerfile', '.dockerignore']);
 copy(apiRoot, path.join(stage, 'api'), ['src', 'prisma', 'package.json', 'package-lock.json', 'tsconfig.json', 'Dockerfile', '.dockerignore']);
 copy(path.join(root, 'deploy/preview'), path.join(stage, 'deploy'), ['compose.yml', 'gateway.mjs', 'nginx.py']);
 fs.mkdirSync(path.join(stage, 'bootstrap'));
